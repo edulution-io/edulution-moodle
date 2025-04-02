@@ -1,0 +1,45 @@
+services:
+  mariadb:
+    image: docker.io/bitnami/mariadb:latest
+    container_name: moodle-db
+    restart: unless-stopped
+    environment:
+      - MARIADB_USER=bn_moodle
+      - MARIADB_PASSWORD=81ez0dNkI24N3VCs9
+      - MARIADB_DATABASE=bitnami_moodle
+      - MARIADB_ROOT_PASSWORD=supersecure81ez0dNkI24N3VCs9
+      - ALLOW_EMPTY_PASSWORD=no
+    volumes:
+      - /srv/docker/moodle/mariadb:/bitnami/mariadb
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -uroot -p81ez0dNkI24N3VCs9 -h127.0.0.1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  moodle:
+    container_name: moodle-app
+    restart: unless-stopped
+    environment:
+      - MOODLE_DATABASE_HOST=mariadb
+      - MOODLE_DATABASE_USER=bn_moodle
+      - MOODLE_DATABASE_PASSWORD=81ez0dNkI24N3VCs9
+      - MOODLE_USERNAME=admin
+      - MOODLE_PASSWORD=Muster!
+      - MOODLE_EMAIL=admin@example.com
+    volumes:
+      - /srv/docker/moodle/moodle:/bitnami/moodle
+      - /srv/docker/moodle/moodledata:/bitnami/moodledata
+      - ./docker/logs:/var/log/moodle
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    ports:
+      - 8080:8080
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:8080/login/index.php && curl -fs http://localhost:8080/admin/index.php || exit 1"]
+      interval: 120s
+      timeout: 30s
+      retries: 3
+    image: bitnami/moodle:latest
+    entrypoint: ["bash", "-c", "apt-get update && apt-get install -y curl && curl -fsSL https://raw.githubusercontent.com/edulution-io/edulution-moodle/refs/heads/main/entrypoint-wrapper.sh -o /tmp/entrypoint.sh && chmod +x /tmp/entrypoint.sh && exec /tmp/entrypoint.sh"]
