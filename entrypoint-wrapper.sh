@@ -1,16 +1,24 @@
 #!/bin/bash
 
-apt-get update
-apt-get install -y curl
+set -e
 
-# Start Bitnami entrypoint in background
+# Starte Moodle im Vordergrund (wichtig, dass dieser Prozess zuletzt kommt!)
 /opt/bitnami/scripts/moodle/entrypoint.sh /opt/bitnami/scripts/moodle/run.sh &
 
-# Warte ein bisschen (alternativ: auf HTTP warten wie du es schon tust)
-sleep 60
+MOODLE_PID=$!
 
-# Jetzt eigenes Skript ausführen
-/custom_scripts/setup.sh
+echo "Warte darauf, dass Moodle fertig installiert ist..."
 
-# Warten, bis Moodle-Prozess beendet wird
-wait
+# Warte darauf, dass Moodle erreichbar ist (HTTP 200)
+until curl -s -f http://localhost/login/index.php > /dev/null; do
+  echo "Moodle noch nicht erreichbar, warte..."
+  sleep 5
+done
+
+echo "Moodle ist erreichbar – führe Setup im Hintergrund aus."
+
+# Setup im Hintergrund starten
+/custom_scripts/setup.sh &
+
+# Warte auf Moodle-Prozess (damit Container aktiv bleibt)
+wait "$MOODLE_PID"

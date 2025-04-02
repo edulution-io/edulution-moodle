@@ -141,7 +141,7 @@ is_moodle_installed() {
     local db_name="${MOODLE_DATABASE_NAME:-bitnami_moodle}"
 
     local query="SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '$db_name';"
-    local result=$(mysql -h "$db_host" -u "$db_user" -p"$db_password" -e "$query" -s -N)
+    local result=$(/opt/bitnami/mysql/bin/mariadb -h "$db_host" -u "$db_user" -p"$db_password" -e "$query" -s -N)
 
     if [[ "$result" -gt 0 ]]; then
         log_message "✅ Moodle is fully installed."
