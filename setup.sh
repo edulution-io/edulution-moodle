@@ -7,7 +7,7 @@ PLUGIN_DB="/tmp/plugins-available.csv"
 FILTERED_LIST="/tmp/plugins-install.txt"
 LOG_FILE="/var/log/moodle/install.log"
 
-curl -s https://raw.githubusercontent.com/netzint/ni-moodle/refs/heads/main/plugins.csv > "$PLUGIN_LIST"
+curl -s https://raw.githubusercontent.com/edulution-io/edulution-moodle/refs/heads/main/plugins.csv > "$PLUGIN_LIST"
 
 
 # 📝 Function to log messages with emojis and timestamps
