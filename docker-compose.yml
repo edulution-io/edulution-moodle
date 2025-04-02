@@ -30,7 +30,7 @@ services:
     volumes:
       - /srv/docker/moodle/moodle:/bitnami/moodle
       - /srv/docker/moodle/moodledata:/bitnami/moodledata
-      - ./docker/logs:/var/log/moodle
+      - /srv/docker/moodle/logs:/var/log/moodle
     depends_on:
       mariadb:
         condition: service_healthy
