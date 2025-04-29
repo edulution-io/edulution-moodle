@@ -6,8 +6,10 @@
 # Start Bitnami entrypoint in background
 /opt/bitnami/scripts/moodle/entrypoint.sh /opt/bitnami/scripts/moodle/run.sh &
 
-curl -fsSL https://raw.githubusercontent.com/edulution-io/edulution-moodle/refs/heads/main/setup.sh -o /setup.sh
-source /setup.sh
+curl -fsSL https://raw.githubusercontent.com/edulution-io/edulution-moodle/refs/heads/main/setup.sh -o /opt/setup.sh
+chmod +x /opt/setup.sh
+
+/opt/setup.sh
 
 # Warte ein bisschen (alternativ: auf HTTP warten wie du es schon tust)
 sleep 300
