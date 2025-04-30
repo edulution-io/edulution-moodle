@@ -123,7 +123,7 @@ install_german_locale() {
     apt-get update
     apt-get install -y locales
     locale-gen de_DE.UTF-8
-    update-locale LANG=de_DE.UTF-8
+    update-locale de_DE.UTF-8
     log_message "✅ System locale set to de_DE.UTF-8"
 
     cd /bitnami/moodle
