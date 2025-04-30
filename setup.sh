@@ -6,9 +6,12 @@ MOODLE_DIR="/bitnami/moodle"
 PLUGIN_DB="/tmp/plugins-available.csv"
 FILTERED_LIST="/tmp/plugins-install.txt"
 LOG_FILE="/var/log/moodle/install.log"
+PLUGIN_LIST="/tmp/plugins.csv"
 
 curl -s https://raw.githubusercontent.com/edulution-io/edulution-moodle/refs/heads/main/plugins.csv > "$PLUGIN_LIST"
 
+# Fix webserver-root
+sed -i "s|^\$CFG->wwwroot\s*=.*|\\\$CFG->wwwroot = 'https://' . \$_SERVER['HTTP_HOST'] . '/moodle-app';|" /opt/bitnami/moodle/config.php
 
 # 📝 Function to log messages with emojis and timestamps
 log_message() {
