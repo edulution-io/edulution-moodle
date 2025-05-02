@@ -95,30 +95,33 @@ install_german_locale() {
     log_message "🔄 Installing German locale and setting default language in Moodle..."
     apt-get update
     apt-get install -y locales
+    echo "de_DE.UTF-8 UTF-8" >> /etc/locale.gen && locale-gen
     locale-gen de_DE.UTF-8
     update-locale de_DE.UTF-8
     log_message "✅ System locale set to de_DE.UTF-8"
 
     cd /bitnami/moodle
-    moosh language-install de
-    moosh language-install de_comm
+    moosh -n language-install de
+    moosh -n language-install de_comm
     log_message "✅ Installed Moodle languages: de, de_comm"
 
-    moosh config-set defaultlang de_comm
+    chown -R daemon:daemon /bitnami/
+
+    moosh -n config-set lang de_comm
     log_message "✅ Default Moodle language set to de_comm"
 }
 
 # Check if plugin is avaliable for current moodle version
 # $1 = Plugin name
 check_plugin_avaliable() {
-    moosh plugin-list | grep $MOODLE_VERSION | grep $1 2>$1 >/dev/zero
+    moosh plugin-list | grep $MOODLE_VERSION | grep $1 2>&1 >/dev/zero
     return $?
 }
 
 # Install plugin by name
 # $1 = Plugin name
 install_plugin() {
-    moosh -n plugin-install "$plugin" 2>$1 >/dev/zero
+    moosh -n plugin-install "$plugin" 2>&1 >/dev/zero
     return $?
 }
 
