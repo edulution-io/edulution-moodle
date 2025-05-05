@@ -4,6 +4,8 @@ PLUGIN_LIST="/tmp/plugins.csv"
 MOODLE_LOG="/tmp/moodle.log"
 MOODLE_DIR="/bitnami/moodle"
 
+VERSION_FILE="/bitnami/moodledata/EDULUTION_MOODLE"
+
 cat <<'EOF'
 
 
@@ -153,6 +155,35 @@ add_domain_to_hosts_file() {
     echo "$ip ui.dev.multi.schule" >> /etc/hosts
 }
 
+get_moodle_version() {
+    MOODLE_VERSION=$(grep '$release' "$MOODLE_DIR/version.php" | grep -oP '\d+\.\d+')
+    echo
+    log_message "ℹ️ Detected Moodle version: $MOODLE_VERSION"
+    echo
+}
+
+save_moodle_version() {
+    echo "$MOODLE_VERSION" > $VERSION_FILE
+}
+
+# returns 0 if moodle is configured
+check_moodle_configured() {
+    if [ -e "$VERSION_FILE" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# returns 1 if moodle needs update
+check_moodle_version() {
+    if [ "$(cat $VERSION_FILE)" == "$MOODLE_VERSION" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 set_moodle_settings() {
     moosh -n config-set autolang 0
     moosh -n config-set theme moove 
@@ -196,18 +227,23 @@ while ! is_moodle_healthy; do
     sleep 5
 done
 
-download_plugin_list
-install_moosh
-install_german_locale
+get_moodle_version
 
-MOODLE_VERSION=$(grep '$release' "$MOODLE_DIR/version.php" | grep -oP '\d+\.\d+')
-log_message "ℹ️ Detected Moodle version: $MOODLE_VERSION"
+if ! check_moodle_configured; then
+    download_plugin_list
+    install_moosh
+    install_german_locale
 
-install_all_plugins
+    # if ! check_moodle_version; then
+    #     # update moodle plugins here
+    # fi
+
+    install_all_plugins
+    download_edulution_logos
+    set_moodle_settings
+fi
 
 add_domain_to_hosts_file
-
-download_edulution_logos
-set_moodle_settings
+save_moodle_version
 
 tail -f $MOODLE_LOG
