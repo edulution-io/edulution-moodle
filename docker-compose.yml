@@ -38,6 +38,9 @@ services:
       - MOODLE_HOST=/moodle-app
       - MOODLE_REVERSEPROXY=true
       - MOODLE_SSLPROXY=true
+      - KEYCLOAK_CLIENT_ID=edu-ui
+      - KEYCLOAK_CLIENT_SECRET=123456789
+      - EDULUTION_BASE_DOMAIN=demo.edulution.ui
     volumes:
       - /srv/docker/edulution-moodle/data/moodle:/bitnami/moodle
       - /srv/docker/edulution-moodle/data/moodledata:/bitnami/moodledata

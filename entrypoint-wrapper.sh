@@ -198,11 +198,11 @@ set_moodle_settings() {
     moosh -n auth-manage enable oidc
     moosh -n config-set idptype 3 auth_oidc
     moosh -n config-set clientauthmethod 1 auth_oidc
-    moosh -n config-set clientid edu-ui auth_oidc
-    moosh -n config-set clientsecret LDGPtJXxxzYMAbA4ULg8Y4y1Mlk0AqGD auth_oidc
-    moosh -n config-set authendpoint https://ui.dev.multi.schule/auth/realms/edulution/protocol/openid-connect/auth auth_oidc
-    moosh -n config-set tokenendpoint https://ui.dev.multi.schule/auth/realms/edulution/protocol/openid-connect/token auth_oidc
-    moosh -n config-set oidcresource https://ui.dev.multi.schule/auth/ auth_oidc
+    moosh -n config-set clientid $KEYCLOAK_CLIENT_ID auth_oidc
+    moosh -n config-set clientsecret $KEYCLOAK_CLIENT_SECRET auth_oidc
+    moosh -n config-set authendpoint https://${EDULUTION_BASE_DOMAIN}/auth/realms/edulution/protocol/openid-connect/auth auth_oidc
+    moosh -n config-set tokenendpoint https://${EDULUTION_BASE_DOMAIN}/auth/realms/edulution/protocol/openid-connect/token auth_oidc
+    moosh -n config-set oidcresource https://${EDULUTION_BASE_DOMAIN}/auth/ auth_oidc
     moosh -n config-set forceredirect 1 auth_oidc
     moosh -n config-set field_map_firstname givenName auth_oidc
     moosh -n config-set field_lock_firstname locked auth_oidc
