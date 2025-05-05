@@ -197,6 +197,7 @@ set_moodle_settings() {
     moosh -n plugin-install -d auth_oidc
     moosh -n auth-manage enable oidc
     moosh -n config-set idptype 3 auth_oidc
+    moosh -n config-set clientauthmethod 1 auth_oidc
     moosh -n config-set clientid edu-ui auth_oidc
     moosh -n config-set clientsecret LDGPtJXxxzYMAbA4ULg8Y4y1Mlk0AqGD auth_oidc
     moosh -n config-set authendpoint https://ui.dev.multi.schule/auth/realms/edulution/protocol/openid-connect/auth auth_oidc
