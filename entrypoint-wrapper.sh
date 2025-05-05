@@ -51,7 +51,7 @@ is_moodle_installed() {
 # 🚦 Function to check Moodle service health
 is_moodle_healthy() {
     #log_message "🔄 Checking Moodle service health..."
-    if curl -fs http://localhost:8080/login/index.php && curl -fs http://localhost:8080/admin/index.php; then
+    if curl -fs --output /dev/null http://localhost:8080/login/index.php; then
         echo
         log_message "✅ Moodle service is healthy."
         return 0
