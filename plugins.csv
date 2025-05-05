@@ -31,4 +31,5 @@ mod_ratingallocate
 #theme_academi
 #theme_adaptable
 #theme_foundation
-#theme_moove
+theme_moove
+auth_oidc

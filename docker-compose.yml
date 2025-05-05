@@ -42,7 +42,6 @@ services:
       - /srv/docker/edulution-moodle/data/moodle:/bitnami/moodle
       - /srv/docker/edulution-moodle/data/moodledata:/bitnami/moodledata
       - /srv/docker/edulution-moodle/data/logs:/var/log/moodle
-      - ./share:/srv/share
     depends_on:
       edulution-moodle-db:
         condition: service_healthy
@@ -52,7 +51,6 @@ services:
       timeout: 30s
       retries: 3
     image: bitnami/moodle:latest
-    #entrypoint: ["bash", "-c", "apt-get update && apt-get install -y curl && sleep 10000"]
     entrypoint: ["bash", "-c", "apt-get update && apt-get install -y curl && curl -fsSL https://raw.githubusercontent.com/edulution-io/edulution-moodle/refs/heads/main/entrypoint-wrapper.sh -o /tmp/entrypoint.sh && chmod +x /tmp/entrypoint.sh && exec /tmp/entrypoint.sh"]
     networks:
       - edulution-moodle

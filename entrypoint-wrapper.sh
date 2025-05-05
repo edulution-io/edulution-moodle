@@ -73,6 +73,11 @@ download_plugin_list() {
     curl -s https://raw.githubusercontent.com/edulution-io/edulution-moodle/refs/heads/main/plugins.csv > "$PLUGIN_LIST"
 }
 
+download_edulution_logos() {
+    curl -s https://raw.githubusercontent.com/edulution-io/edulution-moodle/refs/heads/main/edulution.io_MOODLE.png > /tmp/edulution.io_MOODLE.png
+    curl -s https://raw.githubusercontent.com/edulution-io/edulution-moodle/refs/heads/main/favicon.ico > /tmp/favicon.ico
+}
+
 # ⚙️ Function to install Moosh
 install_moosh() {
     if ! command -v moosh >/dev/null 1>&1; then
@@ -143,6 +148,37 @@ install_all_plugins() {
     chown -R daemon:daemon /bitnami/
 }
 
+set_moodle_settings() {
+    moosh -n config-set autolang = No
+    moosh -n config-set theme = moove 
+    moosh -n file-upload -c 1 -m theme_moove -f favicon -p / /tmp/favicon.ico
+    moosh -n file-upload -c 1 -m theme_moove -f logo -p / /tmp/edulution.io_MOODLE.png
+    moosh -n config-set favicon "/favicon.ico" theme_moove
+    moosh -n config-set logo "/edulution.io_MOODLE.png" theme_moove
+    moosh -n config-set guestloginbutton 0
+    moosh -n auth-manage disable email
+    moosh -n config-set curlsecurityblockedhosts "$(echo -e '127.0.0.0/8\n192.168.0.0/16\n10.0.0.0/8\n0.0.0.0\nlocalhost\n169.254.169.254\n0000::1')"
+    moosh -n plugin-install -d auth_oidc
+    moosh -n auth-manage enable oauth2
+    moosh -n config-set idptype 3 auth_oidc
+    moosh -n config-set clientid edu-ui auth_oidc
+    moosh -n config-set clientsecret LDGPtJXxxzYMAbA4ULg8Y4y1Mlk0AqGD auth_oidc
+    moosh -n config-set authendpoint https://ui.dev.multi.schule/auth/realms/edulution/protocol/openid-connect/auth auth_oidc
+    moosh -n config-set tokenendpoint https://ui.dev.multi.schule/auth/realms/edulution/protocol/openid-connect/token auth_oidc
+    moosh -n config-set oidcresource https://ui.dev.multi.schule/auth/ auth_oidc
+    moosh -n config-set forceredirect 1 auth_oidc
+    moosh -n config-set field_map_firstname givenName auth_oidc
+    moosh -n config-set field_lock_firstname locked auth_oidc
+    moosh -n config-set field_map_lastname givenName auth_oidc
+    moosh -n config-set field_lock_lastname locked auth_oidc
+    moosh -n config-set field_lock_email locked auth_oidc
+    moosh -n config-set opname "edulution.io" auth_oidc
+    moosh -n config-set icon "moodle:t/locked" auth_oidc
+    moosh -n config-set showloginform 0
+
+    chown -R daemon:daemon /bitnami/
+}
+
 # Wait for Moodle to be fully installed
 log_message "⏳ Waiting for Moodle to be fully installed..."
 while ! is_moodle_installed; do
@@ -163,5 +199,8 @@ MOODLE_VERSION=$(grep '$release' "$MOODLE_DIR/version.php" | grep -oP '\d+\.\d+'
 log_message "ℹ️ Detected Moodle version: $MOODLE_VERSION"
 
 install_all_plugins
+
+download_edulution_logos
+set_moodle_settings
 
 tail -f $MOODLE_LOG
