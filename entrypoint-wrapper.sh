@@ -149,8 +149,8 @@ install_all_plugins() {
 }
 
 set_moodle_settings() {
-    moosh -n config-set autolang = No
-    moosh -n config-set theme = moove 
+    moosh -n config-set autolang 0
+    moosh -n config-set theme moove 
     moosh -n file-upload -c 1 -m theme_moove -f favicon -p / /tmp/favicon.ico
     moosh -n file-upload -c 1 -m theme_moove -f logo -p / /tmp/edulution.io_MOODLE.png
     moosh -n config-set favicon "/favicon.ico" theme_moove
@@ -174,7 +174,7 @@ set_moodle_settings() {
     moosh -n config-set field_lock_email locked auth_oidc
     moosh -n config-set opname "edulution.io" auth_oidc
     moosh -n config-set icon "moodle:t/locked" auth_oidc
-    moosh -n config-set showloginform 0
+    #moosh -n config-set showloginform 0
 
     chown -R daemon:daemon /bitnami/
 }
