@@ -53,7 +53,7 @@ services:
       interval: 120s
       timeout: 30s
       retries: 3
-    image: bitnami/moodle:latest
+    image: bitnami/moodle:4.5
     entrypoint: ["bash", "-c", "apt-get update && apt-get install -y curl && curl -fsSL https://raw.githubusercontent.com/edulution-io/edulution-moodle/refs/heads/main/entrypoint-wrapper.sh -o /tmp/entrypoint.sh && chmod +x /tmp/entrypoint.sh && exec /tmp/entrypoint.sh"]
     networks:
       - edulution-moodle
