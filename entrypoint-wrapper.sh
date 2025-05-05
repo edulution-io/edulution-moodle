@@ -152,7 +152,7 @@ install_all_plugins() {
 
 add_domain_to_hosts_file() {
     ip=$(getent hosts edulution-traefik | awk '{ print $1 }')
-    echo "$ip ui.dev.multi.schule" >> /etc/hosts
+    echo "$ip $EDULUTION_BASE_DOMAIN" >> /etc/hosts
 }
 
 get_moodle_version() {
