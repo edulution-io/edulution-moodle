@@ -65,7 +65,7 @@ is_moodle_healthy() {
 
 # Function to fix moodle configuration
 fix_moodle_configuration() {
-    sed -i "s|^\$CFG->wwwroot\s*=.*|\$CFG->wwwroot = 'https://' . \$_SERVER['HTTP_HOST'] . '/moodle-app';|" /opt/bitnami/moodle/config.php
+    sed -i "s|^\$CFG->wwwroot\s*=.*|\$CFG->wwwroot = 'https://' . \$_SERVER['HTTP_HOST'] . '/moodle-app';|" /opt/bitnami/moodle/config.php 2>/dev/null
 }
 
 # Download list of plugins
@@ -148,6 +148,11 @@ install_all_plugins() {
     chown -R daemon:daemon /bitnami/
 }
 
+add_domain_to_hosts_file() {
+    ip=$(getent hosts edulution-traefik | awk '{ print $1 }')
+    echo "$ip ui.dev.multi.schule" >> /etc/hosts
+}
+
 set_moodle_settings() {
     moosh -n config-set autolang 0
     moosh -n config-set theme moove 
@@ -159,7 +164,7 @@ set_moodle_settings() {
     moosh -n auth-manage disable email
     moosh -n config-set curlsecurityblockedhosts "$(echo -e '127.0.0.0/8\n192.168.0.0/16\n10.0.0.0/8\n0.0.0.0\nlocalhost\n169.254.169.254\n0000::1')"
     moosh -n plugin-install -d auth_oidc
-    moosh -n auth-manage enable oauth2
+    moosh -n auth-manage enable oidc
     moosh -n config-set idptype 3 auth_oidc
     moosh -n config-set clientid edu-ui auth_oidc
     moosh -n config-set clientsecret LDGPtJXxxzYMAbA4ULg8Y4y1Mlk0AqGD auth_oidc
@@ -199,6 +204,8 @@ MOODLE_VERSION=$(grep '$release' "$MOODLE_DIR/version.php" | grep -oP '\d+\.\d+'
 log_message "ℹ️ Detected Moodle version: $MOODLE_VERSION"
 
 install_all_plugins
+
+add_domain_to_hosts_file
 
 download_edulution_logos
 set_moodle_settings
