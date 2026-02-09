@@ -1,0 +1,23 @@
+http:
+  routers:
+    edulution-moodle:
+      rule: PathPrefix(`/moodle`)
+      service: edulution-moodle
+      entryPoints:
+        - websecure
+      tls: {}
+      middlewares:
+        - moodle-strip-prefix
+
+  middlewares:
+    moodle-strip-prefix:
+      stripPrefix:
+        prefixes:
+          - /moodle
+
+  services:
+    edulution-moodle:
+      loadBalancer:
+        servers:
+          - url: http://edulution-moodle:80
+        passHostHeader: true
