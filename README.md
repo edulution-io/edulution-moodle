@@ -13,7 +13,7 @@ Moodle LMS mit Keycloak-Integration und automatischer User-Synchronisierung fuer
 - **Automatische Synchronisierung** - User aus Keycloak (wie edulution-mail)
 - **Rollen-Mapping** - role-teacher, role-student, role-schooladministrator
 - **Soft-Delete** - User werden erst suspendiert, dann geloescht
-- **Auto-Secrets** - Passwoerter werden automatisch generiert
+- **Zero-Config** - Liest Secrets automatisch von edulution
 
 ---
 
@@ -21,101 +21,26 @@ Moodle LMS mit Keycloak-Integration und automatischer User-Synchronisierung fuer
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/edulution-io/edulution-moodle/dev/deployment/edulution/install.sh | sudo bash
+cd /srv/docker/edulution-moodle
+docker compose up -d
 ```
 
-Das Script:
-- Erstellt alle Verzeichnisse
-- Generiert sichere Passwoerter automatisch
-- Installiert Traefik-Konfiguration
-- Laedt docker-compose.yml
-
-Dann:
-1. Keycloak Client erstellen (siehe unten)
-2. `docker-compose.yml` anpassen (nur 2 Werte!)
-3. `docker compose up -d`
+Fertig! Keine manuelle Konfiguration noetig - Secrets werden automatisch von edulution gelesen.
 
 ---
 
-## Manuelle Installation (edulution)
+## Was passiert automatisch?
 
-### 1. Traefik Config
+- **Hostname** - Wird aus `EDULUTION_HOSTNAME` gelesen
+- **Keycloak Secret** - Wird aus `KEYCLOAK_EDU_MAILCOW_SYNC_SECRET` gelesen (gleicher Client wie edulution-mail)
+- **DB Passwoerter** - Werden automatisch generiert
+- **Traefik Config** - Wird automatisch installiert
 
-```bash
-curl -sSL https://raw.githubusercontent.com/edulution-io/edulution-moodle/dev/deployment/edulution/traefik/moodle.yml \
-  -o /srv/docker/edulution-ui/data/traefik/config/moodle.yml
-```
+---
 
-### 2. Moodle Setup
-
-```bash
-mkdir -p /srv/docker/edulution-moodle/{secrets,moodledata,mariadb,redis,logs}
-cd /srv/docker/edulution-moodle
-
-# Secrets generieren
-openssl rand -base64 32 > secrets/db_password
-openssl rand -base64 32 > secrets/db_root_password
-openssl rand -base64 16 > secrets/admin_password
-chmod 600 secrets/*
-
-# docker-compose.yml
-curl -sSL https://raw.githubusercontent.com/edulution-io/edulution-moodle/dev/deployment/edulution/docker-compose.yml -o docker-compose.yml
-
-# Anpassen (nur 2 Werte!)
-nano docker-compose.yml
-```
-
-### 3. Keycloak Client erstellen
-
-In Keycloak Admin Console:
-
-1. **Clients → Create:**
-   - Client ID: `edu-moodle-sync`
-   - Client Protocol: `openid-connect`
-
-2. **Settings:**
-   - Access Type: `confidential`
-   - Service Accounts Enabled: `ON`
-
-3. **Credentials Tab:**
-   - Secret kopieren → in `docker-compose.yml` eintragen
-
-4. **Service Account Roles:**
-   - Client Roles → `realm-management`
-   - Hinzufuegen: `view-users`, `query-users`, `view-groups`, `query-groups`
-
-### 4. docker-compose.yml anpassen
-
-Nur 2 Werte muessen geaendert werden:
-
-```yaml
-environment:
-  - MOODLE_HOSTNAME=ui.DEINE-DOMAIN.de        # <-- Anpassen
-  - KEYCLOAK_SECRET_KEY=DEIN_KEYCLOAK_SECRET  # <-- Anpassen
-```
-
-### 5. Starten
-
-```bash
-docker compose up -d
-docker compose logs -f edulution-moodle
-```
-
-### 6. Zugriff
+## Zugriff
 
 `https://deine-domain.de/moodle`
-
----
-
-## Konfiguration
-
-Die Konfiguration ist minimal - nur 2 Werte in `docker-compose.yml`:
-
-| Variable | Beschreibung | Beispiel |
-|----------|--------------|----------|
-| `MOODLE_HOSTNAME` | Domain ohne https:// | `ui.73.dev.multi.schule` |
-| `KEYCLOAK_SECRET_KEY` | Client Secret | (aus Keycloak) |
-
-Passwoerter werden automatisch generiert in `/srv/docker/edulution-moodle/secrets/`
 
 ---
 

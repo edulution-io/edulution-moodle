@@ -15,6 +15,7 @@ echo ""
 # Konfiguration
 INSTALL_DIR="/srv/docker/edulution-moodle"
 TRAEFIK_DIR="/srv/docker/edulution-ui/data/traefik/config"
+EDULUTION_ENV="/srv/docker/edulution-ui/apps/api/.env"
 REPO_URL="https://raw.githubusercontent.com/edulution-io/edulution-moodle/dev"
 
 # Farben
@@ -32,6 +33,14 @@ if [ "$EUID" -ne 0 ]; then
     log_error "Bitte als root ausfuehren: sudo bash install.sh"
     exit 1
 fi
+
+# Edulution-Check
+if [ ! -f "$EDULUTION_ENV" ]; then
+    log_error "Edulution nicht gefunden: $EDULUTION_ENV"
+    log_error "Bitte zuerst edulution installieren!"
+    exit 1
+fi
+log_info "Edulution gefunden"
 
 # 1. Traefik Config
 log_info "Installiere Traefik-Konfiguration..."
@@ -54,7 +63,7 @@ mkdir -p "$INSTALL_DIR/logs"
 cd "$INSTALL_DIR"
 
 # 3. Secrets generieren (falls nicht vorhanden)
-log_info "Generiere Secrets..."
+log_info "Generiere DB-Secrets..."
 if [ ! -f "$INSTALL_DIR/secrets/db_password" ]; then
     openssl rand -base64 32 | tr -d '\n' > "$INSTALL_DIR/secrets/db_password"
     chmod 600 "$INSTALL_DIR/secrets/db_password"
@@ -71,14 +80,6 @@ else
     log_warn "DB-Root-Passwort existiert bereits"
 fi
 
-if [ ! -f "$INSTALL_DIR/secrets/admin_password" ]; then
-    openssl rand -base64 16 | tr -d '\n' > "$INSTALL_DIR/secrets/admin_password"
-    chmod 600 "$INSTALL_DIR/secrets/admin_password"
-    log_info "Admin-Passwort generiert"
-else
-    log_warn "Admin-Passwort existiert bereits"
-fi
-
 # 4. docker-compose.yml herunterladen
 log_info "Lade docker-compose.yml..."
 curl -sSL "$REPO_URL/deployment/edulution/docker-compose.yml" -o docker-compose.yml
@@ -88,27 +89,14 @@ echo "========================================"
 echo "  Installation abgeschlossen!"
 echo "========================================"
 echo ""
-echo "Naechste Schritte:"
+echo "Secrets werden automatisch von edulution gelesen:"
+echo "  - EDULUTION_HOSTNAME"
+echo "  - KEYCLOAK_EDU_MAILCOW_SYNC_SECRET"
 echo ""
-echo "1. Keycloak Client erstellen:"
-echo "   - Client ID: edu-moodle-sync"
-echo "   - Access Type: confidential"
-echo "   - Service Accounts Enabled: ON"
-echo "   - Service Account Roles: view-users, query-users, view-groups, query-groups"
+echo "Starten mit:"
+echo "  cd $INSTALL_DIR"
+echo "  docker compose up -d"
 echo ""
-echo "2. docker-compose.yml anpassen:"
-echo "   cd $INSTALL_DIR"
-echo "   nano docker-compose.yml"
-echo ""
-echo "   Aendern:"
-echo "   - MOODLE_HOSTNAME=ui.DEINE-DOMAIN.de"
-echo "   - KEYCLOAK_SECRET_KEY=DEIN_KEYCLOAK_SECRET"
-echo ""
-echo "3. Starten:"
-echo "   docker compose up -d"
-echo ""
-echo "4. Logs pruefen:"
-echo "   docker compose logs -f edulution-moodle"
-echo ""
-echo "Secrets wurden automatisch generiert in: $INSTALL_DIR/secrets/"
+echo "Logs pruefen:"
+echo "  docker compose logs -f edulution-moodle"
 echo ""
