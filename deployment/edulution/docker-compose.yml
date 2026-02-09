@@ -17,7 +17,7 @@ services:
       edulution-moodle-redis:
         condition: service_healthy
     networks:
-      - edulution
+      - edulution-ui_default
 
   edulution-moodle-db:
     image: mariadb:10.11
@@ -40,7 +40,7 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - edulution
+      - edulution-ui_default
 
   edulution-moodle-redis:
     image: redis:7-alpine
@@ -55,8 +55,8 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - edulution
+      - edulution-ui_default
 
 networks:
-  edulution:
+  edulution-ui_default:
     external: true
