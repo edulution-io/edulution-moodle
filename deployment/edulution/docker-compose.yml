@@ -4,63 +4,16 @@ services:
     restart: always
     container_name: edulution-moodle
     volumes:
-      - ./moodledata:/var/moodledata
-      - ./data:/srv/data
-      - ./logs:/var/log/moodle-sync
+      - /srv/docker/edulution-moodle:/srv/docker/edulution-moodle
     environment:
-      # Moodle Grundkonfiguration
-      MOODLE_WWWROOT: ${MOODLE_URL}
-      MOODLE_SITE_NAME: ${MOODLE_SITE_NAME:-Moodle}
-      MOODLE_ADMIN_USER: ${MOODLE_ADMIN_USER:-admin}
-      MOODLE_ADMIN_PASSWORD: ${MOODLE_ADMIN_PASSWORD}
-      MOODLE_ADMIN_EMAIL: ${MOODLE_ADMIN_EMAIL}
-      MOODLE_DEFAULT_LANGUAGE: ${MOODLE_LANGUAGE:-de}
-
-      # Datenbank
-      MOODLE_DATABASE_HOST: edulution-moodle-db
-      MOODLE_DATABASE_NAME: moodle
-      MOODLE_DATABASE_USER: moodle
-      MOODLE_DATABASE_PASSWORD: ${MOODLE_DB_PASSWORD}
-
-      # Redis
-      REDIS_HOST: edulution-moodle-redis
-      REDIS_PORT: 6379
-
-      # Keycloak
-      KEYCLOAK_SERVER_URL: ${KEYCLOAK_URL}
-      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-edulution}
-      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-edu-moodle-sync}
-      KEYCLOAK_SECRET_KEY: ${KEYCLOAK_SECRET}
-      KEYCLOAK_VERIFY_SSL: ${KEYCLOAK_VERIFY_SSL:-1}
-
-      # Sync
-      SYNC_ENABLED: ${SYNC_ENABLED:-1}
-      DRY_RUN: ${DRY_RUN:-1}
-      SYNC_INTERVAL: ${SYNC_INTERVAL:-300}
-      SYNC_USERS_IN_GROUPS: ${SYNC_GROUPS:-role-schooladministrator,role-teacher,role-student}
-
-      # Rollen-Mapping
-      ROLE_STUDENT_GROUPS: ${ROLE_STUDENT_GROUPS:-role-student}
-      ROLE_STUDENT_MOODLE: student
-      ROLE_TEACHER_GROUPS: ${ROLE_TEACHER_GROUPS:-role-teacher}
-      ROLE_TEACHER_MOODLE: editingteacher
-      ROLE_MANAGER_GROUPS: ${ROLE_MANAGER_GROUPS:-role-schooladministrator}
-      ROLE_MANAGER_MOODLE: manager
-
-      # Soft-Delete
-      SOFT_DELETE_ENABLED: 1
-      DELETE_ENABLED: 0
+      - MOODLE_HOSTNAME=ui.DEINE-DOMAIN.de
+      - MOODLE_PATH=/srv/docker/edulution-moodle
+      - KEYCLOAK_SECRET_KEY=DEIN_KEYCLOAK_SECRET
     depends_on:
       edulution-moodle-db:
         condition: service_healthy
       edulution-moodle-redis:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fs http://localhost/ || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 180s
     networks:
       - edulution
 
@@ -69,12 +22,13 @@ services:
     restart: always
     container_name: edulution-moodle-db
     volumes:
-      - ./mariadb:/var/lib/mysql
+      - /srv/docker/edulution-moodle/mariadb:/var/lib/mysql
+      - /srv/docker/edulution-moodle/secrets:/run/secrets:ro
     environment:
-      MYSQL_ROOT_PASSWORD: ${MOODLE_DB_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
       MYSQL_DATABASE: moodle
       MYSQL_USER: moodle
-      MYSQL_PASSWORD: ${MOODLE_DB_PASSWORD}
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
       MYSQL_CHARACTER_SET_SERVER: utf8mb4
       MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
     healthcheck:
@@ -92,7 +46,7 @@ services:
     container_name: edulution-moodle-redis
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
-      - ./redis:/data
+      - /srv/docker/edulution-moodle/redis:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s

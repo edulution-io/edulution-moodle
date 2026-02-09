@@ -13,6 +13,7 @@ Moodle LMS mit Keycloak-Integration und automatischer User-Synchronisierung fuer
 - **Automatische Synchronisierung** - User aus Keycloak (wie edulution-mail)
 - **Rollen-Mapping** - role-teacher, role-student, role-schooladministrator
 - **Soft-Delete** - User werden erst suspendiert, dann geloescht
+- **Auto-Secrets** - Passwoerter werden automatisch generiert
 
 ---
 
@@ -22,9 +23,15 @@ Moodle LMS mit Keycloak-Integration und automatischer User-Synchronisierung fuer
 curl -sSL https://raw.githubusercontent.com/edulution-io/edulution-moodle/dev/deployment/edulution/install.sh | sudo bash
 ```
 
+Das Script:
+- Erstellt alle Verzeichnisse
+- Generiert sichere Passwoerter automatisch
+- Installiert Traefik-Konfiguration
+- Laedt docker-compose.yml
+
 Dann:
 1. Keycloak Client erstellen (siehe unten)
-2. `.env` anpassen
+2. `docker-compose.yml` anpassen (nur 2 Werte!)
 3. `docker compose up -d`
 
 ---
@@ -41,18 +48,20 @@ curl -sSL https://raw.githubusercontent.com/edulution-io/edulution-moodle/dev/de
 ### 2. Moodle Setup
 
 ```bash
-mkdir -p /srv/docker/edulution-moodle
+mkdir -p /srv/docker/edulution-moodle/{secrets,moodledata,mariadb,redis,logs}
 cd /srv/docker/edulution-moodle
+
+# Secrets generieren
+openssl rand -base64 32 > secrets/db_password
+openssl rand -base64 32 > secrets/db_root_password
+openssl rand -base64 16 > secrets/admin_password
+chmod 600 secrets/*
 
 # docker-compose.yml
 curl -sSL https://raw.githubusercontent.com/edulution-io/edulution-moodle/dev/deployment/edulution/docker-compose.yml -o docker-compose.yml
 
-# .env
-curl -sSL https://raw.githubusercontent.com/edulution-io/edulution-moodle/dev/deployment/edulution/.env.example -o .env
-chmod 600 .env
-
-# Anpassen
-nano .env
+# Anpassen (nur 2 Werte!)
+nano docker-compose.yml
 ```
 
 ### 3. Keycloak Client erstellen
@@ -68,51 +77,59 @@ In Keycloak Admin Console:
    - Service Accounts Enabled: `ON`
 
 3. **Credentials Tab:**
-   - Secret kopieren → in `.env` eintragen
+   - Secret kopieren → in `docker-compose.yml` eintragen
 
 4. **Service Account Roles:**
    - Client Roles → `realm-management`
    - Hinzufuegen: `view-users`, `query-users`, `view-groups`, `query-groups`
 
-### 4. Starten
+### 4. docker-compose.yml anpassen
+
+Nur 2 Werte muessen geaendert werden:
+
+```yaml
+environment:
+  - MOODLE_HOSTNAME=ui.DEINE-DOMAIN.de        # <-- Anpassen
+  - KEYCLOAK_SECRET_KEY=DEIN_KEYCLOAK_SECRET  # <-- Anpassen
+```
+
+### 5. Starten
 
 ```bash
 docker compose up -d
 docker compose logs -f edulution-moodle
 ```
 
-### 5. Zugriff
+### 6. Zugriff
 
 `https://deine-domain.de/moodle`
 
 ---
 
-## Konfiguration (.env)
+## Konfiguration
+
+Die Konfiguration ist minimal - nur 2 Werte in `docker-compose.yml`:
 
 | Variable | Beschreibung | Beispiel |
 |----------|--------------|----------|
-| `MOODLE_URL` | Vollstaendige URL | `https://ui.domain.de/moodle` |
-| `MOODLE_ADMIN_PASSWORD` | Admin-Passwort | `Sicher123!` |
-| `MOODLE_DB_PASSWORD` | DB-Passwort | `DBSicher456!` |
-| `KEYCLOAK_URL` | Keycloak URL | `https://ui.domain.de/auth/` |
-| `KEYCLOAK_SECRET` | Client Secret | (aus Keycloak) |
-| `DRY_RUN` | Test-Modus | `1` (erst testen!) |
+| `MOODLE_HOSTNAME` | Domain ohne https:// | `ui.73.dev.multi.schule` |
+| `KEYCLOAK_SECRET_KEY` | Client Secret | (aus Keycloak) |
+
+Passwoerter werden automatisch generiert in `/srv/docker/edulution-moodle/secrets/`
 
 ---
 
 ## Sync
 
-Der Sync läuft automatisch alle 5 Minuten (konfigurierbar).
+Der Sync läuft automatisch alle 5 Minuten.
 
 ```bash
 # Sync-Logs
-docker compose exec edulution-moodle tail -f /var/log/moodle-sync/sync_stdout.log
+docker compose logs -f edulution-moodle | grep sync
 
 # Manueller Sync
 docker compose exec edulution-moodle /opt/sync-venv/bin/python /opt/edulution-moodle-sync/sync.py --once
 ```
-
-**Wichtig:** Erst mit `DRY_RUN=1` testen, dann auf `DRY_RUN=0` umstellen.
 
 ---
 
