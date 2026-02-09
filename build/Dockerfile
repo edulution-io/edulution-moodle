@@ -57,6 +57,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     php8.1-xmlrpc \
     php8.1-ldap \
     php8.1-redis \
+    redis-tools \
     php8.1-opcache \
     php8.1-apcu \
     php8.1-igbinary \
