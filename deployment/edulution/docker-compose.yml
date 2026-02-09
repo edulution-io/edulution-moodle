@@ -5,12 +5,21 @@ services:
     container_name: edulution-moodle
     volumes:
       - /srv/docker/edulution-ui/data/apps/moodle:/srv/docker/edulution-moodle
+      - /srv/docker/edulution-ui/data/apps/moodle/secrets:/run/secrets:ro
     env_file:
       - /srv/docker/edulution-ui/edulution.env
     environment:
       - MOODLE_HOSTNAME=${EDULUTION_BASE_DOMAIN}
       - MOODLE_PATH=/srv/docker/edulution-moodle
       - KEYCLOAK_SECRET_KEY=${KEYCLOAK_EDU_MAILCOW_SYNC_SECRET}
+      # Database
+      - MOODLE_DATABASE_HOST=edulution-moodle-db
+      - MOODLE_DATABASE_NAME=moodle
+      - MOODLE_DATABASE_USER=moodle
+      - MOODLE_DATABASE_PASSWORD_FILE=/run/secrets/db_password
+      # Redis
+      - REDIS_HOST=edulution-moodle-redis
+      - REDIS_PORT=6379
     depends_on:
       edulution-moodle-db:
         condition: service_healthy
