@@ -13,9 +13,9 @@ echo "========================================"
 echo ""
 
 # Konfiguration
-INSTALL_DIR="/srv/docker/edulution-moodle"
+INSTALL_DIR="/srv/docker/edulution-ui/data/apps/moodle"
 TRAEFIK_DIR="/srv/docker/edulution-ui/data/traefik/config"
-EDULUTION_ENV="/srv/docker/edulution-ui/apps/api/.env"
+EDULUTION_ENV="/srv/docker/edulution-ui/edulution.env"
 REPO_URL="https://raw.githubusercontent.com/edulution-io/edulution-moodle/dev"
 
 # Farben
@@ -40,7 +40,7 @@ if [ ! -f "$EDULUTION_ENV" ]; then
     log_error "Bitte zuerst edulution installieren!"
     exit 1
 fi
-log_info "Edulution gefunden"
+log_info "Edulution gefunden: $EDULUTION_ENV"
 
 # 1. Traefik Config
 log_info "Installiere Traefik-Konfiguration..."
@@ -90,7 +90,7 @@ echo "  Installation abgeschlossen!"
 echo "========================================"
 echo ""
 echo "Secrets werden automatisch von edulution gelesen:"
-echo "  - EDULUTION_HOSTNAME"
+echo "  - EDULUTION_BASE_DOMAIN"
 echo "  - KEYCLOAK_EDU_MAILCOW_SYNC_SECRET"
 echo ""
 echo "Starten mit:"

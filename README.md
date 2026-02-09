@@ -21,7 +21,7 @@ Moodle LMS mit Keycloak-Integration und automatischer User-Synchronisierung fuer
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/edulution-io/edulution-moodle/dev/deployment/edulution/install.sh | sudo bash
-cd /srv/docker/edulution-moodle
+cd /srv/docker/edulution-ui/data/apps/moodle
 docker compose up -d
 ```
 
@@ -31,7 +31,7 @@ Fertig! Keine manuelle Konfiguration noetig - Secrets werden automatisch von edu
 
 ## Was passiert automatisch?
 
-- **Hostname** - Wird aus `EDULUTION_HOSTNAME` gelesen
+- **Hostname** - Wird aus `EDULUTION_BASE_DOMAIN` gelesen
 - **Keycloak Secret** - Wird aus `KEYCLOAK_EDU_MAILCOW_SYNC_SECRET` gelesen (gleicher Client wie edulution-mail)
 - **DB Passwoerter** - Werden automatisch generiert
 - **Traefik Config** - Wird automatisch installiert
