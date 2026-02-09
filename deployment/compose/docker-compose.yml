@@ -1,0 +1,189 @@
+# =====================================================
+# EDULUTION MOODLE - EDULUTION DEPLOYMENT
+# =====================================================
+# Diese Datei ist fuer das edulution-deployment Repository
+# Variablen mit <...> werden vom edulution-Frontend befuellt
+#
+# Netzwerk: edulution (external) - wird von edulution bereitgestellt
+# Volumes: /srv/docker/edulution-moodle/
+# =====================================================
+
+services:
+  # ===========================================
+  # MOODLE APPLICATION
+  # ===========================================
+  edulution-moodle:
+    image: ghcr.io/edulution-io/edulution-moodle:latest
+    restart: always
+    container_name: edulution-moodle
+    volumes:
+      # Persistente Daten
+      - /srv/docker/edulution-moodle/moodle:/var/www/html/moodle
+      - /srv/docker/edulution-moodle/moodledata:/var/moodledata
+      - /srv/docker/edulution-moodle/data:/srv/data
+      - /srv/docker/edulution-moodle/backups:/srv/backups
+      - /srv/docker/edulution-moodle/logs:/var/log/moodle-sync
+      # Plugin-Konfiguration (optional)
+      - /srv/docker/edulution-moodle/config/plugins.json:/srv/config/plugins.json:ro
+    environment:
+      # =============================================
+      # MOODLE GRUNDKONFIGURATION
+      # (Werte werden vom edulution-Frontend gesetzt)
+      # =============================================
+      MOODLE_WWWROOT: <EDULUTION_MOODLE_URL>
+      MOODLE_SITE_NAME: <EDULUTION_MOODLE_SITE_NAME>
+      MOODLE_ADMIN_EMAIL: <EDULUTION_ADMIN_EMAIL>
+      MOODLE_DEFAULT_LANGUAGE: <EDULUTION_MOODLE_LANGUAGE>
+      MOODLE_INSTALL_LANGUAGES: de,de_comm,en
+
+      # =============================================
+      # DATENBANK (interne MariaDB)
+      # =============================================
+      MOODLE_DATABASE_HOST: edulution-moodle-db
+      MOODLE_DATABASE_NAME: moodle
+      MOODLE_DATABASE_USER: moodle
+      MOODLE_DATABASE_PASSWORD: ${MOODLE_DB_PASSWORD}
+
+      # =============================================
+      # REDIS CACHE
+      # =============================================
+      REDIS_HOST: edulution-moodle-redis
+      REDIS_PORT: 6379
+
+      # =============================================
+      # KEYCLOAK INTEGRATION
+      # (Automatisch aus edulution-Infrastruktur)
+      # =============================================
+      KEYCLOAK_SERVER_URL: https://${DOMAIN}/auth/
+      KEYCLOAK_REALM: edulution
+      KEYCLOAK_CLIENT_ID: edu-moodle-sync
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_EDU_MOODLE_SYNC_SECRET}
+      KEYCLOAK_VERIFY_SSL: 1
+
+      # =============================================
+      # SYNC KONFIGURATION
+      # =============================================
+      SYNC_ENABLED: 1
+      SYNC_INTERVAL: 300
+      DRY_RUN: 0
+      GROUPS_TO_SYNC: <EDULUTION_MOODLE_SYNC_GROUPS>
+
+      # =============================================
+      # USER SYNC
+      # =============================================
+      SYNC_USERS_IN_GROUPS: <EDULUTION_MOODLE_SYNC_GROUPS>
+      IGNORE_USERS: admin,guest,root
+      PROTECTED_USERS: admin,guest
+
+      # =============================================
+      # ROLLEN-MAPPING
+      # (Werte vom Frontend konfigurierbar)
+      # =============================================
+      ROLE_STUDENT_GROUPS: <EDULUTION_MOODLE_STUDENT_GROUPS>
+      ROLE_STUDENT_MOODLE: student
+      ROLE_TEACHER_GROUPS: <EDULUTION_MOODLE_TEACHER_GROUPS>
+      ROLE_TEACHER_MOODLE: editingteacher
+      ROLE_MANAGER_GROUPS: <EDULUTION_MOODLE_ADMIN_GROUPS>
+      ROLE_MANAGER_MOODLE: manager
+
+      # =============================================
+      # KURS-SYNC
+      # =============================================
+      COURSE_SYNC_ATTRIBUTE: moodleCourse
+      DEFAULT_COURSE_CATEGORY: 1
+      DEFAULT_COURSE_FORMAT: topics
+
+      # =============================================
+      # SOFT-DELETE / LOESCHUNG
+      # =============================================
+      SOFT_DELETE_ENABLED: 1
+      SOFT_DELETE_GRACE_PERIOD: 2592000
+      DELETE_ENABLED: 0
+
+      # =============================================
+      # SSO KONFIGURATION
+      # =============================================
+      ENABLE_SSO: 1
+      FORCE_SSO: <EDULUTION_MOODLE_FORCE_SSO>
+
+      # =============================================
+      # SMTP MAIL
+      # (Ueber edulution-mail wenn vorhanden)
+      # =============================================
+      SMTP_HOST: <EDULUTION_SMTP_HOST>
+      SMTP_PORT: <EDULUTION_SMTP_PORT>
+      SMTP_USER: <EDULUTION_SMTP_USER>
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_SECURITY: tls
+      SMTP_NOREPLY: noreply@${DOMAIN}
+
+      # =============================================
+      # UPDATES
+      # =============================================
+      MOODLE_AUTO_UPDATE: 0
+      PLUGIN_AUTO_UPDATE: 0
+      BACKUP_BEFORE_UPDATE: 1
+    depends_on:
+      edulution-moodle-db:
+        condition: service_healthy
+      edulution-moodle-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost/login/index.php || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    networks:
+      - edulution
+    labels:
+      - "edulution.service=moodle"
+      - "edulution.description=Moodle Learning Management System"
+      - "edulution.version=latest"
+
+  # ===========================================
+  # MARIADB DATABASE
+  # ===========================================
+  edulution-moodle-db:
+    image: mariadb:10.11
+    restart: always
+    container_name: edulution-moodle-db
+    volumes:
+      - /srv/docker/edulution-moodle/mariadb:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MOODLE_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: moodle
+      MYSQL_USER: moodle
+      MYSQL_PASSWORD: ${MOODLE_DB_PASSWORD}
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - edulution
+
+  # ===========================================
+  # REDIS CACHE
+  # ===========================================
+  edulution-moodle-redis:
+    image: redis:7-alpine
+    restart: always
+    container_name: edulution-moodle-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - /srv/docker/edulution-moodle/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - edulution
+
+networks:
+  edulution:
+    external: true

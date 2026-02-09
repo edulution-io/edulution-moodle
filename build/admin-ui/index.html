@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edulution Moodle Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/style.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div id="app">
+        <!-- Navigation Header -->
+        <nav class="bg-gradient-to-r from-primary-600 to-primary-800 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-3">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-graduation-cap text-2xl"></i>
+                        <div>
+                            <h1 class="text-xl font-bold">Edulution Moodle Admin</h1>
+                            <p class="text-xs text-primary-200">Management Dashboard</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-6">
+                        <span v-if="dashboard.moodle" class="text-sm bg-primary-700 px-3 py-1 rounded-full">
+                            <i class="fas fa-code-branch mr-1"></i>
+                            Moodle {{ dashboard.moodle.version || 'N/A' }}
+                        </span>
+                        <span :class="['px-3 py-1 rounded-full text-sm font-medium',
+                                      healthStatus === 'healthy' ? 'bg-green-500' :
+                                      healthStatus === 'degraded' ? 'bg-yellow-500' : 'bg-red-500']">
+                            <i :class="['fas mr-1', healthStatus === 'healthy' ? 'fa-check-circle' : 'fa-exclamation-circle']"></i>
+                            {{ healthStatus }}
+                        </span>
+                        <button @click="loadDashboard()" class="text-primary-200 hover:text-white transition">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Tab Navigation -->
+        <div class="container mx-auto px-4 mt-6">
+            <div class="bg-white rounded-xl shadow-sm p-1.5 flex flex-wrap gap-1">
+                <button v-for="tab in tabs" :key="tab.id"
+                    @click="activeTab = tab.id"
+                    :class="['px-4 py-2.5 rounded-lg transition-all duration-200 flex items-center space-x-2',
+                             activeTab === tab.id
+                                ? 'bg-primary-600 text-white shadow-md'
+                                : 'text-gray-600 hover:bg-gray-100']">
+                    <i :class="tab.icon"></i>
+                    <span class="font-medium">{{ tab.name }}</span>
+                    <span v-if="tab.badge" class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                        {{ tab.badge }}
+                    </span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="container mx-auto px-4 py-6">
+            <!-- Loading Overlay -->
+            <div v-if="loading" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg p-6 shadow-xl">
+                    <i class="fas fa-spinner fa-spin text-3xl text-primary-600"></i>
+                    <p class="mt-2 text-gray-600">Laden...</p>
+                </div>
+            </div>
+
+            <!-- Toast Notifications -->
+            <div class="fixed top-4 right-4 z-50 space-y-2">
+                <div v-for="(toast, index) in toasts" :key="index"
+                     :class="['px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3 transform transition-all',
+                              toast.type === 'success' ? 'bg-green-500 text-white' :
+                              toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-primary-500 text-white']">
+                    <i :class="['fas', toast.type === 'success' ? 'fa-check-circle' :
+                                       toast.type === 'error' ? 'fa-times-circle' : 'fa-info-circle']"></i>
+                    <span>{{ toast.message }}</span>
+                </div>
+            </div>
+
+            <!-- ==================== DASHBOARD TAB ==================== -->
+            <div v-show="activeTab === 'dashboard'">
+                <!-- Status Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-primary-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm font-medium">Benutzer gesamt</p>
+                                <p class="text-3xl font-bold text-gray-800">{{ dashboard.moodle?.users_total || 0 }}</p>
+                            </div>
+                            <div class="bg-primary-100 p-3 rounded-full">
+                                <i class="fas fa-users text-primary-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-green-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm font-medium">Kurse</p>
+                                <p class="text-3xl font-bold text-gray-800">{{ dashboard.moodle?.courses_total || 0 }}</p>
+                            </div>
+                            <div class="bg-green-100 p-3 rounded-full">
+                                <i class="fas fa-book text-green-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-yellow-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm font-medium">Sync Status</p>
+                                <p :class="['text-xl font-bold',
+                                           dashboard.sync?.status === 'running' ? 'text-green-600' :
+                                           dashboard.sync?.status === 'paused' ? 'text-yellow-600' : 'text-gray-800']">
+                                    {{ formatSyncStatus(dashboard.sync?.status) }}
+                                </p>
+                            </div>
+                            <div class="bg-yellow-100 p-3 rounded-full">
+                                <i class="fas fa-sync text-yellow-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-purple-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm font-medium">Letzter Sync</p>
+                                <p class="text-lg font-bold text-gray-800">{{ formatDate(dashboard.sync?.last_run) }}</p>
+                            </div>
+                            <div class="bg-purple-100 p-3 rounded-full">
+                                <i class="fas fa-clock text-purple-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Info & Quick Actions -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <!-- System Status -->
+                    <div class="bg-white rounded-xl shadow-sm p-5">
+                        <h3 class="font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-server mr-2 text-primary-600"></i>
+                            System Status
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Uptime</span>
+                                <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{{ dashboard.system?.uptime || 'N/A' }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Disk Usage</span>
+                                <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{{ dashboard.system?.disk_usage?.percent || 'N/A' }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Memory</span>
+                                <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{{ dashboard.system?.memory_usage?.used || 'N/A' }} / {{ dashboard.system?.memory_usage?.total || 'N/A' }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Keycloak</span>
+                                <span :class="['px-2 py-1 rounded text-sm',
+                                              dashboard.keycloak?.connected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700']">
+                                    {{ dashboard.keycloak?.connected ? 'Verbunden' : 'Getrennt' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="bg-white rounded-xl shadow-sm p-5">
+                        <h3 class="font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-bolt mr-2 text-yellow-500"></i>
+                            Schnellaktionen
+                        </h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button @click="triggerSync()" class="btn-action bg-primary-50 text-primary-700 hover:bg-primary-100">
+                                <i class="fas fa-sync mr-2"></i>
+                                Sync starten
+                            </button>
+                            <button @click="clearCache()" class="btn-action bg-yellow-50 text-yellow-700 hover:bg-yellow-100">
+                                <i class="fas fa-broom mr-2"></i>
+                                Cache leeren
+                            </button>
+                            <button @click="createBackup()" class="btn-action bg-green-50 text-green-700 hover:bg-green-100">
+                                <i class="fas fa-download mr-2"></i>
+                                Backup
+                            </button>
+                            <button @click="runCron()" class="btn-action bg-purple-50 text-purple-700 hover:bg-purple-100">
+                                <i class="fas fa-clock mr-2"></i>
+                                Cron
+                            </button>
+                            <button @click="toggleMaintenance()" :class="['btn-action', maintenanceMode ? 'bg-red-50 text-red-700 hover:bg-red-100' : 'bg-gray-50 text-gray-700 hover:bg-gray-100']">
+                                <i class="fas fa-tools mr-2"></i>
+                                {{ maintenanceMode ? 'Wartung AUS' : 'Wartung AN' }}
+                            </button>
+                            <button @click="checkUpgrades()" class="btn-action bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
+                                <i class="fas fa-arrow-up mr-2"></i>
+                                Updates pruefen
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Health Checks -->
+                    <div class="bg-white rounded-xl shadow-sm p-5">
+                        <h3 class="font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-heartbeat mr-2 text-red-500"></i>
+                            Health Checks
+                        </h3>
+                        <div class="space-y-3">
+                            <div v-for="(status, name) in health.checks" :key="name"
+                                 class="flex justify-between items-center">
+                                <span class="text-gray-600 capitalize">{{ formatCheckName(name) }}</span>
+                                <span :class="['px-2 py-1 rounded text-sm flex items-center',
+                                              status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700']">
+                                    <i :class="['fas mr-1', status ? 'fa-check' : 'fa-times']"></i>
+                                    {{ status ? 'OK' : 'Fehler' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Errors -->
+                <div class="bg-white rounded-xl shadow-sm p-5">
+                    <h3 class="font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2 text-red-500"></i>
+                        Letzte Fehler
+                    </h3>
+                    <div v-if="dashboard.recent_errors?.length" class="space-y-2">
+                        <div v-for="(error, index) in dashboard.recent_errors" :key="index"
+                             class="bg-red-50 border-l-4 border-red-500 p-3 rounded-r">
+                            <div class="flex justify-between">
+                                <span class="text-red-800 font-medium">{{ error.level }}</span>
+                                <span class="text-gray-500 text-sm">{{ formatDate(error.timestamp) }}</span>
+                            </div>
+                            <p class="text-gray-700 mt-1 text-sm">{{ error.message }}</p>
+                        </div>
+                    </div>
+                    <div v-else class="text-center py-8 text-gray-500">
+                        <i class="fas fa-check-circle text-4xl text-green-400 mb-2"></i>
+                        <p>Keine aktuellen Fehler</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== SYNC TAB ==================== -->
+            <div v-show="activeTab === 'sync'">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Sync Control Panel -->
+                    <div class="lg:col-span-1 space-y-4">
+                        <div class="bg-white rounded-xl shadow-sm p-5">
+                            <h3 class="font-bold text-gray-800 mb-4">Sync Steuerung</h3>
+                            <div class="space-y-3">
+                                <button @click="triggerSync(false)" class="w-full btn-primary">
+                                    <i class="fas fa-play mr-2"></i>
+                                    Inkrementeller Sync
+                                </button>
+                                <button @click="triggerSync(true)" class="w-full btn-secondary">
+                                    <i class="fas fa-sync mr-2"></i>
+                                    Vollstaendiger Sync
+                                </button>
+                                <button @click="toggleSyncPause()"
+                                        :class="['w-full', syncPaused ? 'btn-success' : 'btn-danger']">
+                                    <i :class="['fas mr-2', syncPaused ? 'fa-play' : 'fa-pause']"></i>
+                                    {{ syncPaused ? 'Sync fortsetzen' : 'Sync pausieren' }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Sync Configuration -->
+                        <div class="bg-white rounded-xl shadow-sm p-5">
+                            <h3 class="font-bold text-gray-800 mb-4">Konfiguration</h3>
+                            <div class="space-y-3 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Intervall</span>
+                                    <span class="font-mono">{{ syncConfig.sync_interval }}s</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Alle Benutzer</span>
+                                    <span :class="syncConfig.sync_all_users ? 'text-green-600' : 'text-gray-600'">
+                                        {{ syncConfig.sync_all_users ? 'Ja' : 'Nein' }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Soft Delete</span>
+                                    <span :class="syncConfig.soft_delete_enabled ? 'text-green-600' : 'text-gray-600'">
+                                        {{ syncConfig.soft_delete_enabled ? 'Aktiv' : 'Inaktiv' }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600">Gruppen:</span>
+                                    <div class="mt-1 flex flex-wrap gap-1">
+                                        <span v-for="group in syncConfig.groups_to_sync" :key="group"
+                                              class="bg-primary-100 text-primary-700 px-2 py-0.5 rounded text-xs">
+                                            {{ group }}
+                                        </span>
+                                        <span v-if="!syncConfig.groups_to_sync?.length" class="text-gray-400">
+                                            Keine definiert
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sync Logs -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white rounded-xl shadow-sm p-5">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-gray-800">Sync Logs</h3>
+                                <div class="flex items-center space-x-2">
+                                    <select v-model="logFilter" class="text-sm border rounded px-2 py-1">
+                                        <option value="all">Alle Level</option>
+                                        <option value="ERROR">Nur Fehler</option>
+                                        <option value="WARNING">Warnungen</option>
+                                        <option value="INFO">Info</option>
+                                    </select>
+                                    <button @click="loadSyncLogs()" class="text-primary-600 hover:text-primary-800">
+                                        <i class="fas fa-refresh"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="bg-gray-900 text-green-400 font-mono text-xs p-4 rounded-lg max-h-[500px] overflow-auto">
+                                <div v-for="(log, index) in filteredSyncLogs" :key="index" class="mb-1 leading-relaxed">
+                                    <span class="text-gray-500">{{ log.timestamp }}</span>
+                                    <span :class="logLevelClass(log.level)" class="mx-2">[{{ log.level }}]</span>
+                                    <span class="text-gray-300">{{ log.message }}</span>
+                                </div>
+                                <div v-if="!filteredSyncLogs.length" class="text-gray-500 text-center py-4">
+                                    Keine Log-Eintraege vorhanden
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== PLUGINS TAB ==================== -->
+            <div v-show="activeTab === 'plugins'">
+                <div class="bg-white rounded-xl shadow-sm">
+                    <div class="p-5 border-b flex justify-between items-center">
+                        <h3 class="font-bold text-gray-800">Installierte Plugins</h3>
+                        <div class="flex space-x-2">
+                            <button @click="checkPluginUpdates()" class="btn-secondary text-sm">
+                                <i class="fas fa-search mr-2"></i>
+                                Updates pruefen
+                            </button>
+                            <button @click="updateAllPlugins()" class="btn-primary text-sm"
+                                    :disabled="!pluginsWithUpdates.length">
+                                <i class="fas fa-download mr-2"></i>
+                                Alle aktualisieren ({{ pluginsWithUpdates.length }})
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="text-left p-4 font-medium text-gray-600">Plugin</th>
+                                    <th class="text-left p-4 font-medium text-gray-600">Version</th>
+                                    <th class="text-left p-4 font-medium text-gray-600">Status</th>
+                                    <th class="text-right p-4 font-medium text-gray-600">Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="plugin in plugins" :key="plugin.component"
+                                    class="border-t hover:bg-gray-50 transition">
+                                    <td class="p-4">
+                                        <p class="font-medium text-gray-800">{{ plugin.name }}</p>
+                                        <p class="text-sm text-gray-500">{{ plugin.component }}</p>
+                                    </td>
+                                    <td class="p-4">
+                                        <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+                                            {{ plugin.version }}
+                                        </span>
+                                    </td>
+                                    <td class="p-4">
+                                        <span v-if="plugin.update_available"
+                                              class="inline-flex items-center text-orange-600 bg-orange-50 px-2 py-1 rounded text-sm">
+                                            <i class="fas fa-arrow-up mr-1"></i>
+                                            Update verfuegbar
+                                        </span>
+                                        <span v-else class="inline-flex items-center text-green-600 bg-green-50 px-2 py-1 rounded text-sm">
+                                            <i class="fas fa-check mr-1"></i>
+                                            Aktuell
+                                        </span>
+                                    </td>
+                                    <td class="p-4 text-right">
+                                        <button v-if="plugin.update_available"
+                                                @click="updatePlugin(plugin.component)"
+                                                class="text-primary-600 hover:text-primary-800 mr-3">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                        <button @click="uninstallPlugin(plugin.component)"
+                                                class="text-red-600 hover:text-red-800">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr v-if="!plugins.length">
+                                    <td colspan="4" class="p-8 text-center text-gray-500">
+                                        <i class="fas fa-puzzle-piece text-4xl mb-2"></i>
+                                        <p>Keine Plugins gefunden</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== USERS TAB ==================== -->
+            <div v-show="activeTab === 'users'">
+                <div class="bg-white rounded-xl shadow-sm">
+                    <div class="p-5 border-b flex flex-wrap gap-4 justify-between items-center">
+                        <h3 class="font-bold text-gray-800">Benutzer Synchronisation</h3>
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <input v-model="userSearch" @input="searchUsers"
+                                       type="text" placeholder="Suchen..."
+                                       class="pl-10 pr-4 py-2 border rounded-lg text-sm w-64">
+                                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                            </div>
+                            <select v-model="userStatusFilter" @change="loadUsers" class="border rounded-lg px-3 py-2 text-sm">
+                                <option value="all">Alle Status</option>
+                                <option value="synced">Synchronisiert</option>
+                                <option value="pending">Ausstehend</option>
+                                <option value="failed">Fehlgeschlagen</option>
+                                <option value="protected">Geschuetzt</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="text-left p-4 font-medium text-gray-600">Benutzer</th>
+                                    <th class="text-left p-4 font-medium text-gray-600">E-Mail</th>
+                                    <th class="text-left p-4 font-medium text-gray-600">Status</th>
+                                    <th class="text-left p-4 font-medium text-gray-600">Letzter Sync</th>
+                                    <th class="text-right p-4 font-medium text-gray-600">Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="user in users" :key="user.username" class="border-t hover:bg-gray-50">
+                                    <td class="p-4">
+                                        <div class="flex items-center">
+                                            <div class="bg-primary-100 text-primary-600 w-10 h-10 rounded-full flex items-center justify-center mr-3">
+                                                {{ user.username.charAt(0).toUpperCase() }}
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-800">{{ user.username }}</p>
+                                                <p class="text-sm text-gray-500">{{ user.firstname }} {{ user.lastname }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="p-4 text-gray-600">{{ user.email }}</td>
+                                    <td class="p-4">
+                                        <span :class="userStatusClass(user.status)">
+                                            {{ formatUserStatus(user.status) }}
+                                        </span>
+                                    </td>
+                                    <td class="p-4 text-gray-600 text-sm">{{ formatDate(user.last_sync) }}</td>
+                                    <td class="p-4 text-right">
+                                        <button @click="syncUser(user.username)"
+                                                class="text-primary-600 hover:text-primary-800 mr-3"
+                                                title="Jetzt synchronisieren">
+                                            <i class="fas fa-sync"></i>
+                                        </button>
+                                        <button @click="toggleUserProtection(user)"
+                                                :class="user.status === 'protected' ? 'text-yellow-600' : 'text-gray-400'"
+                                                :title="user.status === 'protected' ? 'Schutz entfernen' : 'Vor Loeschung schuetzen'">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr v-if="!users.length">
+                                    <td colspan="5" class="p-8 text-center text-gray-500">
+                                        <i class="fas fa-users text-4xl mb-2"></i>
+                                        <p>Keine Benutzer gefunden</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination -->
+                    <div class="p-4 border-t flex justify-between items-center">
+                        <span class="text-sm text-gray-600">
+                            {{ usersTotal }} Benutzer gesamt
+                        </span>
+                        <div class="flex space-x-2">
+                            <button @click="userPage > 0 && (userPage--, loadUsers())"
+                                    :disabled="userPage === 0"
+                                    class="px-3 py-1 border rounded disabled:opacity-50">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <span class="px-3 py-1">Seite {{ userPage + 1 }}</span>
+                            <button @click="userPage++; loadUsers()"
+                                    :disabled="users.length < userLimit"
+                                    class="px-3 py-1 border rounded disabled:opacity-50">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== BACKUPS TAB ==================== -->
+            <div v-show="activeTab === 'backups'">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <!-- Backup erstellen -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-white rounded-xl shadow-sm p-5">
+                            <h3 class="font-bold text-gray-800 mb-4">Neues Backup</h3>
+                            <div class="space-y-3">
+                                <button @click="createBackup('full')" class="w-full btn-primary">
+                                    <i class="fas fa-database mr-2"></i>
+                                    Vollstaendig
+                                </button>
+                                <button @click="createBackup('quick')" class="w-full btn-secondary">
+                                    <i class="fas fa-bolt mr-2"></i>
+                                    Schnell
+                                </button>
+                                <button @click="createBackup('db-only')" class="w-full btn-secondary">
+                                    <i class="fas fa-table mr-2"></i>
+                                    Nur Datenbank
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-4">
+                                Vollstaendig: DB + Dateien<br>
+                                Schnell: Nur geaenderte Dateien<br>
+                                DB: Nur Datenbank-Dump
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Backup Liste -->
+                    <div class="lg:col-span-3">
+                        <div class="bg-white rounded-xl shadow-sm">
+                            <div class="p-5 border-b flex justify-between items-center">
+                                <h3 class="font-bold text-gray-800">Vorhandene Backups</h3>
+                                <button @click="loadBackups()" class="text-primary-600 hover:text-primary-800">
+                                    <i class="fas fa-refresh"></i>
+                                </button>
+                            </div>
+                            <div class="divide-y">
+                                <div v-for="backup in backups" :key="backup.filename"
+                                     class="p-4 flex items-center justify-between hover:bg-gray-50">
+                                    <div class="flex items-center">
+                                        <div class="bg-green-100 text-green-600 w-12 h-12 rounded-lg flex items-center justify-center mr-4">
+                                            <i class="fas fa-archive text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-800">{{ backup.filename }}</p>
+                                            <p class="text-sm text-gray-500">
+                                                {{ formatDate(backup.created) }} | {{ backup.size }} | {{ backup.type }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button @click="restoreBackup(backup.filename)"
+                                                class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200"
+                                                title="Wiederherstellen">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
+                                        <button @click="deleteBackup(backup.filename)"
+                                                class="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
+                                                title="Loeschen">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div v-if="!backups.length" class="p-8 text-center text-gray-500">
+                                    <i class="fas fa-archive text-4xl mb-2"></i>
+                                    <p>Keine Backups vorhanden</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== LOGS TAB ==================== -->
+            <div v-show="activeTab === 'logs'">
+                <div class="bg-white rounded-xl shadow-sm">
+                    <div class="p-5 border-b flex flex-wrap gap-4 justify-between items-center">
+                        <h3 class="font-bold text-gray-800">System Logs</h3>
+                        <div class="flex items-center space-x-3">
+                            <select v-model="selectedLogType" @change="loadLogs()" class="border rounded-lg px-3 py-2 text-sm">
+                                <option value="sync">Sync Log</option>
+                                <option value="error">Error Log</option>
+                                <option value="audit">Audit Log</option>
+                                <option value="apache">Apache Log</option>
+                                <option value="php">PHP Log</option>
+                            </select>
+                            <select v-model="logLines" @change="loadLogs()" class="border rounded-lg px-3 py-2 text-sm">
+                                <option :value="50">50 Zeilen</option>
+                                <option :value="100">100 Zeilen</option>
+                                <option :value="200">200 Zeilen</option>
+                                <option :value="500">500 Zeilen</option>
+                            </select>
+                            <button @click="downloadLog()" class="btn-secondary text-sm">
+                                <i class="fas fa-download mr-2"></i>
+                                Download
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <div class="bg-gray-900 text-green-400 font-mono text-xs p-4 rounded-lg max-h-[600px] overflow-auto">
+                            <div v-for="(log, index) in logs" :key="index" class="mb-1 leading-relaxed">
+                                <span class="text-gray-500">{{ log.timestamp }}</span>
+                                <span :class="logLevelClass(log.level)" class="mx-2">[{{ log.level }}]</span>
+                                <span v-if="log.module" class="text-purple-400">({{ log.module }})</span>
+                                <span class="text-gray-300">{{ log.message }}</span>
+                            </div>
+                            <div v-if="!logs.length" class="text-gray-500 text-center py-4">
+                                Keine Log-Eintraege vorhanden
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== SETTINGS TAB ==================== -->
+            <div v-show="activeTab === 'settings'">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Moodle Settings -->
+                    <div class="bg-white rounded-xl shadow-sm p-5">
+                        <h3 class="font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-graduation-cap mr-2 text-primary-600"></i>
+                            Moodle Einstellungen
+                        </h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">WWW Root</label>
+                                <input type="text" :value="settings.moodle?.wwwroot" readonly
+                                       class="w-full border rounded-lg px-3 py-2 bg-gray-50 text-gray-600">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Site Name</label>
+                                <input type="text" :value="settings.moodle?.site_name" readonly
+                                       class="w-full border rounded-lg px-3 py-2 bg-gray-50 text-gray-600">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Standardsprache</label>
+                                <input type="text" :value="settings.moodle?.default_language" readonly
+                                       class="w-full border rounded-lg px-3 py-2 bg-gray-50 text-gray-600">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Keycloak Settings -->
+                    <div class="bg-white rounded-xl shadow-sm p-5">
+                        <h3 class="font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-key mr-2 text-yellow-500"></i>
+                            Keycloak Einstellungen
+                        </h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Server URL</label>
+                                <input type="text" :value="settings.keycloak?.server_url" readonly
+                                       class="w-full border rounded-lg px-3 py-2 bg-gray-50 text-gray-600">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Realm</label>
+                                <input type="text" :value="settings.keycloak?.realm" readonly
+                                       class="w-full border rounded-lg px-3 py-2 bg-gray-50 text-gray-600">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                                <input type="text" :value="settings.keycloak?.client_id" readonly
+                                       class="w-full border rounded-lg px-3 py-2 bg-gray-50 text-gray-600">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sync Settings -->
+                    <div class="bg-white rounded-xl shadow-sm p-5">
+                        <h3 class="font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-sync mr-2 text-green-500"></i>
+                            Sync Einstellungen
+                        </h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Sync Intervall (Sekunden)</label>
+                                <input type="text" :value="settings.sync?.interval" readonly
+                                       class="w-full border rounded-lg px-3 py-2 bg-gray-50 text-gray-600">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Gruppen zum Synchronisieren</label>
+                                <input type="text" :value="settings.sync?.groups_to_sync" readonly
+                                       class="w-full border rounded-lg px-3 py-2 bg-gray-50 text-gray-600">
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-700">Alle Benutzer synchronisieren</span>
+                                <span :class="settings.sync?.sync_all_users === '1' ? 'text-green-600' : 'text-gray-400'">
+                                    {{ settings.sync?.sync_all_users === '1' ? 'Ja' : 'Nein' }}
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-700">Soft Delete aktiv</span>
+                                <span :class="settings.sync?.soft_delete_enabled === '1' ? 'text-green-600' : 'text-gray-400'">
+                                    {{ settings.sync?.soft_delete_enabled === '1' ? 'Ja' : 'Nein' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mail Settings -->
+                    <div class="bg-white rounded-xl shadow-sm p-5">
+                        <h3 class="font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-envelope mr-2 text-red-500"></i>
+                            E-Mail Einstellungen
+                        </h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">SMTP Host</label>
+                                <input type="text" :value="settings.mail?.smtp_host || 'Nicht konfiguriert'" readonly
+                                       class="w-full border rounded-lg px-3 py-2 bg-gray-50 text-gray-600">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">SMTP Port</label>
+                                <input type="text" :value="settings.mail?.smtp_port" readonly
+                                       class="w-full border rounded-lg px-3 py-2 bg-gray-50 text-gray-600">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Verschluesselung</label>
+                                <input type="text" :value="settings.mail?.smtp_secure?.toUpperCase() || 'TLS'" readonly
+                                       class="w-full border rounded-lg px-3 py-2 bg-gray-50 text-gray-600">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-yellow-500 mt-1 mr-3"></i>
+                        <div>
+                            <p class="font-medium text-yellow-800">Einstellungen aendern</p>
+                            <p class="text-sm text-yellow-700 mt-1">
+                                Die meisten Einstellungen werden ueber Umgebungsvariablen konfiguriert.
+                                Aendern Sie diese in Ihrer docker-compose.yml oder .env Datei und starten Sie den Container neu.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="container mx-auto px-4 py-6 text-center text-gray-500 text-sm">
+            <p>Edulution Moodle Admin v1.0.0 | Powered by FastAPI & Vue.js</p>
+        </footer>
+    </div>
+
+    <script>
+    const { createApp } = Vue
+
+    createApp({
+        data() {
+            return {
+                // UI State
+                activeTab: 'dashboard',
+                loading: false,
+                toasts: [],
+
+                // Tabs Configuration
+                tabs: [
+                    { id: 'dashboard', name: 'Dashboard', icon: 'fas fa-tachometer-alt' },
+                    { id: 'sync', name: 'Sync', icon: 'fas fa-sync' },
+                    { id: 'plugins', name: 'Plugins', icon: 'fas fa-puzzle-piece', badge: null },
+                    { id: 'users', name: 'Benutzer', icon: 'fas fa-users' },
+                    { id: 'backups', name: 'Backups', icon: 'fas fa-database' },
+                    { id: 'logs', name: 'Logs', icon: 'fas fa-file-alt' },
+                    { id: 'settings', name: 'Einstellungen', icon: 'fas fa-cog' },
+                ],
+
+                // Data
+                dashboard: {},
+                health: { checks: {} },
+                syncConfig: {},
+                syncLogs: [],
+                syncPaused: false,
+                plugins: [],
+                users: [],
+                usersTotal: 0,
+                userPage: 0,
+                userLimit: 50,
+                userSearch: '',
+                userStatusFilter: 'all',
+                backups: [],
+                logs: [],
+                settings: {},
+                maintenanceMode: false,
+
+                // Filters
+                logFilter: 'all',
+                selectedLogType: 'sync',
+                logLines: 100,
+            }
+        },
+
+        computed: {
+            healthStatus() {
+                return this.health.status || 'checking...'
+            },
+            filteredSyncLogs() {
+                if (this.logFilter === 'all') return this.syncLogs
+                return this.syncLogs.filter(log => log.level === this.logFilter)
+            },
+            pluginsWithUpdates() {
+                return this.plugins.filter(p => p.update_available)
+            }
+        },
+
+        methods: {
+            // Toast Notifications
+            showToast(message, type = 'info') {
+                const toast = { message, type }
+                this.toasts.push(toast)
+                setTimeout(() => {
+                    const index = this.toasts.indexOf(toast)
+                    if (index > -1) this.toasts.splice(index, 1)
+                }, 3000)
+            },
+
+            // API Calls
+            async apiCall(method, url, data = null) {
+                try {
+                    const config = { method, url }
+                    if (data) config.data = data
+                    const response = await axios(config)
+                    return response.data
+                } catch (error) {
+                    console.error('API Error:', error)
+                    if (error.response?.status === 401) {
+                        this.showToast('Authentifizierung erforderlich', 'error')
+                    } else {
+                        this.showToast(error.response?.data?.detail || 'Ein Fehler ist aufgetreten', 'error')
+                    }
+                    throw error
+                }
+            },
+
+            // Dashboard
+            async loadDashboard() {
+                try {
+                    this.dashboard = await this.apiCall('get', '/api/dashboard')
+                    this.health = await this.apiCall('get', '/api/health')
+
+                    // Check maintenance mode
+                    try {
+                        const maint = await this.apiCall('get', '/api/maintenance/status')
+                        this.maintenanceMode = maint.maintenance_mode
+                    } catch (e) {}
+                } catch (error) {
+                    console.error('Dashboard load error:', error)
+                }
+            },
+
+            async loadHealth() {
+                this.health = await this.apiCall('get', '/api/health')
+            },
+
+            // Sync
+            async loadSyncConfig() {
+                this.syncConfig = await this.apiCall('get', '/api/sync/config')
+                const status = await this.apiCall('get', '/api/sync/status')
+                this.syncPaused = status.status === 'paused'
+            },
+
+            async loadSyncLogs() {
+                this.syncLogs = await this.apiCall('get', `/api/sync/logs?lines=100&level=${this.logFilter}`)
+            },
+
+            async triggerSync(full = false) {
+                await this.apiCall('post', `/api/sync/trigger?full=${full}`)
+                this.showToast(full ? 'Vollstaendiger Sync gestartet' : 'Sync gestartet', 'success')
+            },
+
+            async toggleSyncPause() {
+                if (this.syncPaused) {
+                    await this.apiCall('post', '/api/sync/resume')
+                    this.syncPaused = false
+                    this.showToast('Sync fortgesetzt', 'success')
+                } else {
+                    await this.apiCall('post', '/api/sync/pause')
+                    this.syncPaused = true
+                    this.showToast('Sync pausiert', 'success')
+                }
+            },
+
+            // Users
+            async loadUsers() {
+                const offset = this.userPage * this.userLimit
+                const result = await this.apiCall('get',
+                    `/api/users?status=${this.userStatusFilter}&limit=${this.userLimit}&offset=${offset}&search=${this.userSearch}`)
+                this.users = result.users
+                this.usersTotal = result.total
+            },
+
+            searchUsers: _.debounce(function() {
+                this.userPage = 0
+                this.loadUsers()
+            }, 300),
+
+            async syncUser(username) {
+                await this.apiCall('post', `/api/users/${username}/sync`)
+                this.showToast(`Sync fuer ${username} gestartet`, 'success')
+            },
+
+            async toggleUserProtection(user) {
+                if (user.status === 'protected') {
+                    await this.apiCall('delete', `/api/users/${user.username}/protect`)
+                    this.showToast(`Schutz fuer ${user.username} entfernt`, 'success')
+                } else {
+                    await this.apiCall('post', `/api/users/${user.username}/protect`)
+                    this.showToast(`${user.username} ist jetzt geschuetzt`, 'success')
+                }
+                this.loadUsers()
+            },
+
+            // Plugins
+            async loadPlugins() {
+                this.plugins = await this.apiCall('get', '/api/plugins')
+                const updates = this.plugins.filter(p => p.update_available).length
+                const tab = this.tabs.find(t => t.id === 'plugins')
+                if (tab) tab.badge = updates > 0 ? updates : null
+            },
+
+            async checkPluginUpdates() {
+                this.loading = true
+                try {
+                    await this.apiCall('get', '/api/plugins/updates')
+                    await this.loadPlugins()
+                    this.showToast('Plugin-Updates geprueft', 'success')
+                } finally {
+                    this.loading = false
+                }
+            },
+
+            async updatePlugin(component) {
+                await this.apiCall('post', `/api/plugins/${component}/update`)
+                this.showToast(`Update fuer ${component} gestartet`, 'success')
+            },
+
+            async updateAllPlugins() {
+                await this.apiCall('post', '/api/plugins/update')
+                this.showToast('Alle Plugin-Updates gestartet', 'success')
+            },
+
+            async uninstallPlugin(component) {
+                if (confirm(`Plugin ${component} wirklich deinstallieren?`)) {
+                    await this.apiCall('delete', `/api/plugins/${component}`)
+                    this.showToast(`${component} wird deinstalliert`, 'success')
+                    this.loadPlugins()
+                }
+            },
+
+            // Backups
+            async loadBackups() {
+                this.backups = await this.apiCall('get', '/api/backups')
+            },
+
+            async createBackup(type = 'full') {
+                await this.apiCall('post', `/api/backups/create?backup_type=${type}`)
+                this.showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} Backup wird erstellt`, 'success')
+            },
+
+            async restoreBackup(filename) {
+                if (confirm(`Backup ${filename} wirklich wiederherstellen? Aktuelle Daten werden ueberschrieben!`)) {
+                    await this.apiCall('post', `/api/backups/restore/${filename}`)
+                    this.showToast('Wiederherstellung gestartet', 'success')
+                }
+            },
+
+            async deleteBackup(filename) {
+                if (confirm(`Backup ${filename} wirklich loeschen?`)) {
+                    await this.apiCall('delete', `/api/backups/${filename}`)
+                    this.showToast('Backup geloescht', 'success')
+                    this.loadBackups()
+                }
+            },
+
+            // Logs
+            async loadLogs() {
+                this.logs = await this.apiCall('get', `/api/logs/${this.selectedLogType}?lines=${this.logLines}`)
+            },
+
+            async downloadLog() {
+                window.open(`/api/logs/download/${this.selectedLogType}`, '_blank')
+            },
+
+            // Settings
+            async loadSettings() {
+                this.settings = await this.apiCall('get', '/api/settings')
+            },
+
+            // Maintenance
+            async clearCache() {
+                await this.apiCall('post', '/api/cache/clear')
+                this.showToast('Cache geleert', 'success')
+            },
+
+            async runCron() {
+                await this.apiCall('post', '/api/cron/run')
+                this.showToast('Cron gestartet', 'success')
+            },
+
+            async toggleMaintenance() {
+                if (this.maintenanceMode) {
+                    await this.apiCall('post', '/api/maintenance/off')
+                    this.maintenanceMode = false
+                    this.showToast('Wartungsmodus deaktiviert', 'success')
+                } else {
+                    await this.apiCall('post', '/api/maintenance/on')
+                    this.maintenanceMode = true
+                    this.showToast('Wartungsmodus aktiviert', 'success')
+                }
+            },
+
+            async checkUpgrades() {
+                this.loading = true
+                try {
+                    const result = await this.apiCall('post', '/api/upgrade/check')
+                    if (result.upgrade_available) {
+                        this.showToast('Upgrades verfuegbar!', 'info')
+                    } else {
+                        this.showToast('Moodle ist aktuell', 'success')
+                    }
+                } finally {
+                    this.loading = false
+                }
+            },
+
+            // Formatters
+            formatDate(dateStr) {
+                if (!dateStr) return 'Nie'
+                const date = new Date(dateStr)
+                return date.toLocaleString('de-DE', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })
+            },
+
+            formatSyncStatus(status) {
+                const statusMap = {
+                    'running': 'Laeuft',
+                    'idle': 'Bereit',
+                    'paused': 'Pausiert',
+                    'error': 'Fehler',
+                    'unknown': 'Unbekannt'
+                }
+                return statusMap[status] || status
+            },
+
+            formatUserStatus(status) {
+                const statusMap = {
+                    'synced': 'Synchronisiert',
+                    'pending': 'Ausstehend',
+                    'failed': 'Fehlgeschlagen',
+                    'protected': 'Geschuetzt'
+                }
+                return statusMap[status] || status
+            },
+
+            formatCheckName(name) {
+                return name.replace(/_/g, ' ')
+            },
+
+            userStatusClass(status) {
+                const classes = {
+                    'synced': 'bg-green-100 text-green-700 px-2 py-1 rounded text-sm',
+                    'pending': 'bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-sm',
+                    'failed': 'bg-red-100 text-red-700 px-2 py-1 rounded text-sm',
+                    'protected': 'bg-purple-100 text-purple-700 px-2 py-1 rounded text-sm'
+                }
+                return classes[status] || 'bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm'
+            },
+
+            logLevelClass(level) {
+                const classes = {
+                    'ERROR': 'text-red-400',
+                    'CRITICAL': 'text-red-500 font-bold',
+                    'WARNING': 'text-yellow-400',
+                    'INFO': 'text-blue-400',
+                    'DEBUG': 'text-gray-500'
+                }
+                return classes[level] || 'text-white'
+            }
+        },
+
+        watch: {
+            activeTab(tab) {
+                switch (tab) {
+                    case 'sync':
+                        this.loadSyncConfig()
+                        this.loadSyncLogs()
+                        break
+                    case 'plugins':
+                        this.loadPlugins()
+                        break
+                    case 'users':
+                        this.loadUsers()
+                        break
+                    case 'backups':
+                        this.loadBackups()
+                        break
+                    case 'logs':
+                        this.loadLogs()
+                        break
+                    case 'settings':
+                        this.loadSettings()
+                        break
+                }
+            }
+        },
+
+        mounted() {
+            // Load dashboard on start
+            this.loadDashboard()
+
+            // Auto-refresh dashboard every 30 seconds
+            setInterval(() => {
+                if (this.activeTab === 'dashboard') {
+                    this.loadDashboard()
+                }
+            }, 30000)
+
+            // Auto-refresh logs every 10 seconds when on logs/sync tab
+            setInterval(() => {
+                if (this.activeTab === 'sync') {
+                    this.loadSyncLogs()
+                } else if (this.activeTab === 'logs') {
+                    this.loadLogs()
+                }
+            }, 10000)
+        }
+    }).mount('#app')
+
+    // Debounce utility (for search)
+    const _ = {
+        debounce(func, wait) {
+            let timeout
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout)
+                    func.apply(this, args)
+                }
+                clearTimeout(timeout)
+                timeout = setTimeout(later, wait)
+            }
+        }
+    }
+    </script>
+</body>
+</html>

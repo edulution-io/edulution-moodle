@@ -1,0 +1,163 @@
+# =====================================================
+# EDULUTION MOODLE - DYNAMIC TRAEFIK CONFIGURATION
+# =====================================================
+# Standalone dynamische Konfiguration
+# Wird von traefik.yml ueber file provider geladen
+#
+# Pfad: traefik/dynamic/moodle.yml
+# =====================================================
+
+http:
+  # ===========================================
+  # ROUTERS
+  # ===========================================
+  routers:
+    # -----------------------------------------
+    # Haupt-Moodle-Route
+    # -----------------------------------------
+    moodle:
+      rule: Host(`${MOODLE_DOMAIN}`)
+      service: moodle
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - moodle-headers
+        - moodle-compress
+      priority: 100
+
+    # -----------------------------------------
+    # Moodle Pluginfile (grosse Dateien)
+    # -----------------------------------------
+    moodle-pluginfile:
+      rule: Host(`${MOODLE_DOMAIN}`) && PathPrefix(`/pluginfile.php`)
+      service: moodle
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - moodle-headers
+        - moodle-large-upload
+      priority: 110
+
+    # -----------------------------------------
+    # Moodle Draftfile (Uploads)
+    # -----------------------------------------
+    moodle-draftfile:
+      rule: Host(`${MOODLE_DOMAIN}`) && PathPrefix(`/draftfile.php`)
+      service: moodle
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - moodle-headers
+        - moodle-large-upload
+      priority: 110
+
+    # -----------------------------------------
+    # Moodle WebService API
+    # -----------------------------------------
+    moodle-webservice:
+      rule: Host(`${MOODLE_DOMAIN}`) && PathPrefix(`/webservice`)
+      service: moodle
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - moodle-headers
+        - moodle-api-ratelimit
+      priority: 120
+
+  # ===========================================
+  # MIDDLEWARES
+  # ===========================================
+  middlewares:
+    # -----------------------------------------
+    # Security Headers
+    # -----------------------------------------
+    moodle-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: https
+        # HSTS
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        # Security
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: strict-origin-when-cross-origin
+        # Frame fuer LTI
+        customFrameOptionsValue: SAMEORIGIN
+
+    # -----------------------------------------
+    # Compression
+    # -----------------------------------------
+    moodle-compress:
+      compress:
+        excludedContentTypes:
+          - text/event-stream
+
+    # -----------------------------------------
+    # Rate-Limiting fuer API
+    # -----------------------------------------
+    moodle-api-ratelimit:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: 1m
+        sourceCriterion:
+          ipStrategy:
+            depth: 1
+
+    # -----------------------------------------
+    # Grosse Uploads (256MB)
+    # -----------------------------------------
+    moodle-large-upload:
+      buffering:
+        maxRequestBodyBytes: 268435456    # 256MB
+        memRequestBodyBytes: 2097152      # 2MB
+        maxResponseBodyBytes: 0
+        memResponseBodyBytes: 2097152
+
+  # ===========================================
+  # SERVICES
+  # ===========================================
+  services:
+    moodle:
+      loadBalancer:
+        servers:
+          - url: http://moodle:80
+        healthCheck:
+          path: /login/index.php
+          interval: 30s
+          timeout: 5s
+          scheme: http
+        passHostHeader: true
+
+# ===========================================
+# TCP (falls benoetigt)
+# ===========================================
+# tcp:
+#   routers: {}
+#   services: {}
+
+# ===========================================
+# TLS OPTIONS (optional)
+# ===========================================
+tls:
+  options:
+    default:
+      minVersion: VersionTLS12
+      sniStrict: true
+      cipherSuites:
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305

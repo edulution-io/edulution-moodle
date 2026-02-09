@@ -1,0 +1,21 @@
+# Edulution Moodle Sync - Python Dependencies
+# =============================================
+
+# HTTP Requests
+requests>=2.31.0
+
+# Keycloak Integration
+python-keycloak>=3.7.0
+
+# FastAPI for SSO/Token-Handling API
+fastapi>=0.109.0
+uvicorn>=0.27.0
+
+# Prometheus Metrics
+prometheus-client>=0.19.0
+
+# Data Validation
+pydantic>=2.5.0
+
+# Additional utilities
+python-dotenv>=1.0.0

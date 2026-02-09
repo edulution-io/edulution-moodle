@@ -1,0 +1,128 @@
+# =============================================================================
+# MOODLE CRON JOBS CONFIGURATION
+# edulution-moodle - Scheduled Tasks
+# =============================================================================
+# This file should be placed in /etc/cron.d/moodle
+# All times are in UTC - adjust based on your server timezone
+# =============================================================================
+
+# Environment variables
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=""
+
+# =============================================================================
+# MOODLE CORE CRON
+# =============================================================================
+# Moodle's main cron job - processes scheduled tasks
+# Runs every minute as recommended by Moodle
+# Note: If using Supervisor, this may be handled there instead
+* * * * * www-data php /var/www/html/moodle/admin/cli/cron.php >/dev/null 2>&1
+
+# =============================================================================
+# EDULUTION SYNC
+# =============================================================================
+# Synchronize users and groups from edulution API
+# Runs every 5 minutes
+*/5 * * * * root /opt/sync-venv/bin/python /opt/edulution-moodle-sync/sync.py --single-run >> /var/log/moodle-sync/cron.log 2>&1
+
+# Full sync (includes inactive users cleanup) - daily at 1:00 AM
+0 1 * * * root /opt/sync-venv/bin/python /opt/edulution-moodle-sync/sync.py --single-run --full >> /var/log/moodle-sync/full-sync.log 2>&1
+
+# =============================================================================
+# BACKUP
+# =============================================================================
+# Full backup including moodledata - daily at 2:00 AM
+0 2 * * * root /opt/scripts/backup.sh full >> /var/log/moodle-maintenance/backup.log 2>&1
+
+# Quick backup (database + code only) - every 6 hours
+0 */6 * * * root /opt/scripts/backup.sh quick >> /var/log/moodle-maintenance/backup-quick.log 2>&1
+
+# Backup rotation - remove backups older than 7 days - weekly Sunday at 5:00 AM
+0 5 * * 0 root find /srv/backups -type f -mtime +7 -delete >> /var/log/moodle-maintenance/backup-rotation.log 2>&1
+
+# =============================================================================
+# HEALTH CHECK
+# =============================================================================
+# System health check with auto-recovery - every 5 minutes
+*/5 * * * * root /opt/scripts/health_check.sh >> /var/log/moodle-maintenance/health.log 2>&1
+
+# Extended health check with notifications - hourly
+0 * * * * root /opt/scripts/health_check.sh --extended --notify >> /var/log/moodle-maintenance/health-extended.log 2>&1
+
+# =============================================================================
+# PLUGIN UPDATES
+# =============================================================================
+# Check for plugin updates - daily at 3:00 AM
+0 3 * * * root /opt/scripts/check_plugin_updates.sh >> /var/log/moodle-maintenance/plugins.log 2>&1
+
+# Moodle core update check - weekly Sunday at 4:00 AM
+0 4 * * 0 root /opt/scripts/check_moodle_updates.sh >> /var/log/moodle-maintenance/core-updates.log 2>&1
+
+# =============================================================================
+# CACHE MAINTENANCE
+# =============================================================================
+# Purge Moodle caches - daily at 5:00 AM
+0 5 * * * www-data php /var/www/html/moodle/admin/cli/purge_caches.php >> /var/log/moodle-maintenance/cache.log 2>&1
+
+# Clean up temporary files - daily at 6:00 AM
+0 6 * * * root find /tmp -type f -name 'php*' -mtime +1 -delete 2>/dev/null
+0 6 * * * root find /var/moodledata/temp -type f -mtime +7 -delete 2>/dev/null
+0 6 * * * root find /var/moodledata/trashdir -type f -mtime +30 -delete 2>/dev/null
+
+# =============================================================================
+# DATABASE MAINTENANCE
+# =============================================================================
+# Optimize database tables - weekly Sunday at 3:30 AM
+30 3 * * 0 root /opt/scripts/optimize_database.sh >> /var/log/moodle-maintenance/db-optimize.log 2>&1
+
+# Analyze database tables - daily at 4:30 AM
+30 4 * * * root /opt/scripts/analyze_database.sh >> /var/log/moodle-maintenance/db-analyze.log 2>&1
+
+# =============================================================================
+# LOG MAINTENANCE
+# =============================================================================
+# Clean old Moodle logs from database - weekly at 4:00 AM
+0 4 * * 1 www-data php /var/www/html/moodle/admin/cli/cfg.php --name=loglifetime --set=90 >/dev/null 2>&1
+
+# Compress old log files - daily at 6:30 AM
+30 6 * * * root find /var/log/moodle* -name "*.log" -mtime +1 -exec gzip {} \; 2>/dev/null
+30 6 * * * root find /var/log/moodle* -name "*.gz" -mtime +30 -delete 2>/dev/null
+
+# =============================================================================
+# SECURITY TASKS
+# =============================================================================
+# Security audit - weekly Monday at 2:00 AM
+0 2 * * 1 root /opt/scripts/security_audit.sh >> /var/log/moodle-maintenance/security.log 2>&1
+
+# Check for failed login attempts - hourly
+15 * * * * root /opt/scripts/check_failed_logins.sh >> /var/log/moodle-maintenance/failed-logins.log 2>&1
+
+# =============================================================================
+# REPORTING
+# =============================================================================
+# Generate daily usage report - daily at 7:00 AM
+0 7 * * * root /opt/scripts/generate_report.sh daily >> /var/log/moodle-maintenance/reports.log 2>&1
+
+# Generate weekly summary - Monday at 8:00 AM
+0 8 * * 1 root /opt/scripts/generate_report.sh weekly >> /var/log/moodle-maintenance/reports.log 2>&1
+
+# =============================================================================
+# SSL CERTIFICATE RENEWAL (if using Let's Encrypt)
+# =============================================================================
+# Check and renew SSL certificates - twice daily
+0 0,12 * * * root /opt/scripts/renew_certificates.sh >> /var/log/moodle-maintenance/ssl.log 2>&1
+
+# =============================================================================
+# NOTES
+# =============================================================================
+# - All times are in UTC
+# - Adjust timing to avoid overlapping resource-intensive tasks
+# - Monitor log files for errors: /var/log/moodle-maintenance/
+# - Backup logs are in: /var/log/moodle-maintenance/backup.log
+# - Sync logs are in: /var/log/moodle-sync/
+# - Health check logs are in: /var/log/moodle-maintenance/health.log
+#
+# To disable a cron job, comment out the line with #
+# To run a job manually: run the command as the specified user
+# Example: sudo -u www-data php /var/www/html/moodle/admin/cli/cron.php

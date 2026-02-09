@@ -1,0 +1,160 @@
+# =====================================================
+# EDULUTION MOODLE - DOCKER BUILD WORKFLOW
+# =====================================================
+# Baut das Docker Image und pushed es zu GitHub Container Registry
+#
+# Triggers:
+#   - Push auf main/master Branch
+#   - Release erstellt
+#   - Manuell via workflow_dispatch
+#
+# Images:
+#   - ghcr.io/edulution-io/edulution-moodle:latest (main branch)
+#   - ghcr.io/edulution-io/edulution-moodle:v1.0.0 (releases)
+#   - ghcr.io/edulution-io/edulution-moodle:sha-abc123 (commits)
+# =====================================================
+
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths-ignore:
+      - '*.md'
+      - 'docs/**'
+      - '.gitignore'
+
+  release:
+    types: [published]
+
+  workflow_dispatch:
+    inputs:
+      moodle_version:
+        description: 'Moodle Version (Branch)'
+        required: false
+        default: 'MOODLE_405_STABLE'
+        type: choice
+        options:
+          - MOODLE_404_STABLE
+          - MOODLE_405_STABLE
+          - MOODLE_500_STABLE
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # ===========================================
+      # CHECKOUT
+      # ===========================================
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ===========================================
+      # SETUP DOCKER BUILDX
+      # ===========================================
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ===========================================
+      # LOGIN TO GITHUB CONTAINER REGISTRY
+      # ===========================================
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ===========================================
+      # EXTRACT METADATA FOR TAGS
+      # ===========================================
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            # Tag "latest" fuer main/master
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') || github.ref == format('refs/heads/{0}', 'master') }}
+            # Semantic versioning fuer Releases
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            # SHA Tag fuer jeden Commit
+            type=sha,prefix=sha-
+            # Branch name
+            type=ref,event=branch
+
+      # ===========================================
+      # BUILD AND PUSH
+      # ===========================================
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./build/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            MOODLE_VERSION=${{ inputs.moodle_version || 'MOODLE_405_STABLE' }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ===========================================
+      # OUTPUT IMAGE INFO
+      # ===========================================
+      - name: Image digest
+        run: |
+          echo "## Docker Image Built Successfully! :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Moodle Version:** \`${{ inputs.moodle_version || 'MOODLE_405_STABLE' }}\`" >> $GITHUB_STEP_SUMMARY
+
+  # ===========================================
+  # SECURITY SCAN (optional)
+  # ===========================================
+  scan:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name != 'workflow_dispatch'
+
+    permissions:
+      security-events: write
+
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+        continue-on-error: true
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+        continue-on-error: true

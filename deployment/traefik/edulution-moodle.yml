@@ -1,0 +1,217 @@
+# =====================================================
+# EDULUTION MOODLE - TRAEFIK DYNAMIC CONFIGURATION
+# =====================================================
+# Diese Datei kommt ins edulution-deployment Repository
+# unter: traefik/dynamic/edulution-moodle.yml
+#
+# Verwendet gemeinsamen Traefik aus edulution-Infrastruktur
+# =====================================================
+
+http:
+  # ===========================================
+  # ROUTERS
+  # ===========================================
+  routers:
+    # -----------------------------------------
+    # Haupt-Moodle-Route (/moodle)
+    # -----------------------------------------
+    edulution-moodle:
+      rule: PathPrefix(`/moodle`)
+      service: edulution-moodle
+      entryPoints:
+        - websecure
+      tls: {}
+      middlewares:
+        - moodle-headers
+        - moodle-strip-prefix
+      priority: 100
+
+    # -----------------------------------------
+    # Direkter Zugang (Subdomain-Setup)
+    # -----------------------------------------
+    edulution-moodle-direct:
+      rule: Host(`moodle.{{ env "DOMAIN" }}`)
+      service: edulution-moodle
+      entryPoints:
+        - websecure
+      tls: {}
+      middlewares:
+        - moodle-headers
+      priority: 90
+
+    # -----------------------------------------
+    # Moodle Admin-UI (/moodle-admin)
+    # -----------------------------------------
+    edulution-moodle-admin:
+      rule: PathPrefix(`/moodle-admin`)
+      service: edulution-moodle-admin
+      entryPoints:
+        - websecure
+      tls: {}
+      middlewares:
+        - moodle-headers
+        - moodle-admin-strip-prefix
+        - moodle-admin-ratelimit
+      priority: 110
+
+    # -----------------------------------------
+    # Moodle WebService API
+    # -----------------------------------------
+    edulution-moodle-webservice:
+      rule: PathPrefix(`/moodle/webservice`)
+      service: edulution-moodle
+      entryPoints:
+        - websecure
+      tls: {}
+      middlewares:
+        - moodle-headers
+        - moodle-api-ratelimit
+      priority: 120
+
+    # -----------------------------------------
+    # Moodle Pluginfile (grosse Dateien)
+    # -----------------------------------------
+    edulution-moodle-pluginfile:
+      rule: PathPrefix(`/moodle/pluginfile.php`)
+      service: edulution-moodle
+      entryPoints:
+        - websecure
+      tls: {}
+      middlewares:
+        - moodle-headers
+        - moodle-large-upload
+      priority: 130
+
+    # -----------------------------------------
+    # Moodle Draft-Files (Upload)
+    # -----------------------------------------
+    edulution-moodle-draftfile:
+      rule: PathPrefix(`/moodle/draftfile.php`)
+      service: edulution-moodle
+      entryPoints:
+        - websecure
+      tls: {}
+      middlewares:
+        - moodle-headers
+        - moodle-large-upload
+      priority: 130
+
+  # ===========================================
+  # MIDDLEWARES
+  # ===========================================
+  middlewares:
+    # -----------------------------------------
+    # Prefix entfernen fuer /moodle/*
+    # -----------------------------------------
+    moodle-strip-prefix:
+      stripPrefix:
+        prefixes:
+          - /moodle
+
+    # -----------------------------------------
+    # Prefix entfernen fuer /moodle-admin/*
+    # -----------------------------------------
+    moodle-admin-strip-prefix:
+      stripPrefix:
+        prefixes:
+          - /moodle-admin
+
+    # -----------------------------------------
+    # Standard Security Headers
+    # -----------------------------------------
+    moodle-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: https
+        # HSTS
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        # Security Headers
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: strict-origin-when-cross-origin
+        # Frame-Options fuer LTI-Einbettung
+        customFrameOptionsValue: SAMEORIGIN
+        # Permissions Policy
+        permissionsPolicy: "camera=(), microphone=(), geolocation=()"
+        # Content-Security-Policy (angepasst fuer Moodle)
+        contentSecurityPolicy: |
+          default-src 'self';
+          script-src 'self' 'unsafe-inline' 'unsafe-eval';
+          style-src 'self' 'unsafe-inline';
+          img-src 'self' data: blob: https:;
+          font-src 'self' data:;
+          connect-src 'self' wss: https:;
+          frame-src 'self' https:;
+          frame-ancestors 'self';
+
+    # -----------------------------------------
+    # Rate-Limiting fuer API
+    # -----------------------------------------
+    moodle-api-ratelimit:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: 1m
+        sourceCriterion:
+          ipStrategy:
+            depth: 1
+
+    # -----------------------------------------
+    # Rate-Limiting fuer Admin-UI
+    # -----------------------------------------
+    moodle-admin-ratelimit:
+      rateLimit:
+        average: 30
+        burst: 20
+        period: 1m
+        sourceCriterion:
+          ipStrategy:
+            depth: 1
+
+    # -----------------------------------------
+    # Grosse Uploads fuer Moodle (256MB)
+    # -----------------------------------------
+    moodle-large-upload:
+      buffering:
+        maxRequestBodyBytes: 268435456    # 256MB
+        memRequestBodyBytes: 2097152      # 2MB in-memory
+        maxResponseBodyBytes: 0           # Keine Limit fuer Response
+        memResponseBodyBytes: 2097152     # 2MB in-memory
+
+  # ===========================================
+  # SERVICES
+  # ===========================================
+  services:
+    # -----------------------------------------
+    # Moodle Application Service
+    # -----------------------------------------
+    edulution-moodle:
+      loadBalancer:
+        servers:
+          - url: http://edulution-moodle:80
+        healthCheck:
+          path: /login/index.php
+          interval: 30s
+          timeout: 5s
+          scheme: http
+        passHostHeader: true
+        sticky:
+          cookie:
+            name: moodle_sticky
+            secure: true
+            httpOnly: true
+
+    # -----------------------------------------
+    # Moodle Admin-UI Service
+    # -----------------------------------------
+    edulution-moodle-admin:
+      loadBalancer:
+        servers:
+          - url: http://edulution-moodle:8080
+        healthCheck:
+          path: /api/health
+          interval: 30s
+          timeout: 5s
+          scheme: http

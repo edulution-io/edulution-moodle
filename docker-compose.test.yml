@@ -1,0 +1,153 @@
+# =====================================================
+# EDULUTION MOODLE - TEST COMPOSE
+# =====================================================
+# Minimales Setup zum Testen des Docker Images
+#
+# Verwendung:
+#   1. cp .env.test .env
+#   2. docker compose -f docker-compose.test.yml up -d
+#   3. Oeffne http://localhost:8080
+#
+# Logs anzeigen:
+#   docker compose -f docker-compose.test.yml logs -f
+#
+# Stoppen:
+#   docker compose -f docker-compose.test.yml down -v
+# =====================================================
+
+services:
+  # ===========================================
+  # MOODLE APPLICATION
+  # ===========================================
+  moodle:
+    image: ghcr.io/edulution-io/edulution-moodle:latest
+    # Alternativ lokal bauen:
+    # build:
+    #   context: .
+    #   dockerfile: build/Dockerfile
+    container_name: moodle-test
+    restart: unless-stopped
+    ports:
+      - "${MOODLE_PORT:-8080}:80"
+    volumes:
+      # Persistente Daten (optional fuer Tests)
+      - moodle_data:/var/moodledata
+      - moodle_sync:/srv/data
+    environment:
+      # ----- Moodle Basis -----
+      MOODLE_WWWROOT: ${MOODLE_WWWROOT:-http://localhost:8080}
+      MOODLE_SITE_NAME: ${MOODLE_SITE_NAME:-Test Moodle}
+      MOODLE_ADMIN_USER: ${MOODLE_ADMIN_USER:-admin}
+      MOODLE_ADMIN_PASSWORD: ${MOODLE_ADMIN_PASSWORD:-Admin123!}
+      MOODLE_ADMIN_EMAIL: ${MOODLE_ADMIN_EMAIL:-admin@test.local}
+      MOODLE_DEFAULT_LANGUAGE: ${MOODLE_DEFAULT_LANGUAGE:-de}
+
+      # ----- Datenbank -----
+      MOODLE_DATABASE_HOST: mariadb
+      MOODLE_DATABASE_NAME: ${DB_NAME:-moodle}
+      MOODLE_DATABASE_USER: ${DB_USER:-moodle}
+      MOODLE_DATABASE_PASSWORD: ${DB_PASSWORD:-moodle_test_password}
+
+      # ----- Redis -----
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      # ----- Keycloak (optional) -----
+      KEYCLOAK_SERVER_URL: ${KEYCLOAK_SERVER_URL:-}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-edulution}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-edu-moodle-sync}
+      KEYCLOAK_SECRET_KEY: ${KEYCLOAK_SECRET_KEY:-}
+      KEYCLOAK_VERIFY_SSL: ${KEYCLOAK_VERIFY_SSL:-1}
+
+      # ----- Sync -----
+      SYNC_ENABLED: ${SYNC_ENABLED:-0}
+      SYNC_INTERVAL: ${SYNC_INTERVAL:-300}
+      DRY_RUN: ${DRY_RUN:-1}
+
+      # ----- User Sync -----
+      SYNC_USERS_IN_GROUPS: ${SYNC_USERS_IN_GROUPS:-role-schooladministrator,role-teacher,role-student}
+      ROLE_STUDENT_GROUPS: ${ROLE_STUDENT_GROUPS:-role-student}
+      ROLE_TEACHER_GROUPS: ${ROLE_TEACHER_GROUPS:-role-teacher}
+      ROLE_MANAGER_GROUPS: ${ROLE_MANAGER_GROUPS:-role-schooladministrator}
+
+      # ----- Soft-Delete -----
+      SOFT_DELETE_ENABLED: ${SOFT_DELETE_ENABLED:-1}
+      DELETE_ENABLED: ${DELETE_ENABLED:-0}
+
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    networks:
+      - moodle-test
+
+  # ===========================================
+  # MARIADB DATABASE
+  # ===========================================
+  mariadb:
+    image: mariadb:10.11
+    container_name: moodle-test-db
+    restart: unless-stopped
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_test_password}
+      MYSQL_DATABASE: ${DB_NAME:-moodle}
+      MYSQL_USER: ${DB_USER:-moodle}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-moodle_test_password}
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - moodle-test
+
+  # ===========================================
+  # REDIS CACHE
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: moodle-test-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - moodle-test
+
+# ===========================================
+# VOLUMES
+# ===========================================
+volumes:
+  moodle_data:
+    name: moodle-test-data
+  moodle_sync:
+    name: moodle-test-sync
+  mariadb_data:
+    name: moodle-test-mariadb
+  redis_data:
+    name: moodle-test-redis
+
+# ===========================================
+# NETWORKS
+# ===========================================
+networks:
+  moodle-test:
+    name: moodle-test-network
+    driver: bridge

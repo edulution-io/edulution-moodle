@@ -1,0 +1,204 @@
+{
+  "_comment": "Plugin-Liste fuer Edulution Moodle",
+  "_moodle_version": "4.5",
+  "_last_updated": "2025-02-09",
+  "_documentation": "Diese Datei definiert alle Plugins die automatisch installiert werden sollen",
+
+  "plugins": [
+    {
+      "component": "mod_attendance",
+      "name": "Attendance",
+      "required": true,
+      "description": "Anwesenheitsverfolgung fuer Kurse - ermoeglicht Dozenten die Anwesenheit zu tracken"
+    },
+    {
+      "component": "mod_booking",
+      "name": "Booking",
+      "required": true,
+      "description": "Buchungssystem fuer Veranstaltungen, Raeume und Ressourcen"
+    },
+    {
+      "component": "mod_scheduler",
+      "name": "Scheduler",
+      "required": true,
+      "description": "Terminplanung - Studierende koennen Termine bei Dozenten buchen"
+    },
+    {
+      "component": "mod_checklist",
+      "name": "Checklist",
+      "required": false,
+      "description": "Checklisten fuer Studierende zur Aufgabenverfolgung"
+    },
+    {
+      "component": "mod_board",
+      "name": "Board",
+      "required": true,
+      "description": "Kanban-Board fuer kollaboratives Arbeiten"
+    },
+    {
+      "component": "mod_hvp",
+      "name": "H5P",
+      "required": true,
+      "description": "Interaktive H5P-Inhalte (Videos, Quizze, Praesentationen)"
+    },
+    {
+      "component": "mod_questionnaire",
+      "name": "Questionnaire",
+      "required": true,
+      "description": "Erweiterte Umfragen und Frageboegen"
+    },
+    {
+      "component": "mod_collabora",
+      "name": "Collabora Online",
+      "required": false,
+      "description": "LibreOffice Online Integration fuer kollaboratives Bearbeiten"
+    },
+    {
+      "component": "mod_customcert",
+      "name": "Custom Certificate",
+      "required": false,
+      "description": "Erstellt anpassbare PDF-Zertifikate fuer Kursteilnehmer"
+    },
+    {
+      "component": "mod_subcourse",
+      "name": "Subcourse",
+      "required": false,
+      "description": "Importiert Bewertungen aus anderen Kursen"
+    },
+    {
+      "component": "block_completion_progress",
+      "name": "Completion Progress",
+      "required": true,
+      "description": "Visuelle Fortschrittsanzeige fuer Kursabschluss"
+    },
+    {
+      "component": "block_sharing_cart",
+      "name": "Sharing Cart",
+      "required": true,
+      "description": "Ermoeglicht Kopieren von Aktivitaeten zwischen Kursen"
+    },
+    {
+      "component": "block_configurable_reports",
+      "name": "Configurable Reports",
+      "required": false,
+      "description": "Erstellt anpassbare Reports mit SQL"
+    },
+    {
+      "component": "block_xp",
+      "name": "Level Up XP",
+      "required": false,
+      "description": "Gamification mit Erfahrungspunkten und Levels"
+    },
+    {
+      "component": "theme_boost_union",
+      "name": "Boost Union Theme",
+      "required": true,
+      "description": "Erweitertes Theme basierend auf Boost mit mehr Anpassungsmoeglichkeiten"
+    },
+    {
+      "component": "auth_oidc",
+      "name": "OpenID Connect",
+      "required": true,
+      "description": "OpenID Connect Authentifizierung fuer Keycloak SSO Integration"
+    },
+    {
+      "component": "local_o365",
+      "name": "Microsoft 365 Integration",
+      "required": false,
+      "description": "Integration mit Microsoft 365 (optional, nur bei MS365 Nutzung)"
+    },
+    {
+      "component": "enrol_groupsync",
+      "name": "Group Sync Enrolment",
+      "required": true,
+      "description": "Synchronisiert Gruppen basierend auf Einschreibemethoden"
+    },
+    {
+      "component": "enrol_autoenrol",
+      "name": "Auto Enrol",
+      "required": false,
+      "description": "Automatische Kurseinschreibung basierend auf Regeln"
+    },
+    {
+      "component": "local_adminer",
+      "name": "Adminer",
+      "required": false,
+      "dev_only": true,
+      "description": "Datenbank-Administration im Browser - NUR fuer Entwicklung!"
+    },
+    {
+      "component": "local_codechecker",
+      "name": "Code Checker",
+      "required": false,
+      "dev_only": true,
+      "description": "Prueft Moodle-Code auf Coding-Standards - NUR fuer Entwicklung"
+    },
+    {
+      "component": "report_customsql",
+      "name": "Ad-hoc Database Queries",
+      "required": false,
+      "description": "Erstellt Ad-hoc SQL-Reports"
+    },
+    {
+      "component": "report_coursesize",
+      "name": "Course Size",
+      "required": false,
+      "description": "Zeigt Speicherverbrauch von Kursen"
+    },
+    {
+      "component": "tool_opcache",
+      "name": "OPcache Management",
+      "required": false,
+      "dev_only": true,
+      "description": "PHP OPcache Status und Management"
+    },
+    {
+      "component": "tool_migratehvp2h5p",
+      "name": "Migrate HVP to H5P",
+      "required": false,
+      "description": "Migration von mod_hvp zu core H5P"
+    },
+    {
+      "component": "format_tiles",
+      "name": "Tiles Course Format",
+      "required": false,
+      "description": "Kursformat mit Kachel-Layout"
+    },
+    {
+      "component": "format_grid",
+      "name": "Grid Course Format",
+      "required": false,
+      "description": "Kursformat mit Grid-Layout"
+    },
+    {
+      "component": "atto_fontsize",
+      "name": "Atto Font Size",
+      "required": false,
+      "description": "Schriftgroessen-Auswahl im Atto-Editor"
+    },
+    {
+      "component": "filter_multilang2",
+      "name": "Multi-Language Content v2",
+      "required": true,
+      "description": "Verbesserte mehrsprachige Inhalte"
+    },
+    {
+      "component": "qtype_gapfill",
+      "name": "Gap Fill Question",
+      "required": false,
+      "description": "Lueckentext-Fragetyp fuer Quizze"
+    },
+    {
+      "component": "qtype_ordering",
+      "name": "Ordering Question",
+      "required": false,
+      "description": "Sortier-Fragetyp fuer Quizze"
+    },
+    {
+      "component": "availability_xp",
+      "name": "Restriction by XP",
+      "required": false,
+      "description": "Aktivitaetszugriff basierend auf XP-Level (benoetigt block_xp)"
+    }
+  ]
+}

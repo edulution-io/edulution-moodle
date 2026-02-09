@@ -1,66 +1,207 @@
+# =====================================================
+# EDULUTION MOODLE - STANDALONE DOCKER COMPOSE
+# =====================================================
+# Standalone-Deployment ohne edulution-Infrastruktur
+#
+# Verwendung:
+#   1. cp .env.example .env
+#   2. Werte in .env anpassen
+#   3. docker compose up -d
+#
+# Mit SSL (Traefik):
+#   docker compose --profile ssl up -d
+# =====================================================
+
 services:
-  edulution-moodle-db:
-    image: mariadb:latest
-    container_name: edulution-moodle-db
-    restart: unless-stopped
-    command:
-      --character-set-server=utf8mb4
-      --collation-server=utf8mb4_unicode_ci
-      --innodb_file_format=Barracuda
-      --innodb_large_prefix=ON
-      --innodb_file_per_table=ON
-    environment:
-      - MARIADB_USER=moodle
-      - MARIADB_PASSWORD=moodle
-      - MARIADB_DATABASE=moodle
-      - MARIADB_ROOT_PASSWORD=moodle
+  # ===========================================
+  # MOODLE APPLICATION
+  # ===========================================
+  moodle:
+    build:
+      context: .
+      dockerfile: build/Dockerfile
+      args:
+        MOODLE_VERSION: ${MOODLE_VERSION:-MOODLE_405_STABLE}
+    image: ghcr.io/edulution-io/edulution-moodle:${VERSION:-latest}
+    restart: always
+    container_name: moodle
+    ports:
+      - "${MOODLE_PORT:-8080}:80"
     volumes:
-      - /srv/docker/edulution-moodle/data/db:/bitnami/mariadb
+      # Persistente Moodle-Daten
+      - /srv/docker/moodle/code:/var/www/html/moodle
+      - /srv/docker/moodle/data:/var/moodledata
+      - /srv/docker/moodle/sync-data:/srv/data
+      - /srv/docker/moodle/backups:/srv/backups
+      - /srv/docker/moodle/logs:/var/log/moodle-sync
+      # Optionale Konfiguration
+      - /srv/docker/moodle/config/plugins.json:/srv/config/plugins.json:ro
+    environment:
+      # ----- Moodle Grundkonfiguration -----
+      MOODLE_WWWROOT: ${MOODLE_WWWROOT:-http://localhost:8080}
+      MOODLE_SITE_NAME: ${MOODLE_SITE_NAME:-Moodle}
+      MOODLE_ADMIN_USER: ${MOODLE_ADMIN_USER:-admin}
+      MOODLE_ADMIN_PASSWORD: ${MOODLE_ADMIN_PASSWORD:?MOODLE_ADMIN_PASSWORD muss gesetzt sein}
+      MOODLE_ADMIN_EMAIL: ${MOODLE_ADMIN_EMAIL:-admin@example.com}
+      MOODLE_DEFAULT_LANGUAGE: ${MOODLE_DEFAULT_LANGUAGE:-de}
+      MOODLE_INSTALL_LANGUAGES: ${MOODLE_INSTALL_LANGUAGES:-de,de_comm,en}
+
+      # ----- Datenbank -----
+      MOODLE_DATABASE_HOST: mariadb
+      MOODLE_DATABASE_NAME: ${DB_NAME:-moodle}
+      MOODLE_DATABASE_USER: ${DB_USER:-moodle}
+      MOODLE_DATABASE_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD muss gesetzt sein}
+
+      # ----- Redis Cache -----
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      # ----- Keycloak SSO (optional) -----
+      KEYCLOAK_SERVER_URL: ${KEYCLOAK_SERVER_URL:-}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-}
+      KEYCLOAK_VERIFY_SSL: ${KEYCLOAK_VERIFY_SSL:-1}
+
+      # ----- Sync Konfiguration -----
+      SYNC_ENABLED: ${SYNC_ENABLED:-0}
+      SYNC_INTERVAL: ${SYNC_INTERVAL:-300}
+      DRY_RUN: ${DRY_RUN:-0}
+
+      # ----- User Sync -----
+      SYNC_USERS_IN_GROUPS: ${SYNC_USERS_IN_GROUPS:-role-schooladministrator,role-teacher,role-student}
+      SYNC_ALL_USERS: ${SYNC_ALL_USERS:-0}
+      IGNORE_USERS: ${IGNORE_USERS:-admin,guest,root}
+      PROTECTED_USERS: ${PROTECTED_USERS:-admin,guest}
+
+      # ----- Rollen-Mapping -----
+      ROLE_STUDENT_GROUPS: ${ROLE_STUDENT_GROUPS:-role-student}
+      ROLE_STUDENT_MOODLE: ${ROLE_STUDENT_MOODLE:-student}
+      ROLE_TEACHER_GROUPS: ${ROLE_TEACHER_GROUPS:-role-teacher}
+      ROLE_TEACHER_MOODLE: ${ROLE_TEACHER_MOODLE:-editingteacher}
+      ROLE_MANAGER_GROUPS: ${ROLE_MANAGER_GROUPS:-role-schooladministrator}
+      ROLE_MANAGER_MOODLE: ${ROLE_MANAGER_MOODLE:-manager}
+
+      # ----- Kurs-Sync -----
+      COURSE_SYNC_ATTRIBUTE: ${COURSE_SYNC_ATTRIBUTE:-moodleCourse}
+      DEFAULT_COURSE_CATEGORY: ${DEFAULT_COURSE_CATEGORY:-1}
+      DEFAULT_COURSE_FORMAT: ${DEFAULT_COURSE_FORMAT:-topics}
+
+      # ----- Soft-Delete -----
+      SOFT_DELETE_ENABLED: ${SOFT_DELETE_ENABLED:-1}
+      SOFT_DELETE_GRACE_PERIOD: ${SOFT_DELETE_GRACE_PERIOD:-2592000}
+      DELETE_ENABLED: ${DELETE_ENABLED:-0}
+
+      # ----- SMTP Mail -----
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_SECURITY: ${SMTP_SECURITY:-tls}
+      SMTP_NOREPLY: ${SMTP_NOREPLY:-noreply@example.com}
+
+      # ----- Updates -----
+      MOODLE_AUTO_UPDATE: ${MOODLE_AUTO_UPDATE:-0}
+      PLUGIN_AUTO_UPDATE: ${PLUGIN_AUTO_UPDATE:-0}
+      BACKUP_BEFORE_UPDATE: ${BACKUP_BEFORE_UPDATE:-1}
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost/login/index.php || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    networks:
+      - moodle-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.moodle.rule=Host(`${MOODLE_DOMAIN:-moodle.localhost}`)"
+      - "traefik.http.routers.moodle.entrypoints=websecure"
+      - "traefik.http.routers.moodle.tls.certresolver=letsencrypt"
+      - "traefik.http.services.moodle.loadbalancer.server.port=80"
+
+  # ===========================================
+  # MARIADB DATABASE
+  # ===========================================
+  mariadb:
+    image: mariadb:10.11
+    restart: always
+    container_name: moodle-db
+    volumes:
+      - /srv/docker/moodle/mariadb:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?DB_ROOT_PASSWORD muss gesetzt sein}
+      MYSQL_DATABASE: ${DB_NAME:-moodle}
+      MYSQL_USER: ${DB_USER:-moodle}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD muss gesetzt sein}
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - moodle-net
+
+  # ===========================================
+  # REDIS CACHE
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    restart: always
+    container_name: moodle-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - /srv/docker/moodle/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 3
     networks:
-      - edulution-moodle
+      - moodle-net
 
-  edulution-moodle-app:
-    container_name: edulution-moodle-app
-    restart: unless-stopped
-    environment:
-      - MOODLE_DATABASE_HOST=edulution-moodle-db
-      - MOODLE_DATABASE_USER=moodle
-      - MOODLE_DATABASE_PASSWORD=moodle
-      - MOODLE_DATABASE_NAME=moodle
-      - MOODLE_USERNAME=admin
-      - MOODLE_PASSWORD=Muster!
-      - MOODLE_HOST=/moodle-app
-      - MOODLE_REVERSEPROXY=true
-      - MOODLE_SSLPROXY=true
-      - KEYCLOAK_CLIENT_ID=edu-ui
-      - KEYCLOAK_CLIENT_SECRET=123456789
-      - EDULUTION_BASE_DOMAIN=demo.edulution.ui
+  # ===========================================
+  # TRAEFIK REVERSE PROXY (optional, mit profile "ssl")
+  # ===========================================
+  traefik:
+    image: traefik:v3.0
+    restart: always
+    container_name: moodle-traefik
+    profiles: ["ssl"]
+    ports:
+      - "80:80"
+      - "443:443"
     volumes:
-      - /srv/docker/edulution-moodle/data/moodle:/bitnami/moodle
-      - /srv/docker/edulution-moodle/data/moodledata:/bitnami/moodledata
-      - /srv/docker/edulution-moodle/data/logs:/var/log/moodle
-    depends_on:
-      edulution-moodle-db:
-        condition: service_healthy
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /srv/docker/moodle/traefik:/etc/traefik
+      - /srv/docker/moodle/traefik-certs:/letsencrypt
+    command:
+      - "--api.dashboard=false"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=moodle-net"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-admin@example.com}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
     healthcheck:
-      test: ["CMD-SHELL", "curl -fs http://localhost:8080/login/index.php && curl -fs http://localhost:8080/admin/index.php || exit 1"]
-      interval: 120s
-      timeout: 30s
+      test: ["CMD", "traefik", "healthcheck"]
+      interval: 30s
+      timeout: 10s
       retries: 3
-    image: bitnami/moodle:4.5
-    entrypoint: ["bash", "-c", "apt-get update && apt-get install -y curl && curl -fsSL https://raw.githubusercontent.com/edulution-io/edulution-moodle/refs/heads/main/entrypoint-wrapper.sh -o /tmp/entrypoint.sh && chmod +x /tmp/entrypoint.sh && exec /tmp/entrypoint.sh"]
     networks:
-      - edulution-moodle
-      - edulution-ui_default
+      - moodle-net
 
 networks:
-  edulution-moodle:
+  moodle-net:
     driver: bridge
-  edulution-ui_default:
-    external: true
