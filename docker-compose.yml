@@ -57,7 +57,7 @@ services:
 
       # URL & Proxy Settings (IMPORTANT for Traefik!)
       - MOODLE_HOSTNAME=${EDULUTION_BASE_DOMAIN:-localhost}
-      - MOODLE_PATH=/moodle
+      - MOODLE_PATH=${MOODLE_PATH:-/moodle-app}
       - MOODLE_REVERSEPROXY=true
       - MOODLE_SSLPROXY=true
 

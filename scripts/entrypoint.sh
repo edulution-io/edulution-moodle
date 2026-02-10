@@ -47,7 +47,59 @@ echo ""
 # Configuration
 MOODLE_DIR="/var/www/html/moodle"
 MOODLE_DATA="${MOODLE_DATA:-/var/moodledata}"
+MOODLE_PATH="${MOODLE_PATH:-/moodle-app}"
 CONFIG_FILE="${MOODLE_DIR}/config.php"
+
+# Ensure MOODLE_PATH starts with /
+if [[ "${MOODLE_PATH}" != /* ]]; then
+    MOODLE_PATH="/${MOODLE_PATH}"
+fi
+
+# Export for use in templates
+export MOODLE_PATH
+
+log_info "Moodle will be accessible at path: ${MOODLE_PATH}"
+
+# Generate Apache config from template
+log_info "Generating Apache configuration..."
+if [ -f "/var/www/html/moodle/apache-moodle.conf.template" ]; then
+    envsubst '${MOODLE_PATH}' < /var/www/html/moodle/apache-moodle.conf.template > /etc/apache2/sites-available/moodle.conf
+elif [ -f "/etc/apache2/sites-available/moodle.conf.template" ]; then
+    envsubst '${MOODLE_PATH}' < /etc/apache2/sites-available/moodle.conf.template > /etc/apache2/sites-available/moodle.conf
+else
+    # Generate config directly
+    cat > /etc/apache2/sites-available/moodle.conf << APACHE_EOF
+<VirtualHost *:80>
+    ServerAdmin admin@localhost
+    DocumentRoot /var/www/html/moodle
+
+    # Alias for custom path
+    Alias ${MOODLE_PATH} /var/www/html/moodle
+
+    <Directory /var/www/html/moodle>
+        Options -Indexes +FollowSymLinks
+        AllowOverride All
+        Require all granted
+
+        Header always set X-Content-Type-Options "nosniff"
+        Header always set X-XSS-Protection "1; mode=block"
+        Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    </Directory>
+
+    ErrorLog /var/log/moodle/error.log
+    CustomLog /var/log/moodle/access.log combined
+    LogLevel warn
+
+    <IfModule mod_deflate.c>
+        AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+    </IfModule>
+</VirtualHost>
+APACHE_EOF
+fi
+
+# Enable the moodle site
+a2ensite moodle > /dev/null 2>&1 || true
+log_success "Apache configuration generated for path: ${MOODLE_PATH}"
 
 # Wait for database
 log_info "Waiting for database to be ready..."
@@ -73,7 +125,6 @@ if [ ! -f "${CONFIG_FILE}" ]; then
     log_success "Configuration created!"
 else
     log_info "Configuration already exists, updating key settings..."
-    # Update wwwroot, sslproxy, reverseproxy, allowframembedding
     /usr/local/bin/configure-moodle.sh
 fi
 
@@ -163,6 +214,7 @@ echo "  URL: https://${MOODLE_HOSTNAME}${MOODLE_PATH}"
 echo "  Admin: ${MOODLE_ADMIN_USER}"
 echo ""
 echo "  Settings:"
+echo "    - Path: ${MOODLE_PATH}"
 echo "    - Reverse Proxy: ${MOODLE_REVERSEPROXY}"
 echo "    - SSL Proxy: ${MOODLE_SSLPROXY}"
 echo "    - iframe Embedding: ${MOODLE_ALLOWFRAMEMBEDDING}"

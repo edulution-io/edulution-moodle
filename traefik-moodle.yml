@@ -1,11 +1,13 @@
 # Traefik Dynamic Configuration for Moodle
 # Copy this file to your Traefik dynamic config directory
 # e.g., /etc/traefik/dynamic/moodle.yml
+#
+# Default path is /moodle-app - adjust if you changed MOODLE_PATH
 
 http:
   routers:
     moodle:
-      rule: PathPrefix(`/moodle`)
+      rule: PathPrefix(`/moodle-app`)
       service: moodle
       entryPoints:
         - websecure

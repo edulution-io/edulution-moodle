@@ -10,17 +10,15 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV MOODLE_VERSION=4.5
 ENV MOODLE_BRANCH=MOODLE_405_STABLE
 
-# Default environment variables
+# Default environment variables (non-sensitive defaults only)
 ENV MOODLE_DATABASE_HOST=moodle-db \
     MOODLE_DATABASE_NAME=moodle \
     MOODLE_DATABASE_USER=moodle \
-    MOODLE_DATABASE_PASSWORD=moodle \
     MOODLE_ADMIN_USER=admin \
-    MOODLE_ADMIN_PASSWORD=changeme \
     MOODLE_ADMIN_EMAIL=admin@example.com \
     MOODLE_SITE_NAME="Edulution Moodle" \
     MOODLE_HOSTNAME=localhost \
-    MOODLE_PATH=/moodle \
+    MOODLE_PATH=/moodle-app \
     MOODLE_DATA=/var/moodledata \
     MOODLE_REVERSEPROXY=true \
     MOODLE_SSLPROXY=true \
@@ -39,7 +37,6 @@ RUN apt-get update && apt-get install -y \
     php-xmlrpc \
     php-soap \
     php-gd \
-    php-json \
     php-cli \
     php-curl \
     php-zip \
@@ -56,19 +53,22 @@ RUN apt-get update && apt-get install -y \
     supervisor \
     mariadb-client \
     locales \
+    gettext-base \
+    sudo \
     && rm -rf /var/lib/apt/lists/*
 
 # Generate locales
 RUN locale-gen en_US.UTF-8 de_DE.UTF-8
 ENV LANG=en_US.UTF-8
 
-# Configure PHP
-RUN echo "max_execution_time = 300" >> /etc/php/*/apache2/php.ini && \
-    echo "memory_limit = 512M" >> /etc/php/*/apache2/php.ini && \
-    echo "post_max_size = 100M" >> /etc/php/*/apache2/php.ini && \
-    echo "upload_max_filesize = 100M" >> /etc/php/*/apache2/php.ini && \
-    echo "max_input_vars = 5000" >> /etc/php/*/apache2/php.ini && \
-    echo "date.timezone = Europe/Berlin" >> /etc/php/*/apache2/php.ini
+# Configure PHP - find the actual path first
+RUN PHP_INI=$(find /etc/php -name "php.ini" -path "*/apache2/*" | head -1) && \
+    echo "max_execution_time = 300" >> "$PHP_INI" && \
+    echo "memory_limit = 512M" >> "$PHP_INI" && \
+    echo "post_max_size = 100M" >> "$PHP_INI" && \
+    echo "upload_max_filesize = 100M" >> "$PHP_INI" && \
+    echo "max_input_vars = 5000" >> "$PHP_INI" && \
+    echo "date.timezone = Europe/Berlin" >> "$PHP_INI"
 
 # Enable Apache modules
 RUN a2enmod rewrite headers ssl
@@ -89,7 +89,7 @@ RUN mkdir -p /var/moodledata && \
 RUN chown -R www-data:www-data /var/www/html/moodle
 
 # Copy configuration files
-COPY config/apache-moodle.conf /etc/apache2/sites-available/moodle.conf
+COPY config/apache-moodle.conf.template /etc/apache2/sites-available/moodle.conf.template
 COPY config/config-template.php /var/www/html/moodle/config-template.php
 COPY scripts/entrypoint.sh /entrypoint.sh
 COPY scripts/configure-moodle.sh /usr/local/bin/configure-moodle.sh
@@ -98,18 +98,19 @@ COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # Make scripts executable
 RUN chmod +x /entrypoint.sh /usr/local/bin/configure-moodle.sh
 
-# Disable default site and enable moodle
-RUN a2dissite 000-default && a2ensite moodle
+# Disable default site and enable moodle (will be generated at runtime)
+RUN a2dissite 000-default
 
-# Create log directory
-RUN mkdir -p /var/log/moodle && chown www-data:www-data /var/log/moodle
+# Create log directories
+RUN mkdir -p /var/log/moodle /var/log/supervisor && \
+    chown www-data:www-data /var/log/moodle
 
 # Expose port 80
 EXPOSE 80
 
-# Health check
-HEALTHCHECK --interval=60s --timeout=10s --start-period=120s --retries=3 \
-    CMD curl -fs http://localhost/moodle/login/index.php || exit 1
+# Health check - uses MOODLE_PATH env var
+HEALTHCHECK --interval=60s --timeout=10s --start-period=180s --retries=3 \
+    CMD curl -fs http://localhost${MOODLE_PATH:-/moodle-app}/login/index.php || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
