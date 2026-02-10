@@ -109,7 +109,12 @@ log_step "Lade docker-compose.yml..."
 curl -sSL "$REPO_URL/deployment/edulution/docker-compose.yml" -o docker-compose.yml
 log_info "docker-compose.yml heruntergeladen"
 
-# 4. Traefik Config
+# 4. Symlink zur edulution .env erstellen (wichtig für docker-compose Variablen!)
+log_step "Erstelle Symlink zur edulution .env..."
+ln -sf "$EDULUTION_ENV" "$INSTALL_DIR/.env"
+log_info "Symlink erstellt: $INSTALL_DIR/.env -> $EDULUTION_ENV"
+
+# 5. Traefik Config
 log_step "Installiere Traefik-Konfiguration..."
 if [ -d "$TRAEFIK_DIR" ]; then
     curl -sSL "$REPO_URL/deployment/edulution/traefik/moodle.yml" -o "$TRAEFIK_DIR/moodle.yml"
@@ -122,7 +127,7 @@ else
         log_warn "Bitte Traefik-Config manuell kopieren!"
 fi
 
-# 5. Docker Image pullen
+# 6. Docker Image pullen
 log_step "Lade Docker Image..."
 docker compose pull
 
