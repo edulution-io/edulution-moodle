@@ -1,0 +1,21 @@
+# Traefik Dynamic Configuration for Moodle
+# Copy this file to your Traefik dynamic config directory
+# e.g., /etc/traefik/dynamic/moodle.yml
+
+http:
+  routers:
+    moodle:
+      rule: PathPrefix(`/moodle`)
+      service: moodle
+      entryPoints:
+        - websecure
+      tls: {}
+      # Higher priority than catch-all routes
+      priority: 100
+
+  services:
+    moodle:
+      loadBalancer:
+        servers:
+          - url: "http://edulution-moodle:80"
+        passHostHeader: true
