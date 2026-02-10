@@ -7,8 +7,8 @@ LABEL description="Moodle for edulution.io - optimized for reverse proxy and ifr
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Moodle version
-ENV MOODLE_VERSION=4.5
-ENV MOODLE_BRANCH=MOODLE_405_STABLE
+ENV MOODLE_VERSION=5.1.2
+ENV MOODLE_BRANCH=MOODLE_501_STABLE
 
 # Default environment variables (non-sensitive defaults only)
 ENV MOODLE_DATABASE_HOST=moodle-db \
@@ -74,9 +74,9 @@ RUN for PHP_INI in $(find /etc/php -name "php.ini"); do \
 # Enable Apache modules
 RUN a2enmod rewrite headers ssl
 
-# Download Moodle
+# Download Moodle 5.1.2 (latest stable)
 RUN cd /tmp && \
-    curl -L https://download.moodle.org/download.php/direct/stable405/moodle-latest-405.tgz -o moodle.tgz && \
+    curl -L https://download.moodle.org/download.php/stable501/moodle-5.1.2.tgz -o moodle.tgz && \
     tar -xzf moodle.tgz && \
     mv moodle /var/www/html/moodle && \
     rm moodle.tgz
