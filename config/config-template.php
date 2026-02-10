@@ -62,8 +62,8 @@ $CFG->reverseproxy = filter_var(getenv('MOODLE_REVERSEPROXY') ?: 'true', FILTER_
 // Tell Moodle SSL is terminated at the proxy
 $CFG->sslproxy = filter_var(getenv('MOODLE_SSLPROXY') ?: 'true', FILTER_VALIDATE_BOOLEAN);
 
-// Trust X-Forwarded-* headers from proxy
-$CFG->getremoteaddrconf = GETREMOTEADDR_SKIP_HTTP_X_FORWARDED_FOR;
+// Trust X-Forwarded-* headers from proxy (0 = use X-Forwarded-For)
+$CFG->getremoteaddrconf = 0;
 
 //=========================================================================
 // IFRAME EMBEDDING - ALLOW EMBEDDING IN EDULUTION
