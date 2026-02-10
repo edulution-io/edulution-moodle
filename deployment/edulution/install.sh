@@ -16,8 +16,18 @@ echo ""
 # Konfiguration
 INSTALL_DIR="/srv/docker/edulution-moodle"
 TRAEFIK_DIR="/srv/docker/edulution-ui/data/traefik/config"
-EDULUTION_ENV="/srv/docker/edulution-ui/apps/api/.env"
 REPO_URL="https://raw.githubusercontent.com/edulution-io/edulution-moodle/main"
+
+# Finde edulution .env (verschiedene mögliche Pfade)
+if [ -f "/srv/docker/edulution-ui/edulution.env" ]; then
+    EDULUTION_ENV="/srv/docker/edulution-ui/edulution.env"
+elif [ -f "/srv/docker/edulution-ui/apps/api/.env" ]; then
+    EDULUTION_ENV="/srv/docker/edulution-ui/apps/api/.env"
+elif [ -f "/srv/docker/edulution-ui/.env" ]; then
+    EDULUTION_ENV="/srv/docker/edulution-ui/.env"
+else
+    EDULUTION_ENV=""
+fi
 
 # Farben
 RED='\033[0;31m'
@@ -39,12 +49,24 @@ fi
 
 # Edulution-Check
 log_step "Pruefe Edulution-Installation..."
-if [ ! -f "$EDULUTION_ENV" ]; then
-    log_error "Edulution nicht gefunden: $EDULUTION_ENV"
+if [ -z "$EDULUTION_ENV" ] || [ ! -f "$EDULUTION_ENV" ]; then
+    log_error "Edulution .env nicht gefunden!"
+    log_error "Gesucht in:"
+    log_error "  - /srv/docker/edulution-ui/edulution.env"
+    log_error "  - /srv/docker/edulution-ui/apps/api/.env"
+    log_error "  - /srv/docker/edulution-ui/.env"
     log_error "Bitte zuerst edulution installieren!"
     exit 1
 fi
-log_info "Edulution gefunden"
+log_info "Edulution gefunden: $EDULUTION_ENV"
+
+# Lade EDULUTION_HOSTNAME aus der .env
+source "$EDULUTION_ENV"
+if [ -z "$EDULUTION_BASE_DOMAIN" ]; then
+    log_error "EDULUTION_BASE_DOMAIN nicht in $EDULUTION_ENV gefunden!"
+    exit 1
+fi
+log_info "Domain: $EDULUTION_BASE_DOMAIN"
 
 # 1. Moodle-Verzeichnis erstellen
 log_step "Erstelle Moodle-Verzeichnis..."
@@ -122,5 +144,5 @@ echo ""
 echo "Logs pruefen:"
 echo "  docker compose logs -f edulution-moodle"
 echo ""
-echo "URL: https://\$(grep EDULUTION_HOSTNAME $EDULUTION_ENV | cut -d= -f2)/moodle-app"
+echo "URL: https://$EDULUTION_BASE_DOMAIN/moodle-app"
 echo ""

@@ -4,10 +4,10 @@ services:
     restart: always
     container_name: edulution-moodle
     env_file:
-      - /srv/docker/edulution-ui/apps/api/.env
+      - /srv/docker/edulution-ui/edulution.env
     environment:
       # URL Settings - read from edulution .env
-      - MOODLE_HOSTNAME=${EDULUTION_HOSTNAME}
+      - MOODLE_HOSTNAME=${EDULUTION_BASE_DOMAIN}
       - MOODLE_PATH=/moodle-app
 
       # Reverse Proxy Settings
@@ -24,7 +24,7 @@ services:
       # Admin
       - MOODLE_ADMIN_USER=admin
       - MOODLE_ADMIN_PASSWORD_FILE=/run/secrets/admin_password
-      - MOODLE_ADMIN_EMAIL=admin@${EDULUTION_HOSTNAME}
+      - MOODLE_ADMIN_EMAIL=admin@${EDULUTION_BASE_DOMAIN}
       - MOODLE_SITE_NAME=Edulution Moodle
 
       # Redis
