@@ -1,0 +1,98 @@
+services:
+  edulution-moodle:
+    image: ghcr.io/edulution-io/edulution-moodle:latest
+    restart: always
+    container_name: edulution-moodle
+    env_file:
+      - /srv/docker/edulution-ui/apps/api/.env
+    environment:
+      # URL Settings - read from edulution .env
+      - MOODLE_HOSTNAME=${EDULUTION_HOSTNAME}
+      - MOODLE_PATH=/moodle-app
+
+      # Reverse Proxy Settings
+      - MOODLE_REVERSEPROXY=true
+      - MOODLE_SSLPROXY=true
+      - MOODLE_ALLOWFRAMEMBEDDING=true
+
+      # Database
+      - MOODLE_DATABASE_HOST=edulution-moodle-db
+      - MOODLE_DATABASE_NAME=moodle
+      - MOODLE_DATABASE_USER=moodle
+      - MOODLE_DATABASE_PASSWORD_FILE=/run/secrets/db_password
+
+      # Admin
+      - MOODLE_ADMIN_USER=admin
+      - MOODLE_ADMIN_PASSWORD_FILE=/run/secrets/admin_password
+      - MOODLE_ADMIN_EMAIL=admin@${EDULUTION_HOSTNAME}
+      - MOODLE_SITE_NAME=Edulution Moodle
+
+      # Redis
+      - REDIS_HOST=edulution-moodle-redis
+      - REDIS_PORT=6379
+
+      # SSO (optional)
+      - ENABLE_SSO=0
+      - KEYCLOAK_CLIENT_ID=moodle
+      - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_EDU_MAILCOW_SYNC_SECRET:-}
+    volumes:
+      - /srv/docker/edulution-moodle/moodledata:/var/moodledata
+      - /srv/docker/edulution-moodle/logs:/var/log/moodle
+      - /srv/docker/edulution-moodle/secrets:/run/secrets:ro
+    depends_on:
+      edulution-moodle-db:
+        condition: service_healthy
+      edulution-moodle-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost/moodle-app/login/index.php || exit 1"]
+      interval: 60s
+      timeout: 10s
+      start_period: 180s
+      retries: 3
+    networks:
+      - edulution-ui_default
+
+  edulution-moodle-db:
+    image: mariadb:10.11
+    restart: always
+    container_name: edulution-moodle-db
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb_file_per_table=ON
+    volumes:
+      - /srv/docker/edulution-moodle/mariadb:/var/lib/mysql
+      - /srv/docker/edulution-moodle/secrets:/run/secrets:ro
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+      MYSQL_DATABASE: moodle
+      MYSQL_USER: moodle
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - edulution-ui_default
+
+  edulution-moodle-redis:
+    image: redis:7-alpine
+    restart: always
+    container_name: edulution-moodle-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - /srv/docker/edulution-moodle/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - edulution-ui_default
+
+networks:
+  edulution-ui_default:
+    external: true

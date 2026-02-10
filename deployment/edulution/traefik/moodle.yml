@@ -1,0 +1,16 @@
+http:
+  routers:
+    edulution-moodle:
+      rule: PathPrefix(`/moodle-app`)
+      service: edulution-moodle
+      entryPoints:
+        - websecure
+      tls: {}
+      priority: 100
+
+  services:
+    edulution-moodle:
+      loadBalancer:
+        servers:
+          - url: http://edulution-moodle:80
+        passHostHeader: true

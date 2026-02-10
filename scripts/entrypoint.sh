@@ -50,6 +50,17 @@ MOODLE_DATA="${MOODLE_DATA:-/var/moodledata}"
 MOODLE_PATH="${MOODLE_PATH:-/moodle-app}"
 CONFIG_FILE="${MOODLE_DIR}/config.php"
 
+# Load secrets from files if provided
+if [ -f "${MOODLE_DATABASE_PASSWORD_FILE:-}" ]; then
+    export MOODLE_DATABASE_PASSWORD=$(cat "$MOODLE_DATABASE_PASSWORD_FILE")
+    log_info "Loaded database password from file"
+fi
+
+if [ -f "${MOODLE_ADMIN_PASSWORD_FILE:-}" ]; then
+    export MOODLE_ADMIN_PASSWORD=$(cat "$MOODLE_ADMIN_PASSWORD_FILE")
+    log_info "Loaded admin password from file"
+fi
+
 # Ensure MOODLE_PATH starts with /
 if [[ "${MOODLE_PATH}" != /* ]]; then
     MOODLE_PATH="/${MOODLE_PATH}"
