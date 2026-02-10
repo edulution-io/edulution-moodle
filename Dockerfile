@@ -94,10 +94,11 @@ COPY config/apache-moodle.conf.template /etc/apache2/sites-available/moodle.conf
 COPY config/config-template.php /var/www/html/moodle/config-template.php
 COPY scripts/entrypoint.sh /entrypoint.sh
 COPY scripts/configure-moodle.sh /usr/local/bin/configure-moodle.sh
+COPY scripts/generate-config.sh /usr/local/bin/generate-config.sh
 COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Make scripts executable
-RUN chmod +x /entrypoint.sh /usr/local/bin/configure-moodle.sh
+RUN chmod +x /entrypoint.sh /usr/local/bin/configure-moodle.sh /usr/local/bin/generate-config.sh
 
 # Disable default site and enable moodle (will be generated at runtime)
 RUN a2dissite 000-default

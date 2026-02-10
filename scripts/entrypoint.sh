@@ -167,23 +167,16 @@ if [ "${DB_TABLES}" -lt 10 ]; then
 
     log_success "Moodle installed successfully!"
 
-    # Nach erfolgreicher Installation: config.php mit unseren Einstellungen ersetzen
-    log_info "Applying custom configuration..."
-    cp "${MOODLE_DIR}/config-template.php" "${CONFIG_FILE}"
-    chown www-data:www-data "${CONFIG_FILE}"
-    log_success "Configuration applied!"
+    # Nach erfolgreicher Installation: config.php mit korrekten Werten generieren
+    log_info "Generating configuration with actual values..."
+    /usr/local/bin/generate-config.sh
+    log_success "Configuration generated!"
 else
     log_info "Moodle already installed."
 
-    # Config.php mit Template aktualisieren falls nötig
-    if [ -f "${CONFIG_FILE}" ]; then
-        log_info "Updating configuration..."
-        /usr/local/bin/configure-moodle.sh
-    else
-        log_info "Creating configuration from template..."
-        cp "${MOODLE_DIR}/config-template.php" "${CONFIG_FILE}"
-        chown www-data:www-data "${CONFIG_FILE}"
-    fi
+    # Config.php neu generieren mit aktuellen Werten
+    log_info "Regenerating configuration..."
+    /usr/local/bin/generate-config.sh
 
     # Upgrade check
     cd "${MOODLE_DIR}"
