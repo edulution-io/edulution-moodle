@@ -61,14 +61,15 @@ RUN apt-get update && apt-get install -y \
 RUN locale-gen en_US.UTF-8 de_DE.UTF-8
 ENV LANG=en_US.UTF-8
 
-# Configure PHP - find the actual path first
-RUN PHP_INI=$(find /etc/php -name "php.ini" -path "*/apache2/*" | head -1) && \
-    echo "max_execution_time = 300" >> "$PHP_INI" && \
-    echo "memory_limit = 512M" >> "$PHP_INI" && \
-    echo "post_max_size = 100M" >> "$PHP_INI" && \
-    echo "upload_max_filesize = 100M" >> "$PHP_INI" && \
-    echo "max_input_vars = 5000" >> "$PHP_INI" && \
-    echo "date.timezone = Europe/Berlin" >> "$PHP_INI"
+# Configure PHP for both Apache AND CLI
+RUN for PHP_INI in $(find /etc/php -name "php.ini"); do \
+        echo "max_execution_time = 300" >> "$PHP_INI" && \
+        echo "memory_limit = 512M" >> "$PHP_INI" && \
+        echo "post_max_size = 100M" >> "$PHP_INI" && \
+        echo "upload_max_filesize = 100M" >> "$PHP_INI" && \
+        echo "max_input_vars = 5000" >> "$PHP_INI" && \
+        echo "date.timezone = Europe/Berlin" >> "$PHP_INI"; \
+    done
 
 # Enable Apache modules
 RUN a2enmod rewrite headers ssl
