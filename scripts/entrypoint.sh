@@ -128,17 +128,6 @@ done
 echo ""
 log_success "Database is ready!"
 
-# Create config.php from template if it doesn't exist
-if [ ! -f "${CONFIG_FILE}" ]; then
-    log_info "Creating Moodle configuration..."
-    cp "${MOODLE_DIR}/config-template.php" "${CONFIG_FILE}"
-    chown www-data:www-data "${CONFIG_FILE}"
-    log_success "Configuration created!"
-else
-    log_info "Configuration already exists, updating key settings..."
-    /usr/local/bin/configure-moodle.sh
-fi
-
 # Ensure data directory permissions
 log_info "Setting up data directory permissions..."
 mkdir -p "${MOODLE_DATA}"
@@ -152,6 +141,9 @@ DB_TABLES=$(mariadb -h "${MOODLE_DATABASE_HOST}" -u "${MOODLE_DATABASE_USER}" -p
 
 if [ "${DB_TABLES}" -lt 10 ]; then
     log_info "Installing Moodle (this may take a few minutes)..."
+
+    # WICHTIG: config.php muss gelöscht werden vor der Installation!
+    rm -f "${CONFIG_FILE}"
 
     cd "${MOODLE_DIR}"
     sudo -u www-data php admin/cli/install.php \
@@ -173,13 +165,27 @@ if [ "${DB_TABLES}" -lt 10 ]; then
             exit 1
         }
 
-    # Replace generated config with our template
+    log_success "Moodle installed successfully!"
+
+    # Nach erfolgreicher Installation: config.php mit unseren Einstellungen ersetzen
+    log_info "Applying custom configuration..."
     cp "${MOODLE_DIR}/config-template.php" "${CONFIG_FILE}"
     chown www-data:www-data "${CONFIG_FILE}"
-
-    log_success "Moodle installed successfully!"
+    log_success "Configuration applied!"
 else
-    log_info "Moodle already installed. Checking for upgrades..."
+    log_info "Moodle already installed."
+
+    # Config.php mit Template aktualisieren falls nötig
+    if [ -f "${CONFIG_FILE}" ]; then
+        log_info "Updating configuration..."
+        /usr/local/bin/configure-moodle.sh
+    else
+        log_info "Creating configuration from template..."
+        cp "${MOODLE_DIR}/config-template.php" "${CONFIG_FILE}"
+        chown www-data:www-data "${CONFIG_FILE}"
+    fi
+
+    # Upgrade check
     cd "${MOODLE_DIR}"
     sudo -u www-data php admin/cli/upgrade.php --non-interactive || true
     log_success "Upgrade check completed!"
