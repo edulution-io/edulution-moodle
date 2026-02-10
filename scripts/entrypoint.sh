@@ -187,7 +187,7 @@ else
 
     # Upgrade check
     cd "${MOODLE_DIR}"
-    sudo -u www-data php admin/cli/upgrade.php --non-interactive || true
+    sudo -E -u www-data php admin/cli/upgrade.php --non-interactive || true
     log_success "Upgrade check completed!"
 fi
 
@@ -195,19 +195,27 @@ fi
 log_info "Configuring iframe embedding..."
 cd "${MOODLE_DIR}"
 if [ "${MOODLE_ALLOWFRAMEMBEDDING}" = "true" ] || [ "${MOODLE_ALLOWFRAMEMBEDDING}" = "1" ]; then
-    sudo -u www-data php admin/cli/cfg.php --name=allowframembedding --set=1 2>/dev/null || true
+    sudo -E -u www-data php admin/cli/cfg.php --name=allowframembedding --set=1 2>/dev/null || true
     log_success "iframe embedding ENABLED"
 else
-    sudo -u www-data php admin/cli/cfg.php --name=allowframembedding --set=0 2>/dev/null || true
+    sudo -E -u www-data php admin/cli/cfg.php --name=allowframembedding --set=0 2>/dev/null || true
     log_warn "iframe embedding DISABLED"
 fi
 
-# Install German language pack
-log_info "Installing language packs..."
-cd "${MOODLE_DIR}"
-sudo -u www-data php admin/cli/install_langpack.php de 2>/dev/null || true
-sudo -u www-data php admin/cli/install_langpack.php de_comm 2>/dev/null || true
-log_success "Language packs installed!"
+# Download German language pack (no CLI available in Moodle)
+log_info "Downloading German language pack..."
+LANG_DIR="${MOODLE_DATA}/lang"
+mkdir -p "${LANG_DIR}"
+if [ ! -d "${LANG_DIR}/de" ]; then
+    curl -sSL "https://download.moodle.org/download.php/direct/langpack/5.1/de.zip" -o /tmp/de.zip && \
+        unzip -q /tmp/de.zip -d "${LANG_DIR}/" && \
+        rm /tmp/de.zip && \
+        log_success "German language pack installed!" || \
+        log_warn "Could not download German language pack (install manually via admin UI)"
+else
+    log_info "German language pack already installed"
+fi
+chown -R www-data:www-data "${LANG_DIR}"
 
 # Set up cron job
 log_info "Setting up Moodle cron..."
