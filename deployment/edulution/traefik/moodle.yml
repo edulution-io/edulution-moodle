@@ -7,6 +7,14 @@ http:
         - websecure
       tls: {}
       priority: 100
+      middlewares:
+        - moodle-headers
+
+  middlewares:
+    moodle-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
 
   services:
     edulution-moodle:
