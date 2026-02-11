@@ -21,7 +21,12 @@ fi
 # Remove trailing slash
 MOODLE_PATH="${MOODLE_PATH%/}"
 
-WWWROOT="https://${HOSTNAME}${MOODLE_PATH}"
+# Determine protocol
+PROTOCOL="https"
+if [ "${MOODLE_SSLPROXY}" = "false" ] || [ "${MOODLE_SSLPROXY}" = "0" ]; then
+    PROTOCOL="http"
+fi
+WWWROOT="${PROTOCOL}://${HOSTNAME}${MOODLE_PATH}"
 
 # Boolean settings
 REVERSE_PROXY="true"

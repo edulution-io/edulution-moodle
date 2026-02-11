@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 LABEL maintainer="edulution.io"
 LABEL description="Moodle for edulution.io - optimized for reverse proxy and iframe embedding"
@@ -7,8 +7,8 @@ LABEL description="Moodle for edulution.io - optimized for reverse proxy and ifr
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Moodle version
-ENV MOODLE_VERSION=5.1.2
-ENV MOODLE_BRANCH=MOODLE_501_STABLE
+ENV MOODLE_VERSION=5.0.2
+ENV MOODLE_BRANCH=MOODLE_500_STABLE
 
 # Default environment variables (non-sensitive defaults only)
 ENV MOODLE_DATABASE_HOST=moodle-db \
@@ -26,7 +26,7 @@ ENV MOODLE_DATABASE_HOST=moodle-db \
     ENABLE_SSO=0 \
     SYNC_ENABLED=0
 
-# Install dependencies
+# Install dependencies (PHP 8.3 from Ubuntu 24.04)
 RUN apt-get update && apt-get install -y \
     apache2 \
     libapache2-mod-php \
@@ -34,7 +34,6 @@ RUN apt-get update && apt-get install -y \
     php-mysql \
     php-pgsql \
     php-intl \
-    php-xmlrpc \
     php-soap \
     php-gd \
     php-cli \
@@ -45,6 +44,7 @@ RUN apt-get update && apt-get install -y \
     php-bcmath \
     php-ldap \
     php-redis \
+    php-apcu \
     curl \
     wget \
     git \
@@ -74,9 +74,9 @@ RUN for PHP_INI in $(find /etc/php -name "php.ini"); do \
 # Enable Apache modules
 RUN a2enmod rewrite headers ssl
 
-# Download Moodle 5.1.2 (latest stable)
+# Download Moodle 5.0.2 (latest stable)
 RUN cd /tmp && \
-    curl -L https://download.moodle.org/download.php/stable501/moodle-5.1.2.tgz -o moodle.tgz && \
+    curl -L https://download.moodle.org/download.php/direct/stable500/moodle-5.0.2.tgz -o moodle.tgz && \
     tar -xzf moodle.tgz && \
     mv moodle /var/www/html/moodle && \
     rm moodle.tgz
@@ -85,6 +85,12 @@ RUN cd /tmp && \
 RUN mkdir -p /var/moodledata && \
     chown -R www-data:www-data /var/moodledata && \
     chmod 755 /var/moodledata
+
+# Install Composer and Moosh (Moodle Shell)
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
+    git clone --depth 1 https://github.com/tmuras/moosh.git /opt/moosh && \
+    cd /opt/moosh && composer install --no-dev --no-interaction && \
+    ln -s /opt/moosh/moosh.php /usr/local/bin/moosh
 
 # Set ownership
 RUN chown -R www-data:www-data /var/www/html/moodle

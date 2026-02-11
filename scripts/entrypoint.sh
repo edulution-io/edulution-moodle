@@ -200,7 +200,7 @@ log_info "Downloading German language pack..."
 LANG_DIR="${MOODLE_DATA}/lang"
 mkdir -p "${LANG_DIR}"
 if [ ! -d "${LANG_DIR}/de" ]; then
-    curl -sSL "https://download.moodle.org/download.php/direct/langpack/5.1/de.zip" -o /tmp/de.zip && \
+    curl -sSL "https://download.moodle.org/download.php/direct/langpack/5.0/de.zip" -o /tmp/de.zip && \
         unzip -q /tmp/de.zip -d "${LANG_DIR}/" && \
         rm /tmp/de.zip && \
         log_success "German language pack installed!" || \

@@ -1,0 +1,49 @@
+services:
+  moodle:
+    build: .
+    container_name: moodle-local
+    ports:
+      - "8080:80"
+    environment:
+      - MOODLE_HOSTNAME=localhost:8080
+      - MOODLE_PATH=/moodle-app
+      - MOODLE_REVERSEPROXY=false
+      - MOODLE_SSLPROXY=false
+      - MOODLE_ALLOWFRAMEMBEDDING=true
+      - MOODLE_DATABASE_HOST=moodle-db-local
+      - MOODLE_DATABASE_NAME=moodle
+      - MOODLE_DATABASE_USER=moodle
+      - MOODLE_DATABASE_PASSWORD=moodle123
+      - MOODLE_ADMIN_USER=admin
+      - MOODLE_ADMIN_PASSWORD=Admin123!
+      - MOODLE_ADMIN_EMAIL=admin@example.com
+      - MOODLE_SITE_NAME=Moodle Local Test
+    volumes:
+      - moodledata:/var/moodledata
+    depends_on:
+      moodle-db-local:
+        condition: service_healthy
+
+  moodle-db-local:
+    image: mariadb:10.11
+    container_name: moodle-db-local
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass123
+      MYSQL_DATABASE: moodle
+      MYSQL_USER: moodle
+      MYSQL_PASSWORD: moodle123
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mariadb:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  moodledata:
+  mariadb:
