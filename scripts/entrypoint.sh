@@ -58,7 +58,9 @@ echo "=============================================="
 echo ""
 
 # Configuration
-MOODLE_DIR="/var/www/html/moodle"
+# Moodle 5.x: web-accessible files are in public/, CLI tools remain in root
+MOODLE_BASE="/var/www/html/moodle"
+MOODLE_DIR="${MOODLE_BASE}/public"
 MOODLE_DATA="${MOODLE_DATA:-/var/moodledata}"
 MOODLE_PATH="${MOODLE_PATH:-/moodle-app}"
 CONFIG_FILE="${MOODLE_DIR}/config.php"
@@ -95,12 +97,12 @@ else
     cat > /etc/apache2/sites-available/moodle.conf << APACHE_EOF
 <VirtualHost *:80>
     ServerAdmin admin@localhost
-    DocumentRoot /var/www/html/moodle
+    DocumentRoot ${MOODLE_DIR}
 
     # Alias for custom path
-    Alias ${MOODLE_PATH} /var/www/html/moodle
+    Alias ${MOODLE_PATH} ${MOODLE_DIR}
 
-    <Directory /var/www/html/moodle>
+    <Directory ${MOODLE_DIR}>
         Options -Indexes +FollowSymLinks
         AllowOverride All
         Require all granted
@@ -309,7 +311,7 @@ mkdir -p /var/moodledata/localcache
 chown -R www-data:www-data /var/moodledata
 
 # Fix ownership one more time
-chown -R www-data:www-data "${MOODLE_DIR}"
+chown -R www-data:www-data "${MOODLE_BASE}"
 chown -R www-data:www-data "${MOODLE_DATA}"
 
 echo ""

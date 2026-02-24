@@ -96,8 +96,8 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
     cd /opt/moosh && composer install --no-dev --no-interaction && \
     ln -s /opt/moosh/moosh.php /usr/local/bin/moosh
 
-# Copy edulution local plugin
-COPY local/edulution /var/www/html/moodle/local/edulution
+# Copy edulution local plugin (Moodle 5.x: plugins go into public/)
+COPY local/edulution /var/www/html/moodle/public/local/edulution
 
 # Set ownership
 RUN chown -R www-data:www-data /var/www/html/moodle
