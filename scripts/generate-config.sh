@@ -11,7 +11,7 @@
 
 set -euo pipefail
 
-MOODLE_DIR="/var/www/html/moodle/public"
+MOODLE_DIR="/var/www/html/moodle"
 CONFIG_FILE="${MOODLE_DIR}/config.php"
 
 # Get values from environment

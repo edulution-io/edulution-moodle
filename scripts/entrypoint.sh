@@ -63,7 +63,7 @@ MOODLE_BASE="/var/www/html/moodle"
 MOODLE_DIR="${MOODLE_BASE}/public"
 MOODLE_DATA="${MOODLE_DATA:-/var/moodledata}"
 MOODLE_PATH="${MOODLE_PATH:-/moodle-app}"
-CONFIG_FILE="${MOODLE_DIR}/config.php"
+CONFIG_FILE="${MOODLE_BASE}/config.php"
 
 # Load secrets from files if provided
 if [ -f "${MOODLE_DATABASE_PASSWORD_FILE:-}" ]; then
