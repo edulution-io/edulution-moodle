@@ -47,7 +47,6 @@ services:
       # - EDULUTION_VERIFY_SSL=${EDULUTION_VERIFY_SSL:-true}
       # - EDULUTION_COOKIE_AUTH_ENABLED=${EDULUTION_COOKIE_AUTH_ENABLED:-false}
     volumes:
-      - moodle-data:/var/www/html/moodle
       - moodledata:/var/moodledata
       # Plugin für Entwicklung
       - ./local/edulution:/var/www/html/moodle/local/edulution
@@ -63,5 +62,4 @@ services:
 
 volumes:
   db-data:
-  moodle-data:
   moodledata:

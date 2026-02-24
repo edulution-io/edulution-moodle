@@ -7,7 +7,7 @@ LABEL description="Moodle for edulution.io - optimized for reverse proxy and ifr
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Moodle version - can be overridden at build time with --build-arg
-ARG MOODLE_VERSION=5.1.2
+ARG MOODLE_VERSION=5.1.3
 ARG MOODLE_BRANCH=501
 
 # Store version in environment for runtime access
