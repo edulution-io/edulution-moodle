@@ -1,0 +1,25 @@
+http:
+  routers:
+    moodle-app:
+      rule: "PathPrefix(`/moodle-app`)"
+      service: moodle-app
+      entryPoints:
+        - websecure
+      tls: {}
+      middlewares:
+        - moodle-headers
+
+  middlewares:
+    moodle-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: https
+        frameDeny: false
+        customResponseHeaders:
+          X-Frame-Options: ALLOWALL
+
+  services:
+    moodle-app:
+      loadBalancer:
+        servers:
+          - url: "http://edulution-moodle-app:80"

@@ -1,0 +1,61 @@
+{{!
+    Sync results template for local_edulution.
+}}
+
+<div class="sync-results" style="font-size: 13px;">
+    {{#success}}
+    <div class="alert alert-success py-2 mb-3">
+        <i class="fa fa-check-circle"></i>
+        <strong>Synchronisierung abgeschlossen</strong>
+        {{#isDryRun}}<span class="ms-2">(Testlauf - keine Änderungen)</span>{{/isDryRun}}
+    </div>
+
+    <div class="row g-2 mb-3">
+        <div class="col-3">
+            <div class="card text-center py-2 border-success">
+                <div class="text-success" style="font-size: 20px; font-weight: 600;">{{created}}</div>
+                <small class="text-muted">Erstellt</small>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="card text-center py-2 border-info">
+                <div class="text-info" style="font-size: 20px; font-weight: 600;">{{updated}}</div>
+                <small class="text-muted">Aktualisiert</small>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="card text-center py-2 border-warning">
+                <div class="text-warning" style="font-size: 20px; font-weight: 600;">{{deleted}}</div>
+                <small class="text-muted">Entfernt</small>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="card text-center py-2">
+                <div class="text-secondary" style="font-size: 20px; font-weight: 600;">{{skipped}}</div>
+                <small class="text-muted">Übersprungen</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between text-muted">
+        <span><i class="fa fa-clock-o"></i> Dauer: {{duration}}</span>
+        {{#hasErrors}}<span class="text-danger"><i class="fa fa-exclamation-triangle"></i> {{errors}} Fehler</span>{{/hasErrors}}
+    </div>
+
+    {{#hasErrors}}
+    <div class="alert alert-warning py-2 mt-2 mb-0">
+        <strong>Fehler:</strong>
+        <ul class="mb-0 mt-1 ps-3">
+            {{#errorDetails}}<li>{{.}}</li>{{/errorDetails}}
+        </ul>
+    </div>
+    {{/hasErrors}}
+    {{/success}}
+
+    {{^success}}
+    <div class="alert alert-danger py-2 mb-0">
+        <i class="fa fa-times-circle"></i>
+        <strong>Fehlgeschlagen:</strong> {{errorMessage}}
+    </div>
+    {{/success}}
+</div>

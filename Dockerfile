@@ -6,9 +6,13 @@ LABEL description="Moodle for edulution.io - optimized for reverse proxy and ifr
 # Avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Moodle version
-ENV MOODLE_VERSION=5.0.2
-ENV MOODLE_BRANCH=MOODLE_500_STABLE
+# Moodle version - can be overridden at build time with --build-arg
+ARG MOODLE_VERSION=5.1.2
+ARG MOODLE_BRANCH=501
+
+# Store version in environment for runtime access
+ENV MOODLE_VERSION=${MOODLE_VERSION}
+ENV MOODLE_BRANCH_NUM=${MOODLE_BRANCH}
 
 # Default environment variables (non-sensitive defaults only)
 ENV MOODLE_DATABASE_HOST=moodle-db \
@@ -23,8 +27,7 @@ ENV MOODLE_DATABASE_HOST=moodle-db \
     MOODLE_REVERSEPROXY=true \
     MOODLE_SSLPROXY=true \
     MOODLE_ALLOWFRAMEMBEDDING=true \
-    ENABLE_SSO=0 \
-    SYNC_ENABLED=0
+    ENABLE_SSO=0
 
 # Install dependencies (PHP 8.3 from Ubuntu 24.04)
 RUN apt-get update && apt-get install -y \
@@ -74,9 +77,10 @@ RUN for PHP_INI in $(find /etc/php -name "php.ini"); do \
 # Enable Apache modules
 RUN a2enmod rewrite headers ssl
 
-# Download Moodle 5.0.2 (latest stable)
+# Download Moodle (version set via build args)
 RUN cd /tmp && \
-    curl -L https://download.moodle.org/download.php/direct/stable500/moodle-5.0.2.tgz -o moodle.tgz && \
+    echo "Downloading Moodle ${MOODLE_VERSION} from stable${MOODLE_BRANCH}..." && \
+    curl -L "https://download.moodle.org/download.php/direct/stable${MOODLE_BRANCH}/moodle-${MOODLE_VERSION}.tgz" -o moodle.tgz && \
     tar -xzf moodle.tgz && \
     mv moodle /var/www/html/moodle && \
     rm moodle.tgz
@@ -91,6 +95,9 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
     git clone --depth 1 https://github.com/tmuras/moosh.git /opt/moosh && \
     cd /opt/moosh && composer install --no-dev --no-interaction && \
     ln -s /opt/moosh/moosh.php /usr/local/bin/moosh
+
+# Copy edulution local plugin
+COPY local/edulution /var/www/html/moodle/local/edulution
 
 # Set ownership
 RUN chown -R www-data:www-data /var/www/html/moodle

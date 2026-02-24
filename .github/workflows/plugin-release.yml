@@ -1,0 +1,64 @@
+name: Release Plugin
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.1.0)'
+        required: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Create plugin ZIP
+        run: |
+          cd local
+          zip -r ../local_edulution_${{ steps.version.outputs.version }}.zip edulution
+          cd ..
+          echo "Created: local_edulution_${{ steps.version.outputs.version }}.zip"
+          ls -la *.zip
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Release ${{ steps.version.outputs.version }}
+          body: |
+            ## Edulution Moodle Plugin ${{ steps.version.outputs.version }}
+
+            ### Installation
+            1. Download `local_edulution_${{ steps.version.outputs.version }}.zip`
+            2. Extract to `moodle/local/edulution`
+            3. Run Moodle upgrade (Site Administration > Notifications)
+
+            ### Docker Image
+            ```bash
+            docker pull ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }}
+            ```
+          files: |
+            local_edulution_${{ steps.version.outputs.version }}.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

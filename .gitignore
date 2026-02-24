@@ -1,1 +1,77 @@
-data
+# ===========================================
+# Edulution Moodle - .gitignore
+# ===========================================
+
+# -------------------------------------------
+# Docker & Local Development
+# -------------------------------------------
+data/
+*.log
+.env
+.env.local
+.env.*.local
+
+# -------------------------------------------
+# Keycloak Local Data
+# -------------------------------------------
+keycloak/data/
+keycloak/*.bak
+
+# -------------------------------------------
+# Moodle Data (Docker Volumes)
+# -------------------------------------------
+moodledata/
+moodle-data/
+
+# -------------------------------------------
+# Sync Data - Keep scripts, ignore test data
+# -------------------------------------------
+# Keep the sync scripts
+!sync-data/*.php
+!sync-data/*.sh
+
+# Ignore local test CSVs (use .example versions)
+sync-data/*.csv
+!sync-data/*.csv.example
+
+# Ignore sync logs
+sync-data/*.log
+
+# -------------------------------------------
+# Theme (separate repository or local development)
+# -------------------------------------------
+theme/
+
+# -------------------------------------------
+# Claude Code
+# -------------------------------------------
+.claude/
+
+# -------------------------------------------
+# IDE & Editor
+# -------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# -------------------------------------------
+# Temporary Files
+# -------------------------------------------
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# -------------------------------------------
+# OS Generated
+# -------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db

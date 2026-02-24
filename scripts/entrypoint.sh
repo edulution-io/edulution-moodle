@@ -1,5 +1,18 @@
 #!/bin/bash
-set -e
+#
+# Edulution Moodle Entrypoint Script
+#
+# This script initializes and configures Moodle for the edulution.io platform.
+# It handles database setup, Moodle installation, configuration, and cron setup.
+#
+# Environment Variables:
+#   See .env.example for full list of supported variables
+#
+# @copyright 2024 Edulution
+# @license   MIT
+#
+
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -195,12 +208,48 @@ else
     log_warn "iframe embedding DISABLED"
 fi
 
+# Configure security settings (force login, no guest)
+log_info "Configuring security settings..."
+cd "${MOODLE_DIR}"
+sudo -E -u www-data php admin/cli/cfg.php --name=forcelogin --set=1 2>/dev/null || true
+sudo -E -u www-data php admin/cli/cfg.php --name=guestloginbutton --set=0 2>/dev/null || true
+sudo -E -u www-data php admin/cli/cfg.php --name=forceloginforprofiles --set=1 2>/dev/null || true
+log_success "Security settings configured"
+
+# Configure course visibility (students see only enrolled courses)
+log_info "Configuring course visibility settings..."
+cd "${MOODLE_DIR}"
+# Frontpage: keine Kursliste für eingeloggte User (sie nutzen Dashboard)
+sudo -E -u www-data php admin/cli/cfg.php --name=frontpage --set='' 2>/dev/null || true
+sudo -E -u www-data php admin/cli/cfg.php --name=frontpageloggedin --set='' 2>/dev/null || true
+# Kategorien ausblenden
+sudo -E -u www-data php admin/cli/cfg.php --name=maxcategorydepth --set=0 2>/dev/null || true
+# Block myoverview: Kategorien ausblenden
+sudo -E -u www-data php admin/cli/cfg.php --component=block_myoverview --name=displaycategories --set=0 2>/dev/null || true
+log_success "Course visibility configured (students see only enrolled courses)"
+
+# Configure OAuth2/Keycloak SSO (if enabled)
+if [ "${ENABLE_SSO}" = "1" ] || [ "${ENABLE_SSO}" = "true" ]; then
+    if [ -n "${KEYCLOAK_CLIENT_SECRET}" ]; then
+        log_info "Configuring Keycloak SSO..."
+        if [ -f "/sync-data/configure-oauth2.php" ]; then
+            php /sync-data/configure-oauth2.php 2>/dev/null && \
+                log_success "Keycloak SSO configured" || \
+                log_warn "Could not configure Keycloak SSO"
+        else
+            log_warn "configure-oauth2.php not found - SSO not configured"
+        fi
+    else
+        log_warn "ENABLE_SSO=1 but KEYCLOAK_CLIENT_SECRET not set"
+    fi
+fi
+
 # Download German language pack (no CLI available in Moodle)
 log_info "Downloading German language pack..."
 LANG_DIR="${MOODLE_DATA}/lang"
 mkdir -p "${LANG_DIR}"
 if [ ! -d "${LANG_DIR}/de" ]; then
-    curl -sSL "https://download.moodle.org/download.php/direct/langpack/5.0/de.zip" -o /tmp/de.zip && \
+    curl -sSL "https://download.moodle.org/download.php/direct/langpack/5.1/de.zip" -o /tmp/de.zip && \
         unzip -q /tmp/de.zip -d "${LANG_DIR}/" && \
         rm /tmp/de.zip && \
         log_success "German language pack installed!" || \
@@ -215,6 +264,45 @@ log_info "Setting up Moodle cron..."
 echo "* * * * * www-data /usr/bin/php ${MOODLE_DIR}/admin/cli/cron.php > /dev/null 2>&1" > /etc/cron.d/moodle
 chmod 644 /etc/cron.d/moodle
 log_success "Cron configured!"
+
+# Set up Keycloak sync cron (if sync-data is mounted)
+if [ -f "/sync-data/keycloak-sync.php" ]; then
+    log_info "Setting up Keycloak sync cron..."
+
+    # Create sync wrapper script
+    cat > /usr/local/bin/keycloak-sync-cron.sh << 'SYNCEOF'
+#!/bin/bash
+LOGFILE="/var/log/moodle/keycloak-sync.log"
+LOCKFILE="/tmp/keycloak-sync.lock"
+
+# Prevent multiple instances
+if [ -f "$LOCKFILE" ]; then
+    pid=$(cat "$LOCKFILE")
+    if kill -0 "$pid" 2>/dev/null; then
+        exit 0
+    fi
+fi
+echo $$ > "$LOCKFILE"
+trap "rm -f $LOCKFILE" EXIT
+
+echo "$(date '+%Y-%m-%d %H:%M:%S') [START] Keycloak sync" >> "$LOGFILE"
+php /sync-data/keycloak-sync.php >> "$LOGFILE" 2>&1
+echo "$(date '+%Y-%m-%d %H:%M:%S') [DONE] Exit code: $?" >> "$LOGFILE"
+echo "" >> "$LOGFILE"
+SYNCEOF
+    chmod +x /usr/local/bin/keycloak-sync-cron.sh
+
+    # Create log file
+    touch /var/log/moodle/keycloak-sync.log
+    chown www-data:www-data /var/log/moodle/keycloak-sync.log
+
+    # Add cron job (every 5 minutes)
+    SYNC_INTERVAL="${KEYCLOAK_SYNC_INTERVAL:-5}"
+    echo "*/${SYNC_INTERVAL} * * * * root /usr/local/bin/keycloak-sync-cron.sh" > /etc/cron.d/keycloak-sync
+    chmod 644 /etc/cron.d/keycloak-sync
+
+    log_success "Keycloak sync cron configured (every ${SYNC_INTERVAL} minutes)"
+fi
 
 # Create local cache directory
 mkdir -p /var/moodledata/localcache

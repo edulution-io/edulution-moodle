@@ -1,5 +1,15 @@
 #!/bin/bash
-# Generate Moodle config.php with actual values (not getenv)
+#
+# Generate Moodle config.php with actual values
+#
+# This script generates a config.php file for Moodle using environment
+# variables. It's called by entrypoint.sh during container startup.
+#
+# @copyright 2024 Edulution
+# @license   MIT
+#
+
+set -euo pipefail
 
 MOODLE_DIR="/var/www/html/moodle"
 CONFIG_FILE="${MOODLE_DIR}/config.php"
@@ -11,41 +21,49 @@ DB_USER="${MOODLE_DATABASE_USER:-moodle}"
 DB_PASS="${MOODLE_DATABASE_PASSWORD:-}"
 DB_PORT="${MOODLE_DATABASE_PORT:-3306}"
 DATA_ROOT="${MOODLE_DATA:-/var/moodledata}"
-HOSTNAME="${MOODLE_HOSTNAME:-localhost}"
-MOODLE_PATH="${MOODLE_PATH:-/moodle-app}"
 
-# Ensure path starts with /
-if [[ "${MOODLE_PATH}" != /* ]]; then
-    MOODLE_PATH="/${MOODLE_PATH}"
-fi
-# Remove trailing slash
-MOODLE_PATH="${MOODLE_PATH%/}"
+# Determine wwwroot - use MOODLE_WWWROOT if set, otherwise build from components
+if [ -n "${MOODLE_WWWROOT:-}" ]; then
+    # Use explicit wwwroot (remove trailing slash)
+    WWWROOT="${MOODLE_WWWROOT%/}"
+else
+    # Build from hostname and path
+    HOSTNAME="${MOODLE_HOSTNAME:-localhost}"
+    MOODLE_PATH="${MOODLE_PATH:-}"
 
-# Determine protocol
-PROTOCOL="https"
-if [ "${MOODLE_SSLPROXY}" = "false" ] || [ "${MOODLE_SSLPROXY}" = "0" ]; then
-    PROTOCOL="http"
+    # Ensure path starts with / if set
+    if [ -n "${MOODLE_PATH}" ] && [[ "${MOODLE_PATH}" != /* ]]; then
+        MOODLE_PATH="/${MOODLE_PATH}"
+    fi
+    # Remove trailing slash
+    MOODLE_PATH="${MOODLE_PATH%/}"
+
+    # Determine protocol
+    PROTOCOL="https"
+    if [ "${MOODLE_SSLPROXY:-true}" = "false" ] || [ "${MOODLE_SSLPROXY:-true}" = "0" ]; then
+        PROTOCOL="http"
+    fi
+    WWWROOT="${PROTOCOL}://${HOSTNAME}${MOODLE_PATH}"
 fi
-WWWROOT="${PROTOCOL}://${HOSTNAME}${MOODLE_PATH}"
 
 # Boolean settings
 REVERSE_PROXY="true"
 SSL_PROXY="true"
 ALLOW_FRAME="true"
 
-if [ "${MOODLE_REVERSEPROXY}" = "false" ] || [ "${MOODLE_REVERSEPROXY}" = "0" ]; then
+if [ "${MOODLE_REVERSEPROXY:-true}" = "false" ] || [ "${MOODLE_REVERSEPROXY:-true}" = "0" ]; then
     REVERSE_PROXY="false"
 fi
-if [ "${MOODLE_SSLPROXY}" = "false" ] || [ "${MOODLE_SSLPROXY}" = "0" ]; then
+if [ "${MOODLE_SSLPROXY:-true}" = "false" ] || [ "${MOODLE_SSLPROXY:-true}" = "0" ]; then
     SSL_PROXY="false"
 fi
-if [ "${MOODLE_ALLOWFRAMEMBEDDING}" = "false" ] || [ "${MOODLE_ALLOWFRAMEMBEDDING}" = "0" ]; then
+if [ "${MOODLE_ALLOWFRAMEMBEDDING:-true}" = "false" ] || [ "${MOODLE_ALLOWFRAMEMBEDDING:-true}" = "0" ]; then
     ALLOW_FRAME="false"
 fi
 
-# Redis settings
+# Redis settings (optional)
 REDIS_CONFIG=""
-if [ -n "${REDIS_HOST}" ]; then
+if [ -n "${REDIS_HOST:-}" ]; then
     REDIS_PORT="${REDIS_PORT:-6379}"
     REDIS_CONFIG="
 // Redis session handling
@@ -58,9 +76,9 @@ if [ -n "${REDIS_HOST}" ]; then
 \$CFG->session_redis_lock_expire = 7200;"
 fi
 
-# SMTP settings
+# SMTP settings (optional)
 SMTP_CONFIG=""
-if [ -n "${SMTP_HOST}" ]; then
+if [ -n "${SMTP_HOST:-}" ]; then
     SMTP_PORT="${SMTP_PORT:-587}"
     SMTP_SECURITY="${SMTP_SECURITY:-tls}"
     SMTP_CONFIG="
@@ -74,7 +92,7 @@ fi
 # Debug settings
 DEBUG_CONFIG="\$CFG->debug = 0;
 \$CFG->debugdisplay = 0;"
-if [ "${MOODLE_DEBUG}" = "true" ] || [ "${MOODLE_DEBUG}" = "1" ]; then
+if [ "${MOODLE_DEBUG:-false}" = "true" ] || [ "${MOODLE_DEBUG:-false}" = "1" ]; then
     DEBUG_CONFIG="\$CFG->debug = E_ALL;
 \$CFG->debugdisplay = 1;"
 fi
@@ -149,6 +167,7 @@ ${REDIS_CONFIG}
 //=========================================================================
 // SECURITY SETTINGS
 //=========================================================================
+\$CFG->forcelogin = true;  // Force login - start page is always login page
 \$CFG->passwordpolicy = 1;
 \$CFG->minpasswordlength = 12;
 \$CFG->minpassworddigits = 1;
@@ -188,6 +207,6 @@ echo "  - dbhost: ${DB_HOST}"
 echo "  - reverseproxy: ${REVERSE_PROXY}"
 echo "  - sslproxy: ${SSL_PROXY}"
 echo "  - allowframembedding: ${ALLOW_FRAME}"
-if [ -n "${REDIS_HOST}" ]; then
-    echo "  - redis: ${REDIS_HOST}:${REDIS_PORT}"
+if [ -n "${REDIS_HOST:-}" ]; then
+    echo "  - redis: ${REDIS_HOST}:${REDIS_PORT:-6379}"
 fi

@@ -1,108 +1,67 @@
 services:
-  edulution-moodle-db:
+  db:
     image: mariadb:10.11
-    container_name: edulution-moodle-db
     restart: unless-stopped
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
-      - --innodb_file_per_table=ON
     environment:
-      - MARIADB_USER=${MOODLE_DB_USER:-moodle}
-      - MARIADB_PASSWORD=${MOODLE_DB_PASSWORD:-moodle}
-      - MARIADB_DATABASE=${MOODLE_DB_NAME:-moodle}
-      - MARIADB_ROOT_PASSWORD=${MOODLE_DB_ROOT_PASSWORD:-moodle}
+      - MARIADB_USER=${MOODLE_DATABASE_USER:-moodle}
+      - MARIADB_PASSWORD=${MOODLE_DATABASE_PASSWORD:-moodle}
+      - MARIADB_DATABASE=${MOODLE_DATABASE_NAME:-moodle}
+      - MARIADB_ROOT_PASSWORD=${MOODLE_DATABASE_PASSWORD:-moodle}
     volumes:
-      - moodle-db-data:/var/lib/mysql
+      - db-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      start_period: 10s
+      test: ["CMD", "healthcheck.sh", "--connect"]
       interval: 10s
       timeout: 5s
       retries: 3
-    networks:
-      - edulution-moodle
 
-  edulution-moodle-redis:
-    image: redis:7-alpine
-    container_name: edulution-moodle-redis
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    networks:
-      - edulution-moodle
-
-  edulution-moodle:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  moodle:
+    build: .
     image: ghcr.io/edulution-io/edulution-moodle:latest
-    container_name: edulution-moodle
     restart: unless-stopped
+    ports:
+      - "8080:80"
     environment:
-      # Database
-      - MOODLE_DATABASE_HOST=edulution-moodle-db
-      - MOODLE_DATABASE_NAME=${MOODLE_DB_NAME:-moodle}
-      - MOODLE_DATABASE_USER=${MOODLE_DB_USER:-moodle}
-      - MOODLE_DATABASE_PASSWORD=${MOODLE_DB_PASSWORD:-moodle}
-
-      # Admin
+      # Moodle Core Settings
+      - MOODLE_DATABASE_HOST=db
+      - MOODLE_DATABASE_NAME=${MOODLE_DATABASE_NAME:-moodle}
+      - MOODLE_DATABASE_USER=${MOODLE_DATABASE_USER:-moodle}
+      - MOODLE_DATABASE_PASSWORD=${MOODLE_DATABASE_PASSWORD:-moodle}
+      - MOODLE_WWWROOT=${MOODLE_WWWROOT:-http://localhost:8080/moodle-app}
       - MOODLE_ADMIN_USER=${MOODLE_ADMIN_USER:-admin}
-      - MOODLE_ADMIN_PASSWORD=${MOODLE_ADMIN_PASSWORD:-Edulution2024!}
+      - MOODLE_ADMIN_PASSWORD=${MOODLE_ADMIN_PASSWORD:-Admin123!}
       - MOODLE_ADMIN_EMAIL=${MOODLE_ADMIN_EMAIL:-admin@example.com}
-      - MOODLE_SITE_NAME=${MOODLE_SITE_NAME:-Edulution Moodle}
-
-      # URL & Proxy Settings (IMPORTANT for Traefik!)
-      - MOODLE_HOSTNAME=${EDULUTION_BASE_DOMAIN:-localhost}
-      - MOODLE_PATH=${MOODLE_PATH:-/moodle-app}
-      - MOODLE_REVERSEPROXY=true
-      - MOODLE_SSLPROXY=true
-
-      # iframe Embedding (IMPORTANT for edulution integration!)
-      - MOODLE_ALLOWFRAMEMBEDDING=true
-
-      # Redis (optional)
-      - REDIS_HOST=edulution-moodle-redis
-      - REDIS_PORT=6379
-
-      # SSO (optional)
-      - ENABLE_SSO=${ENABLE_SSO:-0}
-      - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID:-}
-      - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET:-}
-      - EDULUTION_BASE_DOMAIN=${EDULUTION_BASE_DOMAIN:-}
-
-      # Debug (set to true for troubleshooting)
-      - MOODLE_DEBUG=${MOODLE_DEBUG:-false}
+      - MOODLE_SITE_NAME=${MOODLE_SITE_NAME:-Moodle}
+      - MOODLE_REVERSEPROXY=${MOODLE_REVERSEPROXY:-false}
+      - MOODLE_SSLPROXY=${MOODLE_SSLPROXY:-false}
+      - MOODLE_ALLOWFRAMEMBEDDING=${MOODLE_ALLOWFRAMEMBEDDING:-true}
+      # Edulution Plugin - Keycloak Settings (takes precedence over admin settings)
+      - EDULUTION_KEYCLOAK_URL=https://ui.kepler-freiburg.de/auth
+      - EDULUTION_KEYCLOAK_REALM=edulution
+      - EDULUTION_KEYCLOAK_CLIENT_ID=moodle
+      # - EDULUTION_KEYCLOAK_CLIENT_SECRET=${EDULUTION_KEYCLOAK_CLIENT_SECRET:-}
+      # - EDULUTION_KEYCLOAK_SYNC_ENABLED=${EDULUTION_KEYCLOAK_SYNC_ENABLED:-false}
+      # - EDULUTION_VERIFY_SSL=${EDULUTION_VERIFY_SSL:-true}
+      # - EDULUTION_COOKIE_AUTH_ENABLED=${EDULUTION_COOKIE_AUTH_ENABLED:-false}
     volumes:
       - moodle-data:/var/www/html/moodle
-      - moodle-moodledata:/var/moodledata
-      - moodle-logs:/var/log/moodle
+      - moodledata:/var/moodledata
+      # Plugin für Entwicklung
+      - ./local/edulution:/var/www/html/moodle/local/edulution
     depends_on:
-      edulution-moodle-db:
-        condition: service_healthy
-      edulution-moodle-redis:
+      db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -fs http://localhost/moodle/login/index.php || exit 1"]
+      test: ["CMD-SHELL", "curl -fs http://localhost/login/index.php || exit 1"]
       interval: 60s
       timeout: 10s
       start_period: 120s
       retries: 3
-    networks:
-      - edulution-moodle
-      - edulution-ui_default
 
 volumes:
-  moodle-db-data:
+  db-data:
   moodle-data:
-  moodle-moodledata:
-  moodle-logs:
-
-networks:
-  edulution-moodle:
-    driver: bridge
-  edulution-ui_default:
-    external: true
+  moodledata:
