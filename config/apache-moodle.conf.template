@@ -1,11 +1,11 @@
 <VirtualHost *:80>
     ServerAdmin admin@localhost
-    DocumentRoot /var/www/html/moodle
+    DocumentRoot /var/www/html/moodle/public
 
     # Alias for custom path - allows access via ${MOODLE_PATH}
-    Alias ${MOODLE_PATH} /var/www/html/moodle
+    Alias ${MOODLE_PATH} /var/www/html/moodle/public
 
-    <Directory /var/www/html/moodle>
+    <Directory /var/www/html/moodle/public>
         Options -Indexes +FollowSymLinks
         AllowOverride All
         Require all granted

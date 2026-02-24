@@ -160,7 +160,7 @@ if [ "${DB_TABLES}" -lt 10 ]; then
     # WICHTIG: config.php muss gelöscht werden vor der Installation!
     rm -f "${CONFIG_FILE}"
 
-    cd "${MOODLE_DIR}"
+    cd "${MOODLE_BASE}"
     sudo -u www-data php admin/cli/install.php \
         --wwwroot="https://${MOODLE_HOSTNAME}${MOODLE_PATH}" \
         --dataroot="${MOODLE_DATA}" \
@@ -194,14 +194,14 @@ else
     /usr/local/bin/generate-config.sh
 
     # Upgrade check
-    cd "${MOODLE_DIR}"
+    cd "${MOODLE_BASE}"
     sudo -E -u www-data php admin/cli/upgrade.php --non-interactive || true
     log_success "Upgrade check completed!"
 fi
 
 # Apply iframe embedding setting in database
 log_info "Configuring iframe embedding..."
-cd "${MOODLE_DIR}"
+cd "${MOODLE_BASE}"
 if [ "${MOODLE_ALLOWFRAMEMBEDDING}" = "true" ] || [ "${MOODLE_ALLOWFRAMEMBEDDING}" = "1" ]; then
     sudo -E -u www-data php admin/cli/cfg.php --name=allowframembedding --set=1 2>/dev/null || true
     log_success "iframe embedding ENABLED"
@@ -212,7 +212,7 @@ fi
 
 # Configure security settings (force login, no guest)
 log_info "Configuring security settings..."
-cd "${MOODLE_DIR}"
+cd "${MOODLE_BASE}"
 sudo -E -u www-data php admin/cli/cfg.php --name=forcelogin --set=1 2>/dev/null || true
 sudo -E -u www-data php admin/cli/cfg.php --name=guestloginbutton --set=0 2>/dev/null || true
 sudo -E -u www-data php admin/cli/cfg.php --name=forceloginforprofiles --set=1 2>/dev/null || true
@@ -220,7 +220,7 @@ log_success "Security settings configured"
 
 # Configure course visibility (students see only enrolled courses)
 log_info "Configuring course visibility settings..."
-cd "${MOODLE_DIR}"
+cd "${MOODLE_BASE}"
 # Frontpage: keine Kursliste für eingeloggte User (sie nutzen Dashboard)
 sudo -E -u www-data php admin/cli/cfg.php --name=frontpage --set='' 2>/dev/null || true
 sudo -E -u www-data php admin/cli/cfg.php --name=frontpageloggedin --set='' 2>/dev/null || true
@@ -263,7 +263,7 @@ chown -R www-data:www-data "${LANG_DIR}"
 
 # Set up cron job
 log_info "Setting up Moodle cron..."
-echo "* * * * * www-data /usr/bin/php ${MOODLE_DIR}/admin/cli/cron.php > /dev/null 2>&1" > /etc/cron.d/moodle
+echo "* * * * * www-data /usr/bin/php ${MOODLE_BASE}/admin/cli/cron.php > /dev/null 2>&1" > /etc/cron.d/moodle
 chmod 644 /etc/cron.d/moodle
 log_success "Cron configured!"
 
