@@ -57,6 +57,7 @@ RUN apt-get update && apt-get install -y \
     locales \
     gettext-base \
     sudo \
+    openssl \
     && rm -rf /var/lib/apt/lists/*
 
 # Generate locales
@@ -74,7 +75,13 @@ RUN for PHP_INI in $(find /etc/php -name "php.ini"); do \
     done
 
 # Enable Apache modules
-RUN a2enmod rewrite headers ssl
+RUN a2enmod rewrite headers ssl expires deflate
+
+# Generate self-signed SSL certificate for internal Traefik → Apache traffic
+RUN openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+    -keyout /etc/ssl/private/moodle-selfsigned.key \
+    -out /etc/ssl/certs/moodle-selfsigned.crt \
+    -subj "/C=DE/O=edulution/CN=moodle-internal"
 
 # Download Moodle (version set via build args)
 RUN cd /tmp && \
@@ -120,8 +127,8 @@ RUN a2dissite 000-default
 RUN mkdir -p /var/log/moodle /var/log/supervisor && \
     chown www-data:www-data /var/log/moodle
 
-# Expose port 80
-EXPOSE 80
+# Expose ports (80 for healthcheck, 443 for Traefik → Moodle HTTPS)
+EXPOSE 80 443
 
 # Health check - Apache serves Moodle at /, Traefik handles path prefix
 HEALTHCHECK --interval=60s --timeout=10s --start-period=180s --retries=3 \

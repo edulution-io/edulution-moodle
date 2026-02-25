@@ -1,4 +1,53 @@
+# HTTP - used for healthcheck and fallback
 <VirtualHost *:80>
+    ServerAdmin admin@localhost
+    DocumentRoot /var/www/html/moodle/public
+
+    <Directory /var/www/html/moodle/public>
+        Options -Indexes +FollowSymLinks
+        AllowOverride All
+        Require all granted
+
+        # Security headers - WITHOUT X-Frame-Options to allow iframe embedding!
+        Header always set X-Content-Type-Options "nosniff"
+        Header always set X-XSS-Protection "1; mode=block"
+        Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    </Directory>
+
+    # Logging
+    ErrorLog /var/log/moodle/error.log
+    CustomLog /var/log/moodle/access.log combined
+    LogLevel warn
+
+    # Compression
+    <IfModule mod_deflate.c>
+        AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+    </IfModule>
+
+    # Performance tuning
+    <IfModule mod_expires.c>
+        ExpiresActive On
+        ExpiresByType image/jpg "access plus 1 month"
+        ExpiresByType image/jpeg "access plus 1 month"
+        ExpiresByType image/gif "access plus 1 month"
+        ExpiresByType image/png "access plus 1 month"
+        ExpiresByType image/svg+xml "access plus 1 month"
+        ExpiresByType text/css "access plus 1 week"
+        ExpiresByType application/javascript "access plus 1 week"
+    </IfModule>
+
+    # Prevent access to sensitive files
+    <FilesMatch "^\.">
+        Require all denied
+    </FilesMatch>
+</VirtualHost>
+
+# HTTPS - self-signed cert for internal Traefik → Moodle traffic
+<VirtualHost *:443>
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/certs/moodle-selfsigned.crt
+    SSLCertificateKeyFile /etc/ssl/private/moodle-selfsigned.key
+
     ServerAdmin admin@localhost
     DocumentRoot /var/www/html/moodle/public
 

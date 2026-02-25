@@ -92,24 +92,17 @@ if [ -n "${MOODLE_WWWROOT:-}" ]; then
 fi
 
 # If there's a URL path, add Apache Alias so Moodle is accessible at that path
+# The sed matches ALL </VirtualHost> tags, so the Alias is added to both :80 and :443
 if [ -n "${URL_PATH}" ]; then
-    log_info "URL path detected: ${URL_PATH} - adding Apache Alias"
+    log_info "URL path detected: ${URL_PATH} - adding Apache Alias to both VirtualHosts"
     sed -i "/<\/VirtualHost>/i\\
     # Path prefix: Moodle accessible at ${URL_PATH}\\
     Alias ${URL_PATH} ${MOODLE_DIR}" /etc/apache2/sites-available/moodle.conf
 fi
 
-# Fix HTTP→HTTPS Location headers behind SSL reverse proxy (prevents Mixed Content errors)
-if [ "${MOODLE_SSLPROXY:-true}" = "true" ] || [ "${MOODLE_SSLPROXY:-true}" = "1" ]; then
-    log_info "SSL proxy detected - rewriting Location headers to HTTPS"
-    sed -i "/<\/VirtualHost>/i\\
-    # Rewrite HTTP Location headers to HTTPS (behind SSL reverse proxy)\\
-    Header edit Location ^http:// https://" /etc/apache2/sites-available/moodle.conf
-fi
-
 # Enable the moodle site
 a2ensite moodle > /dev/null 2>&1 || true
-log_success "Apache configuration generated (DocumentRoot: ${MOODLE_DIR}, Path: ${URL_PATH:-/})"
+log_success "Apache configuration generated (DocumentRoot: ${MOODLE_DIR}, Path: ${URL_PATH:-/}, HTTPS: enabled)"
 
 # Wait for database
 log_info "Waiting for database to be ready..."
