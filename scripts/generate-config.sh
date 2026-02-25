@@ -47,12 +47,12 @@ else
 fi
 
 # Boolean settings
-REVERSE_PROXY="true"
+REVERSE_PROXY="false"
 SSL_PROXY="true"
 ALLOW_FRAME="true"
 
-if [ "${MOODLE_REVERSEPROXY:-true}" = "false" ] || [ "${MOODLE_REVERSEPROXY:-true}" = "0" ]; then
-    REVERSE_PROXY="false"
+if [ "${MOODLE_REVERSEPROXY:-false}" = "true" ] || [ "${MOODLE_REVERSEPROXY:-false}" = "1" ]; then
+    REVERSE_PROXY="true"
 fi
 if [ "${MOODLE_SSLPROXY:-true}" = "false" ] || [ "${MOODLE_SSLPROXY:-true}" = "0" ]; then
     SSL_PROXY="false"

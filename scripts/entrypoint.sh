@@ -5,6 +5,10 @@
 # This script initializes and configures Moodle for the edulution.io platform.
 # It handles database setup, Moodle installation, configuration, and cron setup.
 #
+# When MOODLE_WWWROOT contains a path (e.g. /learningmanagement1), Apache
+# gets an Alias so Moodle is accessible at that path. Traefik forwards
+# the full path (no stripPrefix) and handles the trailing-slash redirect.
+#
 # Environment Variables:
 #   See .env.example for full list of supported variables
 #
@@ -62,7 +66,6 @@ echo ""
 MOODLE_BASE="/var/www/html/moodle"
 MOODLE_DIR="${MOODLE_BASE}/public"
 MOODLE_DATA="${MOODLE_DATA:-/var/moodledata}"
-MOODLE_PATH="${MOODLE_PATH:-/moodle-app}"
 CONFIG_FILE="${MOODLE_BASE}/config.php"
 
 # Load secrets from files if provided
@@ -76,56 +79,30 @@ if [ -f "${MOODLE_ADMIN_PASSWORD_FILE:-}" ]; then
     log_info "Loaded admin password from file"
 fi
 
-# Ensure MOODLE_PATH starts with /
-if [[ "${MOODLE_PATH}" != /* ]]; then
-    MOODLE_PATH="/${MOODLE_PATH}"
-fi
-
-# Export for use in templates
-export MOODLE_PATH
-
-log_info "Moodle will be accessible at path: ${MOODLE_PATH}"
+log_info "wwwroot: ${MOODLE_WWWROOT:-not set, will use hostname}"
 
 # Generate Apache config from template
 log_info "Generating Apache configuration..."
-if [ -f "/var/www/html/moodle/apache-moodle.conf.template" ]; then
-    envsubst '${MOODLE_PATH}' < /var/www/html/moodle/apache-moodle.conf.template > /etc/apache2/sites-available/moodle.conf
-elif [ -f "/etc/apache2/sites-available/moodle.conf.template" ]; then
-    envsubst '${MOODLE_PATH}' < /etc/apache2/sites-available/moodle.conf.template > /etc/apache2/sites-available/moodle.conf
-else
-    # Generate config directly
-    cat > /etc/apache2/sites-available/moodle.conf << APACHE_EOF
-<VirtualHost *:80>
-    ServerAdmin admin@localhost
-    DocumentRoot ${MOODLE_DIR}
+cp /etc/apache2/sites-available/moodle.conf.template /etc/apache2/sites-available/moodle.conf
 
-    # Alias for custom path
-    Alias ${MOODLE_PATH} ${MOODLE_DIR}
+# Auto-detect URL path from MOODLE_WWWROOT (e.g. https://host/learningmanagement1 → /learningmanagement1)
+URL_PATH=""
+if [ -n "${MOODLE_WWWROOT:-}" ]; then
+    URL_PATH=$(echo "${MOODLE_WWWROOT}" | sed -E 's|https?://[^/]+||; s|/$||')
+fi
 
-    <Directory ${MOODLE_DIR}>
-        Options -Indexes +FollowSymLinks
-        AllowOverride All
-        Require all granted
-
-        Header always set X-Content-Type-Options "nosniff"
-        Header always set X-XSS-Protection "1; mode=block"
-        Header always set Referrer-Policy "strict-origin-when-cross-origin"
-    </Directory>
-
-    ErrorLog /var/log/moodle/error.log
-    CustomLog /var/log/moodle/access.log combined
-    LogLevel warn
-
-    <IfModule mod_deflate.c>
-        AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
-    </IfModule>
-</VirtualHost>
-APACHE_EOF
+# If there's a URL path, add Apache Alias so Moodle is accessible at that path
+if [ -n "${URL_PATH}" ]; then
+    log_info "URL path detected: ${URL_PATH} - adding Apache Alias"
+    sed -i "/<\/VirtualHost>/i\\
+    # Path prefix: Moodle accessible at ${URL_PATH}\\
+    Alias ${URL_PATH} ${MOODLE_DIR}\\
+    DirectorySlash Off" /etc/apache2/sites-available/moodle.conf
 fi
 
 # Enable the moodle site
 a2ensite moodle > /dev/null 2>&1 || true
-log_success "Apache configuration generated for path: ${MOODLE_PATH}"
+log_success "Apache configuration generated (DocumentRoot: ${MOODLE_DIR}, Path: ${URL_PATH:-/})"
 
 # Wait for database
 log_info "Waiting for database to be ready..."
@@ -160,9 +137,12 @@ if [ "${DB_TABLES}" -lt 10 ]; then
     # WICHTIG: config.php muss gelöscht werden vor der Installation!
     rm -f "${CONFIG_FILE}"
 
+    # Determine wwwroot for installation
+    INSTALL_WWWROOT="${MOODLE_WWWROOT:-https://${MOODLE_HOSTNAME:-localhost}}"
+
     cd "${MOODLE_BASE}"
     sudo -u www-data php admin/cli/install.php \
-        --wwwroot="https://${MOODLE_HOSTNAME}${MOODLE_PATH}" \
+        --wwwroot="${INSTALL_WWWROOT}" \
         --dataroot="${MOODLE_DATA}" \
         --dbtype=mariadb \
         --dbhost="${MOODLE_DATABASE_HOST}" \
@@ -202,7 +182,7 @@ fi
 # Apply iframe embedding setting in database
 log_info "Configuring iframe embedding..."
 cd "${MOODLE_BASE}"
-if [ "${MOODLE_ALLOWFRAMEMBEDDING}" = "true" ] || [ "${MOODLE_ALLOWFRAMEMBEDDING}" = "1" ]; then
+if [ "${MOODLE_ALLOWFRAMEMBEDDING:-true}" = "true" ] || [ "${MOODLE_ALLOWFRAMEMBEDDING:-true}" = "1" ]; then
     sudo -E -u www-data php admin/cli/cfg.php --name=allowframembedding --set=1 2>/dev/null || true
     log_success "iframe embedding ENABLED"
 else
@@ -221,18 +201,15 @@ log_success "Security settings configured"
 # Configure course visibility (students see only enrolled courses)
 log_info "Configuring course visibility settings..."
 cd "${MOODLE_BASE}"
-# Frontpage: keine Kursliste für eingeloggte User (sie nutzen Dashboard)
 sudo -E -u www-data php admin/cli/cfg.php --name=frontpage --set='' 2>/dev/null || true
 sudo -E -u www-data php admin/cli/cfg.php --name=frontpageloggedin --set='' 2>/dev/null || true
-# Kategorien ausblenden
 sudo -E -u www-data php admin/cli/cfg.php --name=maxcategorydepth --set=0 2>/dev/null || true
-# Block myoverview: Kategorien ausblenden
 sudo -E -u www-data php admin/cli/cfg.php --component=block_myoverview --name=displaycategories --set=0 2>/dev/null || true
 log_success "Course visibility configured (students see only enrolled courses)"
 
 # Configure OAuth2/Keycloak SSO (if enabled)
-if [ "${ENABLE_SSO}" = "1" ] || [ "${ENABLE_SSO}" = "true" ]; then
-    if [ -n "${KEYCLOAK_CLIENT_SECRET}" ]; then
+if [ "${ENABLE_SSO:-0}" = "1" ] || [ "${ENABLE_SSO:-0}" = "true" ]; then
+    if [ -n "${KEYCLOAK_CLIENT_SECRET:-}" ]; then
         log_info "Configuring Keycloak SSO..."
         if [ -f "/sync-data/configure-oauth2.php" ]; then
             php /sync-data/configure-oauth2.php 2>/dev/null && \
@@ -318,14 +295,13 @@ echo ""
 echo "=============================================="
 log_success "Edulution Moodle is ready!"
 echo ""
-echo "  URL: https://${MOODLE_HOSTNAME}${MOODLE_PATH}"
+echo "  wwwroot: ${MOODLE_WWWROOT:-https://${MOODLE_HOSTNAME:-localhost}}"
 echo "  Admin: ${MOODLE_ADMIN_USER}"
 echo ""
 echo "  Settings:"
-echo "    - Path: ${MOODLE_PATH}"
-echo "    - Reverse Proxy: ${MOODLE_REVERSEPROXY}"
-echo "    - SSL Proxy: ${MOODLE_SSLPROXY}"
-echo "    - iframe Embedding: ${MOODLE_ALLOWFRAMEMBEDDING}"
+echo "    - SSL Proxy: ${MOODLE_SSLPROXY:-false}"
+echo "    - Reverse Proxy: ${MOODLE_REVERSEPROXY:-false}"
+echo "    - iframe Embedding: ${MOODLE_ALLOWFRAMEMBEDDING:-true}"
 echo ""
 echo "=============================================="
 echo ""

@@ -2,16 +2,12 @@
     ServerAdmin admin@localhost
     DocumentRoot /var/www/html/moodle/public
 
-    # Alias for custom path - allows access via ${MOODLE_PATH}
-    Alias ${MOODLE_PATH} /var/www/html/moodle/public
-
     <Directory /var/www/html/moodle/public>
         Options -Indexes +FollowSymLinks
         AllowOverride All
         Require all granted
 
         # Security headers - WITHOUT X-Frame-Options to allow iframe embedding!
-        # X-Frame-Options is intentionally NOT set to allow embedding in edulution
         Header always set X-Content-Type-Options "nosniff"
         Header always set X-XSS-Protection "1; mode=block"
         Header always set Referrer-Policy "strict-origin-when-cross-origin"

@@ -22,9 +22,8 @@ ENV MOODLE_DATABASE_HOST=moodle-db \
     MOODLE_ADMIN_EMAIL=admin@example.com \
     MOODLE_SITE_NAME="Edulution Moodle" \
     MOODLE_HOSTNAME=localhost \
-    MOODLE_PATH=/moodle-app \
     MOODLE_DATA=/var/moodledata \
-    MOODLE_REVERSEPROXY=true \
+    MOODLE_REVERSEPROXY=false \
     MOODLE_SSLPROXY=true \
     MOODLE_ALLOWFRAMEMBEDDING=true \
     ENABLE_SSO=0
@@ -123,9 +122,9 @@ RUN mkdir -p /var/log/moodle /var/log/supervisor && \
 # Expose port 80
 EXPOSE 80
 
-# Health check - uses MOODLE_PATH env var
+# Health check - Apache serves Moodle at /, Traefik handles path prefix
 HEALTHCHECK --interval=60s --timeout=10s --start-period=180s --retries=3 \
-    CMD curl -fs http://localhost${MOODLE_PATH:-/moodle-app}/login/index.php || exit 1
+    CMD curl -fs http://localhost/login/index.php || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

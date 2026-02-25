@@ -1,7 +1,28 @@
+#
+# Traefik File Provider - Moodle Route
+#
+# KEIN stripPrefix! Moodle braucht den vollen Pfad für korrekte URL-Generierung.
+# Traefik übernimmt nur den Trailing-Slash-Redirect (HTTPS statt Apaches HTTP).
+#
+# Anpassung: PathPrefix und redirectRegex an den gewünschten Pfad anpassen.
+#
+
 http:
   routers:
+    # Redirect: /learningmanagement1 → /learningmanagement1/ (mit HTTPS)
+    moodle-trailing-slash:
+      rule: "Path(`/learningmanagement1`)"
+      service: moodle-app
+      entryPoints:
+        - websecure
+      tls: {}
+      middlewares:
+        - moodle-add-slash
+      priority: 100
+
+    # Alle Requests unter /learningmanagement1/ → Moodle
     moodle-app:
-      rule: "PathPrefix(`/moodle-app`)"
+      rule: "PathPrefix(`/learningmanagement1/`)"
       service: moodle-app
       entryPoints:
         - websecure
@@ -10,6 +31,12 @@ http:
         - moodle-headers
 
   middlewares:
+    moodle-add-slash:
+      redirectRegex:
+        regex: "^(https?://[^/]+)/learningmanagement1$"
+        replacement: "${1}/learningmanagement1/"
+        permanent: true
+
     moodle-headers:
       headers:
         customRequestHeaders:
