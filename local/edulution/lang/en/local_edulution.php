@@ -1407,9 +1407,25 @@ $string['task_adhoc_sync'] = 'Background Keycloak Synchronization';
 // ============================================================================
 $string['sync_report_subject'] = '[{$a}] Keycloak Sync Report';
 $string['sync_report_body_html'] = '<h2>Keycloak Sync Report</h2><p>Site: {$a->site}</p><p>Time: {$a->time}</p><p>Duration: {$a->duration} seconds</p><h3>Summary</h3><ul><li>Created: {$a->created}</li><li>Updated: {$a->updated}</li><li>Skipped: {$a->skipped}</li><li>Errors: {$a->errors}</li></ul>';
-$string['sync_report_body_text'] = "Keycloak Sync Report\n\nSite: {$a->site}\nTime: {$a->time}\nDuration: {$a->duration} seconds\n\nSummary:\n- Created: {$a->created}\n- Updated: {$a->updated}\n- Skipped: {$a->skipped}\n- Errors: {$a->errors}";
+$string['sync_report_body_text'] = 'Keycloak Sync Report
+
+Site: {$a->site}
+Time: {$a->time}
+Duration: {$a->duration} seconds
+
+Summary:
+- Created: {$a->created}
+- Updated: {$a->updated}
+- Skipped: {$a->skipped}
+- Errors: {$a->errors}';
 $string['sync_error_subject'] = '[{$a}] Keycloak Sync Error';
-$string['sync_error_body'] = "Keycloak synchronization failed.\n\nSite: {$a->site}\nTime: {$a->time}\nError: {$a->error}\n\nPlease check the Moodle logs for more details.";
+$string['sync_error_body'] = 'Keycloak synchronization failed.
+
+Site: {$a->site}
+Time: {$a->time}
+Error: {$a->error}
+
+Please check the Moodle logs for more details.';
 
 // ============================================================================
 // GROUP PATTERN CLASSIFICATION STRINGS

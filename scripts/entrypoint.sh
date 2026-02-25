@@ -96,8 +96,7 @@ if [ -n "${URL_PATH}" ]; then
     log_info "URL path detected: ${URL_PATH} - adding Apache Alias"
     sed -i "/<\/VirtualHost>/i\\
     # Path prefix: Moodle accessible at ${URL_PATH}\\
-    Alias ${URL_PATH} ${MOODLE_DIR}\\
-    DirectorySlash Off" /etc/apache2/sites-available/moodle.conf
+    Alias ${URL_PATH} ${MOODLE_DIR}" /etc/apache2/sites-available/moodle.conf
 fi
 
 # Enable the moodle site

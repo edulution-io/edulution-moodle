@@ -1,0 +1,79 @@
+#
+# Edulution Moodle - Lokale Entwicklung
+#
+# Konfiguriert fuer ui2.schulung.multi.schule Keycloak (extern)
+#
+# Start:
+#   docker compose -f docker-compose.dev.yml up -d
+#
+# Moodle erreichbar unter: http://localhost:8080/moodle-app
+#
+
+services:
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MARIADB_USER: moodle
+      MARIADB_PASSWORD: moodle
+      MARIADB_DATABASE: moodle
+      MARIADB_ROOT_PASSWORD: moodle
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  moodle:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8090:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # DATENBANK
+      MOODLE_DATABASE_HOST: db
+      MOODLE_DATABASE_NAME: moodle
+      MOODLE_DATABASE_USER: moodle
+      MOODLE_DATABASE_PASSWORD: moodle
+      # MOODLE
+      MOODLE_WWWROOT: http://localhost:8090/moodle-app
+      MOODLE_PATH: /moodle-app
+      MOODLE_ADMIN_USER: admin
+      MOODLE_ADMIN_PASSWORD: Admin123!
+      MOODLE_ADMIN_EMAIL: admin@example.com
+      MOODLE_SITE_NAME: Moodle Dev
+      MOODLE_REVERSEPROXY: "false"
+      MOODLE_SSLPROXY: "false"
+      MOODLE_ALLOWFRAMEMBEDDING: "true"
+      # KEYCLOAK (externe URL - ui2.schulung.multi.schule)
+      EDULUTION_KEYCLOAK_URL: https://ui2.schulung.multi.schule/auth
+      EDULUTION_KEYCLOAK_REALM: edulution
+      EDULUTION_KEYCLOAK_CLIENT_ID: edulution-moodle
+      EDULUTION_KEYCLOAK_CLIENT_SECRET: 4beb8afd3a135925147d8c8d1b004d56
+      EDULUTION_KEYCLOAK_SYNC_ENABLED: "false"
+      EDULUTION_VERIFY_SSL: "true"
+      # COOKIE AUTH
+      EDULUTION_COOKIE_AUTH_ENABLED: "true"
+      EDULUTION_COOKIE_AUTH_COOKIE_NAME: authToken
+    volumes:
+      - moodledata:/var/moodledata
+      # Plugin live reload bei Entwicklung (Moodle 5.x: public/)
+      - ./local/edulution:/var/www/html/moodle/public/local/edulution
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost/moodle-app/login/index.php || exit 1"]
+      interval: 60s
+      timeout: 10s
+      start_period: 180s
+      retries: 3
+
+volumes:
+  db-data:
+  moodledata:

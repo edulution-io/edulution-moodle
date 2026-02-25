@@ -1013,6 +1013,14 @@ class phased_sync {
             $existing_enrollments[$key] = $record->role ?? 'student';
         }
 
+        // Build lookup from keycloak_groups by ID (these have the fetched members).
+        $keycloak_groups_by_id = [];
+        foreach ($this->keycloak_groups as $kg) {
+            if (!empty($kg['id'])) {
+                $keycloak_groups_by_id[$kg['id']] = $kg;
+            }
+        }
+
         // Combine all groups that have courses (created, updated, skipped).
         $groups_with_courses = array_merge(
             $this->group_delta['to_create'] ?? [],
@@ -1033,6 +1041,12 @@ class phased_sync {
             $course_id = $courses_by_idnumber[$schema_result['course_idnumber']] ?? null;
             if (!$course_id) {
                 continue;
+            }
+
+            // Get members from the actual keycloak_groups (not the stale copy in group_delta).
+            $group_id = $group['id'] ?? '';
+            if (!empty($group_id) && isset($keycloak_groups_by_id[$group_id])) {
+                $group = $keycloak_groups_by_id[$group_id];
             }
 
             // Get role mapping from schema.

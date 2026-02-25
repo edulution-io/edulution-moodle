@@ -280,7 +280,13 @@ class sync_external extends external_api {
                 $username_lower = strtolower($kc_user['username']);
                 $email_lower = strtolower($kc_user['email'] ?? '');
 
-                // Check if user exists in Moodle
+                // Detect teacher via LDAP_ENTRY_DN (same as phased_sync)
+                $is_teacher = self::is_teacher_user_static($kc_user);
+                if ($is_teacher) {
+                    $teachers_detected++;
+                }
+
+                // Check if user exists in Moodle (for enrollment cache)
                 $moodle_user = $moodle_users_by_email[$email_lower]
                     ?? $moodle_users_by_username[$username_lower]
                     ?? null;
@@ -289,15 +295,10 @@ class sync_external extends external_api {
                     continue;
                 }
 
-                // Detect teacher via LDAP_ENTRY_DN (same as phased_sync)
-                $is_teacher = self::is_teacher_user_static($kc_user);
                 $user_cache[$username_lower] = [
                     'moodle_id' => $moodle_user->id,
                     'is_teacher' => $is_teacher,
                 ];
-                if ($is_teacher) {
-                    $teachers_detected++;
-                }
             }
 
             // === ENROLLMENTS ===

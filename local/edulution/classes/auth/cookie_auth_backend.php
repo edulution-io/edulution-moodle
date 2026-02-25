@@ -352,18 +352,22 @@ class cookie_auth_backend {
             return $cached_key;
         }
 
-        // Fetch from realm.
-        $curl = new \curl();
-        $curl->setopt(['CURLOPT_TIMEOUT' => 10]);
-
+        // Fetch from realm using native curl (Moodle's \curl class may not be loaded yet).
         $verify_ssl = \local_edulution_get_config('verify_ssl', true);
-        if (!$verify_ssl) {
-            $curl->setopt(['CURLOPT_SSL_VERIFYPEER' => false]);
-        }
 
-        $response = $curl->get($realm_url);
+        $ch = curl_init($realm_url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_SSL_VERIFYPEER => (bool) $verify_ssl,
+        ]);
 
-        if ($curl->get_errno() || empty($response)) {
+        $response = curl_exec($ch);
+        $errno = curl_errno($ch);
+        curl_close($ch);
+
+        if ($errno || empty($response)) {
             $this->log_debug("Failed to fetch realm info from: {$realm_url}");
             return $cached_key ?: null; // Return cached key as fallback.
         }
