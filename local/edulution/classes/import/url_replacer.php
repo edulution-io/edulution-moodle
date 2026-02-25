@@ -21,7 +21,7 @@
  * the old domain with a new domain, handling serialized data carefully.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -30,7 +30,8 @@ namespace local_edulution\import;
 /**
  * URL replacer class for migrating URLs between domains.
  */
-class url_replacer {
+class url_replacer
+{
 
     /** @var \mysqli Database connection */
     protected \mysqli $db;
@@ -59,7 +60,8 @@ class url_replacer {
      * @param \mysqli $db Database connection.
      * @param string $prefix Table prefix.
      */
-    public function __construct(\mysqli $db, string $prefix = 'mdl_') {
+    public function __construct(\mysqli $db, string $prefix = 'mdl_')
+    {
         $this->db = $db;
         $this->prefix = $prefix;
         $this->init_known_columns();
@@ -69,7 +71,8 @@ class url_replacer {
      * Initialize known URL and serialized columns.
      * These are the most common columns that contain URLs in Moodle.
      */
-    protected function init_known_columns(): void {
+    protected function init_known_columns(): void
+    {
         // Columns that commonly contain URLs (plain text)
         $this->urlcolumns = [
             'config' => ['value'], // Contains wwwroot, etc.
@@ -127,7 +130,8 @@ class url_replacer {
      *
      * @param callable $callback Progress callback function.
      */
-    public function set_progress_callback(callable $callback): void {
+    public function set_progress_callback(callable $callback): void
+    {
         $this->progresscallback = $callback;
     }
 
@@ -136,7 +140,8 @@ class url_replacer {
      *
      * @param string $message Progress message.
      */
-    protected function progress(string $message): void {
+    protected function progress(string $message): void
+    {
         if ($this->progresscallback) {
             call_user_func($this->progresscallback, $message);
         }
@@ -149,7 +154,8 @@ class url_replacer {
      * @param string $newurl New URL (e.g., 'https://new.example.com').
      * @return int Total number of replacements made.
      */
-    public function replace_all(string $oldurl, string $newurl): int {
+    public function replace_all(string $oldurl, string $newurl): int
+    {
         $this->totalreplacements = 0;
         $this->replacementlog = [];
 
@@ -207,7 +213,8 @@ class url_replacer {
      *
      * @return array List of table names.
      */
-    protected function get_all_tables(): array {
+    protected function get_all_tables(): array
+    {
         $tables = [];
         $result = $this->db->query("SHOW TABLES LIKE '{$this->prefix}%'");
 
@@ -224,7 +231,8 @@ class url_replacer {
      * @param string $table Table name.
      * @return array List of column names.
      */
-    protected function get_text_columns(string $table): array {
+    protected function get_text_columns(string $table): array
+    {
         $columns = [];
         $result = $this->db->query("DESCRIBE `{$table}`");
 
@@ -236,12 +244,14 @@ class url_replacer {
             $type = strtolower($row['Type']);
 
             // Only process text-type columns
-            if (strpos($type, 'text') !== false ||
+            if (
+                strpos($type, 'text') !== false ||
                 strpos($type, 'varchar') !== false ||
                 strpos($type, 'char') !== false ||
                 strpos($type, 'blob') !== false ||
                 strpos($type, 'mediumtext') !== false ||
-                strpos($type, 'longtext') !== false) {
+                strpos($type, 'longtext') !== false
+            ) {
                 $columns[] = $row['Field'];
             }
         }
@@ -377,12 +387,13 @@ class url_replacer {
      * @param string $newurl New URL.
      * @return string Modified serialized data.
      */
-    protected function replace_in_serialized(string $data, string $oldurl, string $newurl): string {
+    protected function replace_in_serialized(string $data, string $oldurl, string $newurl): string
+    {
         // Pattern to match serialized strings containing the old URL
         // Format: s:LENGTH:"STRING";
         $pattern = '/s:(\d+):"([^"]*' . preg_quote($oldurl, '/') . '[^"]*)";/';
 
-        return preg_replace_callback($pattern, function($matches) use ($oldurl, $newurl) {
+        return preg_replace_callback($pattern, function ($matches) use ($oldurl, $newurl) {
             $oldstring = $matches[2];
             $newstring = str_replace($oldurl, $newurl, $oldstring);
             $newlength = strlen($newstring);
@@ -396,7 +407,8 @@ class url_replacer {
      * @param string $table Table name.
      * @return string|null Primary key column name or null.
      */
-    protected function get_primary_key(string $table): ?string {
+    protected function get_primary_key(string $table): ?string
+    {
         $result = $this->db->query("SHOW KEYS FROM `{$table}` WHERE Key_name = 'PRIMARY'");
 
         if ($result && $row = $result->fetch_assoc()) {
@@ -414,7 +426,8 @@ class url_replacer {
      * @param array $targets Array of ['table' => 'column'] pairs.
      * @return int Total replacements.
      */
-    public function replace_specific(string $oldurl, string $newurl, array $targets): int {
+    public function replace_specific(string $oldurl, string $newurl, array $targets): int
+    {
         $total = 0;
 
         foreach ($targets as $table => $columns) {
@@ -446,7 +459,8 @@ class url_replacer {
      * @param string $newurl New wwwroot URL.
      * @return bool Success.
      */
-    public function update_wwwroot(string $newurl): bool {
+    public function update_wwwroot(string $newurl): bool
+    {
         $newurl = rtrim($newurl, '/');
         $escaped = $this->db->real_escape_string($newurl);
 
@@ -459,7 +473,8 @@ class url_replacer {
      *
      * @return array Replacement log entries.
      */
-    public function get_replacement_log(): array {
+    public function get_replacement_log(): array
+    {
         return $this->replacementlog;
     }
 
@@ -468,7 +483,8 @@ class url_replacer {
      *
      * @return int Total count.
      */
-    public function get_total_replacements(): int {
+    public function get_total_replacements(): int
+    {
         return $this->totalreplacements;
     }
 
@@ -479,7 +495,8 @@ class url_replacer {
      * @param string $newurl New URL.
      * @return array Preview results.
      */
-    public function preview(string $oldurl, string $newurl): array {
+    public function preview(string $oldurl, string $newurl): array
+    {
         $oldurl = rtrim($oldurl, '/');
         $preview = [];
 
@@ -503,7 +520,7 @@ class url_replacer {
                         $preview[] = [
                             'table' => $table,
                             'column' => $column,
-                            'count' => (int)$row['cnt'],
+                            'count' => (int) $row['cnt'],
                         ];
                     }
                 }
@@ -519,7 +536,8 @@ class url_replacer {
      * @param string $table Table name (without prefix).
      * @param array $columns Column names.
      */
-    public function add_url_columns(string $table, array $columns): void {
+    public function add_url_columns(string $table, array $columns): void
+    {
         if (!isset($this->urlcolumns[$table])) {
             $this->urlcolumns[$table] = [];
         }
@@ -532,7 +550,8 @@ class url_replacer {
      * @param string $table Table name (without prefix).
      * @param array $columns Column names.
      */
-    public function add_serialized_columns(string $table, array $columns): void {
+    public function add_serialized_columns(string $table, array $columns): void
+    {
         if (!isset($this->serializedcolumns[$table])) {
             $this->serializedcolumns[$table] = [];
         }

@@ -21,7 +21,7 @@
  * group memberships across both systems.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -37,7 +37,8 @@ require_once($GLOBALS['CFG']->dirroot . '/cohort/lib.php');
  * Synchronizes Keycloak groups to Moodle cohorts and manages
  * memberships based on Keycloak group assignments.
  */
-class group_sync {
+class group_sync
+{
 
     /** @var keycloak_client Keycloak API client */
     protected keycloak_client $client;
@@ -60,7 +61,8 @@ class group_sync {
      * @param keycloak_client $client Keycloak API client instance.
      * @param user_sync|null $user_sync User sync instance for ID mappings.
      */
-    public function __construct(keycloak_client $client, ?user_sync $user_sync = null) {
+    public function __construct(keycloak_client $client, ?user_sync $user_sync = null)
+    {
         $this->client = $client;
         $this->user_sync = $user_sync ?? new user_sync($client);
         $this->report = new sync_report();
@@ -72,7 +74,8 @@ class group_sync {
      *
      * @return sync_report Sync report with results.
      */
-    public function sync_groups(): sync_report {
+    public function sync_groups(): sync_report
+    {
         $this->report = new sync_report();
 
         try {
@@ -94,7 +97,8 @@ class group_sync {
      * @param array $keycloak_group Keycloak group data.
      * @return int|null Cohort ID or null on failure.
      */
-    protected function sync_single_group(array $keycloak_group): ?int {
+    protected function sync_single_group(array $keycloak_group): ?int
+    {
         $group_name = $keycloak_group['name'] ?? '';
         $group_id = $keycloak_group['id'] ?? '';
 
@@ -127,7 +131,8 @@ class group_sync {
      *
      * @return sync_report Sync report with results.
      */
-    public function sync_group_memberships(): sync_report {
+    public function sync_group_memberships(): sync_report
+    {
         global $DB;
 
         $this->report = new sync_report();
@@ -177,7 +182,8 @@ class group_sync {
      * @param \stdClass $cohort Moodle cohort.
      * @param string $keycloak_group_id Keycloak group ID.
      */
-    protected function sync_cohort_members(\stdClass $cohort, string $keycloak_group_id): void {
+    protected function sync_cohort_members(\stdClass $cohort, string $keycloak_group_id): void
+    {
         global $DB;
 
         // Get all users and check their group memberships.
@@ -249,7 +255,8 @@ class group_sync {
      * @param array $keycloak_group Keycloak group data.
      * @return \stdClass|null Moodle cohort or null.
      */
-    public function find_moodle_cohort(array $keycloak_group): ?\stdClass {
+    public function find_moodle_cohort(array $keycloak_group): ?\stdClass
+    {
         global $DB;
 
         $idnumber = $this->cohort_prefix . ($keycloak_group['id'] ?? '');
@@ -266,7 +273,8 @@ class group_sync {
      * @param array $keycloak_group Keycloak group data.
      * @return \stdClass|null Created cohort or null on failure.
      */
-    public function create_moodle_cohort(array $keycloak_group): ?\stdClass {
+    public function create_moodle_cohort(array $keycloak_group): ?\stdClass
+    {
         global $DB;
 
         $group_name = $keycloak_group['name'] ?? '';
@@ -304,7 +312,8 @@ class group_sync {
      * @param array $keycloak_group Keycloak group data.
      * @return bool True if update is needed.
      */
-    protected function needs_update(\stdClass $cohort, array $keycloak_group): bool {
+    protected function needs_update(\stdClass $cohort, array $keycloak_group): bool
+    {
         $group_name = $keycloak_group['name'] ?? '';
         return $cohort->name !== $group_name;
     }
@@ -315,7 +324,8 @@ class group_sync {
      * @param \stdClass $cohort Moodle cohort.
      * @param array $keycloak_group Keycloak group data.
      */
-    protected function update_cohort(\stdClass $cohort, array $keycloak_group): void {
+    protected function update_cohort(\stdClass $cohort, array $keycloak_group): void
+    {
         $cohort->name = $keycloak_group['name'] ?? $cohort->name;
         $cohort->timemodified = time();
 
@@ -328,7 +338,8 @@ class group_sync {
      * @param string $prefix Prefix string.
      * @return self
      */
-    public function set_cohort_prefix(string $prefix): self {
+    public function set_cohort_prefix(string $prefix): self
+    {
         $this->cohort_prefix = $prefix;
         return $this;
     }
@@ -339,7 +350,8 @@ class group_sync {
      * @param int $context_id Context ID.
      * @return self
      */
-    public function set_context_id(int $context_id): self {
+    public function set_context_id(int $context_id): self
+    {
         $this->context_id = $context_id;
         return $this;
     }
@@ -349,7 +361,8 @@ class group_sync {
      *
      * @return sync_report Current report.
      */
-    public function get_report(): sync_report {
+    public function get_report(): sync_report
+    {
         return $this->report;
     }
 
@@ -358,7 +371,8 @@ class group_sync {
      *
      * @return keycloak_client Client instance.
      */
-    public function get_client(): keycloak_client {
+    public function get_client(): keycloak_client
+    {
         return $this->client;
     }
 }

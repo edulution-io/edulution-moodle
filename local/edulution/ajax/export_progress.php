@@ -21,7 +21,7 @@
  * status of an export job.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -103,8 +103,10 @@ try {
 
         // If log file is being written to, the export is running.
         // Check if the process completed by looking for success/error indicators.
-        if (strpos($logContent, 'EXPORT COMPLETED SUCCESSFULLY') !== false ||
-            strpos($logContent, 'Export completed successfully') !== false) {
+        if (
+            strpos($logContent, 'EXPORT COMPLETED SUCCESSFULLY') !== false ||
+            strpos($logContent, 'Export completed successfully') !== false
+        ) {
             // Export seems complete - check for output file.
             $outputFile = $progressData['output_file'] ?? '';
             if (!empty($outputFile) && file_exists($outputFile)) {
@@ -115,9 +117,11 @@ try {
                 $progressData['filename'] = basename($outputFile);
                 $progressData['filesize'] = filesize($outputFile);
             }
-        } elseif (strpos($logContent, 'Export failed') !== false ||
-                  strpos($logContent, 'ERROR:') !== false ||
-                  strpos($logContent, 'Fatal error') !== false) {
+        } elseif (
+            strpos($logContent, 'Export failed') !== false ||
+            strpos($logContent, 'ERROR:') !== false ||
+            strpos($logContent, 'Fatal error') !== false
+        ) {
             $progressData['status'] = 'error';
             $progressData['completed'] = true;
             $progressData['success'] = false;
@@ -129,7 +133,7 @@ try {
 
     // Check if background PID is still running.
     if (!empty($progressData['pid']) && $progressData['status'] === 'running') {
-        $pid = (int)$progressData['pid'];
+        $pid = (int) $progressData['pid'];
         $isRunning = file_exists("/proc/{$pid}");
         if (!$isRunning) {
             // Process completed - check output file.

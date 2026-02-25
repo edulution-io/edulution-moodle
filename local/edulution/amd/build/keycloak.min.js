@@ -1,11 +1,11 @@
 /**
- * Keycloak setup functionality for Edulution plugin.
+ * Keycloak setup functionality for edulution plugin.
  *
  * Handles connection testing, form validation, wizard navigation,
  * and saving settings via AJAX.
  *
  * @module     local_edulution/keycloak
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates', 'local_edulution/common'],

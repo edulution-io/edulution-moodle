@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Full database import CLI script for Edulution.
+ * Full database import CLI script for edulution.
  *
  * This script can run BEFORE Moodle is fully installed.
  * It imports a complete database dump and moodledata from an export ZIP.
@@ -26,7 +26,7 @@
  *       --dbhost=db --dbname=moodle --dbuser=moodle --dbpass=secret
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -89,7 +89,7 @@ $options = getopt($shortopts, $longopts);
 // Print help.
 if (isset($options['help']) || isset($options['h'])) {
     echo <<<EOF
-Full database import for Edulution migration.
+Full database import for edulution migration.
 
 This script imports a complete Moodle export package. It can run
 BEFORE Moodle is installed and will:
@@ -172,7 +172,7 @@ $config = [
     'dbname' => $options['dbname'] ?? getenv('MOODLE_DOCKER_DBNAME') ?: 'moodle',
     'dbuser' => $options['dbuser'] ?? getenv('MOODLE_DOCKER_DBUSER') ?: 'moodle',
     'dbpass' => $options['dbpass'] ?? getenv('MOODLE_DOCKER_DBPASS') ?: '',
-    'dbport' => (int)($options['dbport'] ?? getenv('MOODLE_DOCKER_DBPORT') ?: 3306),
+    'dbport' => (int) ($options['dbport'] ?? getenv('MOODLE_DOCKER_DBPORT') ?: 3306),
     'dbprefix' => $options['dbprefix'] ?? 'mdl_',
     'adminpass' => $options['adminpass'] ?? null,
     'agree_license' => isset($options['agree-license']),
@@ -196,7 +196,8 @@ $usecolor = !$config['no_color'] && function_exists('posix_isatty') && posix_isa
  * @param string $color Color code.
  * @return string Formatted message.
  */
-function fmt(string $message, string $color = ''): string {
+function fmt(string $message, string $color = ''): string
+{
     global $usecolor;
     if (!$usecolor || empty($color)) {
         return $message;
@@ -210,7 +211,8 @@ function fmt(string $message, string $color = ''): string {
  * @param string $message The message to output.
  * @param bool $error Whether this is an error.
  */
-function output(string $message, bool $error = false): void {
+function output(string $message, bool $error = false): void
+{
     global $config;
     if ($config['quiet'] && !$error) {
         return;
@@ -227,7 +229,8 @@ function output(string $message, bool $error = false): void {
  *
  * @param string $message The message.
  */
-function verbose(string $message): void {
+function verbose(string $message): void
+{
     global $config;
     if ($config['verbose'] && !$config['quiet']) {
         echo fmt("  [*] ", CLI_CYAN) . $message . "\n";
@@ -240,7 +243,8 @@ function verbose(string $message): void {
  * @param int $num Phase number.
  * @param string $name Phase name.
  */
-function phase(int $num, string $name): void {
+function phase(int $num, string $name): void
+{
     global $config;
     if ($config['quiet']) {
         return;
@@ -254,7 +258,8 @@ function phase(int $num, string $name): void {
  *
  * @param string $message The message.
  */
-function success(string $message): void {
+function success(string $message): void
+{
     global $config;
     if ($config['quiet']) {
         return;
@@ -267,7 +272,8 @@ function success(string $message): void {
  *
  * @param string $message The message.
  */
-function warning(string $message): void {
+function warning(string $message): void
+{
     global $config;
     if ($config['quiet']) {
         return;
@@ -283,7 +289,8 @@ function warning(string $message): void {
  * @param string $log Log message to append.
  * @param bool $complete Whether import is complete.
  */
-function update_progress(int $percent, string $status, string $log = '', bool $complete = false): void {
+function update_progress(int $percent, string $status, string $log = '', bool $complete = false): void
+{
     global $config, $progresslog;
 
     if (empty($config['progress_file'])) {
@@ -314,7 +321,8 @@ function update_progress(int $percent, string $status, string $log = '', bool $c
  * @param int $bytes Size in bytes.
  * @return string Formatted size.
  */
-function format_size(int $bytes): string {
+function format_size(int $bytes): string
+{
     $units = ['B', 'KB', 'MB', 'GB', 'TB'];
     $bytes = max($bytes, 0);
     $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
@@ -328,7 +336,8 @@ function format_size(int $bytes): string {
  *
  * @param string $dir Directory path.
  */
-function delete_directory(string $dir): void {
+function delete_directory(string $dir): void
+{
     if (!is_dir($dir)) {
         return;
     }
@@ -351,7 +360,8 @@ function delete_directory(string $dir): void {
  * @param string $dst Destination directory.
  * @return array Copy statistics.
  */
-function copy_directory(string $src, string $dst): array {
+function copy_directory(string $src, string $dst): array
+{
     $stats = ['files' => 0, 'size' => 0];
 
     if (!is_dir($dst)) {
@@ -386,7 +396,8 @@ function copy_directory(string $src, string $dst): array {
  *
  * @return string|null Path to mysql command.
  */
-function find_mysql(): ?string {
+function find_mysql(): ?string
+{
     $paths = [
         '/usr/bin/mysql',
         '/usr/local/bin/mysql',
@@ -418,7 +429,8 @@ function find_mysql(): ?string {
  * @param bool $default Default answer.
  * @return bool User's response.
  */
-function confirm(string $message, bool $default = false): bool {
+function confirm(string $message, bool $default = false): bool
+{
     $prompt = $default ? '[Y/n]' : '[y/N]';
     echo "\n{$message} {$prompt}: ";
 

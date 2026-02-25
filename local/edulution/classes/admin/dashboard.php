@@ -21,21 +21,23 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Dashboard data provider class for local_edulution.
  *
- * This class provides data and statistics for the Edulution dashboard,
+ * This class provides data and statistics for the edulution dashboard,
  * including system status, recent activity, and quick action links.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class dashboard {
+class dashboard
+{
 
     /**
      * Get the complete dashboard data.
      *
      * @return array Dashboard data including stats, status, and activities.
      */
-    public function get_dashboard_data(): array {
+    public function get_dashboard_data(): array
+    {
         return [
             'stats' => $this->get_stats(),
             'status' => $this->get_system_status(),
@@ -51,7 +53,8 @@ class dashboard {
      *
      * @return array Statistics data.
      */
-    public function get_stats(): array {
+    public function get_stats(): array
+    {
         global $DB;
 
         return [
@@ -69,7 +72,8 @@ class dashboard {
      *
      * @return int Number of active users.
      */
-    protected function get_active_users_count(): int {
+    protected function get_active_users_count(): int
+    {
         global $DB;
 
         $cutoff = time() - (30 * 86400);
@@ -85,7 +89,8 @@ class dashboard {
      *
      * @return int Number of export files.
      */
-    protected function get_exports_count(): int {
+    protected function get_exports_count(): int
+    {
         $exportpath = \local_edulution_get_export_path();
         if (!is_dir($exportpath)) {
             return 0;
@@ -100,7 +105,8 @@ class dashboard {
      *
      * @return int Number of import files.
      */
-    protected function get_imports_count(): int {
+    protected function get_imports_count(): int
+    {
         $importpath = \local_edulution_get_import_path();
         if (!is_dir($importpath)) {
             return 0;
@@ -115,7 +121,8 @@ class dashboard {
      *
      * @return array System status data.
      */
-    public function get_system_status(): array {
+    public function get_system_status(): array
+    {
         $exportpath = \local_edulution_get_export_path();
         $importpath = \local_edulution_get_import_path();
 
@@ -138,7 +145,8 @@ class dashboard {
      * @param string $type The sync type (keycloak, cleanup).
      * @return int|null Timestamp of last sync or null if never run.
      */
-    protected function get_last_sync_time(string $type): ?int {
+    protected function get_last_sync_time(string $type): ?int
+    {
         global $DB;
 
         $classname = match ($type) {
@@ -165,7 +173,8 @@ class dashboard {
      * @param int $limit Maximum number of items to return.
      * @return array List of recent exports.
      */
-    public function get_recent_exports(int $limit = 5): array {
+    public function get_recent_exports(int $limit = 5): array
+    {
         $exportpath = \local_edulution_get_export_path();
         if (!is_dir($exportpath)) {
             return [];
@@ -202,7 +211,8 @@ class dashboard {
      * @param int $limit Maximum number of items to return.
      * @return array List of recent imports.
      */
-    public function get_recent_imports(int $limit = 5): array {
+    public function get_recent_imports(int $limit = 5): array
+    {
         $importpath = \local_edulution_get_import_path();
         if (!is_dir($importpath)) {
             return [];
@@ -239,7 +249,8 @@ class dashboard {
      * @param int $limit Maximum number of items to return.
      * @return array List of recent syncs.
      */
-    public function get_recent_syncs(int $limit = 5): array {
+    public function get_recent_syncs(int $limit = 5): array
+    {
         global $DB;
 
         // Query task log for recent sync runs.
@@ -271,7 +282,8 @@ class dashboard {
      *
      * @return array List of quick actions with URLs and capabilities.
      */
-    public function get_quick_actions(): array {
+    public function get_quick_actions(): array
+    {
         $context = \context_system::instance();
 
         $actions = [];
@@ -329,7 +341,8 @@ class dashboard {
      *
      * @return array Storage usage data.
      */
-    public function get_storage_info(): array {
+    public function get_storage_info(): array
+    {
         $exportpath = \local_edulution_get_export_path();
         $importpath = \local_edulution_get_import_path();
 
@@ -347,7 +360,8 @@ class dashboard {
      * @param string $path Directory path.
      * @return int Total size in bytes.
      */
-    protected function get_directory_size(string $path): int {
+    protected function get_directory_size(string $path): int
+    {
         if (!is_dir($path)) {
             return 0;
         }

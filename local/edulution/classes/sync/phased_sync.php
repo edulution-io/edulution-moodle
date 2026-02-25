@@ -21,7 +21,7 @@
  * and progress tracking for each phase.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -44,7 +44,8 @@ defined('MOODLE_INTERNAL') || die();
  * 9. SYNC_ENROLL - Apply enrollment changes
  * 10. COMPLETE - Finalize and report
  */
-class phased_sync {
+class phased_sync
+{
 
     /** Phase constants */
     const PHASE_INIT = 'init';
@@ -147,7 +148,8 @@ class phased_sync {
      * @param keycloak_client $client Keycloak client.
      * @param group_classifier|null $classifier Group classifier.
      */
-    public function __construct(keycloak_client $client, ?group_classifier $classifier = null) {
+    public function __construct(keycloak_client $client, ?group_classifier $classifier = null)
+    {
         $this->client = $client;
         $this->classifier = $classifier ?? new group_classifier();
 
@@ -162,7 +164,8 @@ class phased_sync {
     /**
      * Initialize the schema processor from configuration.
      */
-    protected function init_schema_processor(): void {
+    protected function init_schema_processor(): void
+    {
         // Load schema configuration from settings or use defaults.
         $schema_json = get_config('local_edulution', 'naming_schemas');
 
@@ -185,7 +188,8 @@ class phased_sync {
      * @param callable $callback Callback function(phase, progress, message, stats).
      * @return self
      */
-    public function set_progress_callback(callable $callback): self {
+    public function set_progress_callback(callable $callback): self
+    {
         $this->progress_callback = $callback;
         return $this;
     }
@@ -196,7 +200,8 @@ class phased_sync {
      * @param bool $verbose True for detailed logging, false for summaries only.
      * @return self
      */
-    public function set_verbose(bool $verbose): self {
+    public function set_verbose(bool $verbose): self
+    {
         $this->verbose = $verbose;
         return $this;
     }
@@ -206,7 +211,8 @@ class phased_sync {
      *
      * @return array Final statistics and results.
      */
-    public function run(): array {
+    public function run(): array
+    {
         $start_time = time();
 
         try {
@@ -258,7 +264,8 @@ class phased_sync {
     /**
      * Phase 1: Fetch users from Keycloak.
      */
-    protected function run_phase_fetch_users(): void {
+    protected function run_phase_fetch_users(): void
+    {
         $this->set_phase(self::PHASE_FETCH_USERS, 5, 'Fetching users from Keycloak...');
 
         $this->keycloak_users = [];
@@ -285,7 +292,8 @@ class phased_sync {
     /**
      * Phase 2: Calculate user delta.
      */
-    protected function run_phase_delta_users(): void {
+    protected function run_phase_delta_users(): void
+    {
         global $DB;
 
         $this->set_phase(self::PHASE_DELTA_USERS, 15, 'Calculating user changes...');
@@ -437,7 +445,8 @@ class phased_sync {
      *
      * Also builds the user_cache with is_teacher status for enrollment phase.
      */
-    protected function run_phase_sync_users(): void {
+    protected function run_phase_sync_users(): void
+    {
         global $DB, $CFG;
         require_once($CFG->dirroot . '/user/lib.php');
 
@@ -594,7 +603,8 @@ class phased_sync {
     /**
      * Phase 4: Fetch groups from Keycloak.
      */
-    protected function run_phase_fetch_groups(): void {
+    protected function run_phase_fetch_groups(): void
+    {
         $this->set_phase(self::PHASE_FETCH_GROUPS, 40, 'Fetching groups from Keycloak...');
 
         $this->keycloak_groups = $this->client->get_all_groups_flat();
@@ -610,7 +620,8 @@ class phased_sync {
      *
      * Uses schema processor to match groups and determine course properties.
      */
-    protected function run_phase_delta_groups(): void {
+    protected function run_phase_delta_groups(): void
+    {
         global $DB;
 
         $this->set_phase(self::PHASE_DELTA_GROUPS, 45, 'Calculating course changes...');
@@ -721,7 +732,8 @@ class phased_sync {
      *
      * Uses schema results and category resolver for course creation.
      */
-    protected function run_phase_sync_groups(): void {
+    protected function run_phase_sync_groups(): void
+    {
         global $CFG;
         require_once($CFG->dirroot . '/course/lib.php');
 
@@ -813,7 +825,8 @@ class phased_sync {
      *
      * Only fetches members for groups that matched a schema (have courses).
      */
-    protected function run_phase_fetch_members(): void {
+    protected function run_phase_fetch_members(): void
+    {
         $this->set_phase(self::PHASE_FETCH_MEMBERS, 60, 'Fetching group memberships...');
 
         // Build set of group IDs that have/will have courses (from delta phase).
@@ -887,7 +900,8 @@ class phased_sync {
      * @param array $kc_user Keycloak user data with attributes.
      * @return bool True if user is a teacher or admin.
      */
-    protected function is_teacher_user(array $kc_user): bool {
+    protected function is_teacher_user(array $kc_user): bool
+    {
         $username = strtolower($kc_user['username'] ?? '');
         $attributes = $kc_user['attributes'] ?? [];
 
@@ -965,7 +979,8 @@ class phased_sync {
      *
      * Uses schema results from group delta phase to determine enrollments.
      */
-    protected function run_phase_delta_enroll(): void {
+    protected function run_phase_delta_enroll(): void
+    {
         global $DB;
 
         $this->set_phase(self::PHASE_DELTA_ENROLL, 70, 'Calculating enrollment changes...');
@@ -1138,7 +1153,8 @@ class phased_sync {
      * @param array $courses_by_idnumber Course lookup by idnumber.
      * @param array $existing_enrollments Existing enrollments.
      */
-    protected function calculate_unenrollments(array $courses_by_idnumber, array $existing_enrollments): void {
+    protected function calculate_unenrollments(array $courses_by_idnumber, array $existing_enrollments): void
+    {
         global $DB;
 
         // Get sync-managed course IDs (courses with kc_ or kc_project_ idnumber).
@@ -1155,7 +1171,7 @@ class phased_sync {
             list($course_id, $user_id) = explode('_', $key);
 
             // Only consider sync-managed courses.
-            if (!isset($sync_course_ids[(int)$course_id])) {
+            if (!isset($sync_course_ids[(int) $course_id])) {
                 continue;
             }
 
@@ -1166,8 +1182,8 @@ class phased_sync {
                 $course = $DB->get_record('course', ['id' => $course_id], 'id, shortname');
 
                 $this->enroll_delta['to_unenroll'][] = [
-                    'user_id' => (int)$user_id,
-                    'course_id' => (int)$course_id,
+                    'user_id' => (int) $user_id,
+                    'course_id' => (int) $course_id,
                     'username' => $user->username ?? 'unknown',
                     'course_shortname' => $course->shortname ?? 'unknown',
                     'current_role' => $role,
@@ -1186,7 +1202,8 @@ class phased_sync {
     /**
      * Phase 9: Sync enrollments.
      */
-    protected function run_phase_sync_enroll(): void {
+    protected function run_phase_sync_enroll(): void
+    {
         global $DB;
 
         $this->set_phase(self::PHASE_SYNC_ENROLL, 80, 'Processing enrollments...');
@@ -1330,7 +1347,8 @@ class phased_sync {
     /**
      * Phase 10: Complete.
      */
-    protected function run_phase_complete(): void {
+    protected function run_phase_complete(): void
+    {
         $this->set_phase(self::PHASE_COMPLETE, 100, 'Synchronization complete!');
 
         $this->log('success', sprintf(
@@ -1353,7 +1371,8 @@ class phased_sync {
      * @param int $progress Progress percentage.
      * @param string $message Status message.
      */
-    protected function set_phase(string $phase, int $progress, string $message): void {
+    protected function set_phase(string $phase, int $progress, string $message): void
+    {
         $this->current_phase = $phase;
         $this->update_progress($progress, $message);
         if ($this->verbose) {
@@ -1367,7 +1386,8 @@ class phased_sync {
      * @param float $progress Progress percentage.
      * @param string $message Status message.
      */
-    protected function update_progress(float $progress, string $message): void {
+    protected function update_progress(float $progress, string $message): void
+    {
         if ($this->progress_callback) {
             call_user_func(
                 $this->progress_callback,
@@ -1385,7 +1405,8 @@ class phased_sync {
      * @param string $type Log type (info, success, warning, error).
      * @param string $message Log message.
      */
-    protected function log(string $type, string $message): void {
+    protected function log(string $type, string $message): void
+    {
         $this->log[] = [
             'type' => $type,
             'message' => $message,
@@ -1405,7 +1426,8 @@ class phased_sync {
      * @param string $type Error type.
      * @param string $message Error message.
      */
-    protected function add_error(string $type, string $message): void {
+    protected function add_error(string $type, string $message): void
+    {
         $this->errors[] = [
             'type' => $type,
             'message' => $message,
@@ -1421,7 +1443,8 @@ class phased_sync {
      * @param int $moodle_id Moodle user ID.
      * @param string $username Username.
      */
-    protected function store_user_mapping(string $keycloak_id, int $moodle_id, string $username): void {
+    protected function store_user_mapping(string $keycloak_id, int $moodle_id, string $username): void
+    {
         global $DB;
 
         $dbman = $DB->get_manager();
@@ -1462,7 +1485,8 @@ class phased_sync {
      * @param int $user_id Moodle user ID.
      * @return bool True if role was newly assigned, false if already assigned or failed.
      */
-    protected function assign_coursecreator_role(int $user_id): bool {
+    protected function assign_coursecreator_role(int $user_id): bool
+    {
         global $DB;
 
         $role = $DB->get_record('role', ['shortname' => 'coursecreator']);
@@ -1492,7 +1516,8 @@ class phased_sync {
      *
      * @return array Statistics.
      */
-    public function get_stats(): array {
+    public function get_stats(): array
+    {
         return $this->stats;
     }
 
@@ -1501,7 +1526,8 @@ class phased_sync {
      *
      * @return array Errors.
      */
-    public function get_errors(): array {
+    public function get_errors(): array
+    {
         return $this->errors;
     }
 
@@ -1510,7 +1536,8 @@ class phased_sync {
      *
      * @return array Log entries.
      */
-    public function get_log(): array {
+    public function get_log(): array
+    {
         return $this->log;
     }
 }

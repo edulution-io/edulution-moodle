@@ -21,7 +21,7 @@
  * reading configuration from plugin settings.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -35,7 +35,8 @@ defined('MOODLE_INTERNAL') || die();
  * Main orchestrator for the synchronization process. Reads configuration
  * from plugin settings and coordinates user and group synchronization.
  */
-class sync_manager {
+class sync_manager
+{
 
     /** Sync mode: full sync (users, courses, enrollments) */
     const MODE_FULL = 'full';
@@ -94,7 +95,8 @@ class sync_manager {
      * @param keycloak_client|null $client Pre-configured Keycloak client.
      * @param group_classifier|null $classifier Pre-configured group classifier.
      */
-    public function __construct(?keycloak_client $client = null, ?group_classifier $classifier = null) {
+    public function __construct(?keycloak_client $client = null, ?group_classifier $classifier = null)
+    {
         $this->load_config();
         $this->report = new sync_report();
 
@@ -112,7 +114,8 @@ class sync_manager {
     /**
      * Load configuration from plugin settings (environment variables take precedence).
      */
-    protected function load_config(): void {
+    protected function load_config(): void
+    {
         $this->config = [
             'enabled' => (bool) \local_edulution_get_config('keycloak_sync_enabled'),
             'url' => \local_edulution_get_config('keycloak_url') ?: '',
@@ -127,7 +130,8 @@ class sync_manager {
     /**
      * Initialize the Keycloak client and sync handlers.
      */
-    protected function init_client(): void {
+    protected function init_client(): void
+    {
         $this->client = new keycloak_client(
             $this->config['url'],
             $this->config['realm'],
@@ -144,11 +148,12 @@ class sync_manager {
      *
      * @return bool True if all required settings are present.
      */
-    public function is_configured(): bool {
+    public function is_configured(): bool
+    {
         return !empty($this->config['url']) &&
-               !empty($this->config['realm']) &&
-               !empty($this->config['client_id']) &&
-               !empty($this->config['client_secret']);
+            !empty($this->config['realm']) &&
+            !empty($this->config['client_id']) &&
+            !empty($this->config['client_secret']);
     }
 
     /**
@@ -156,7 +161,8 @@ class sync_manager {
      *
      * @return bool True if enabled.
      */
-    public function is_enabled(): bool {
+    public function is_enabled(): bool
+    {
         return $this->enabled && $this->is_configured();
     }
 
@@ -165,7 +171,8 @@ class sync_manager {
      *
      * @return sync_report Combined sync report.
      */
-    public function run_full_sync(): sync_report {
+    public function run_full_sync(): sync_report
+    {
         $this->report = new sync_report();
 
         if (!$this->is_enabled()) {
@@ -197,7 +204,8 @@ class sync_manager {
      *
      * @return array Preview data with users and groups to sync.
      */
-    public function run_preview(): array {
+    public function run_preview(): array
+    {
         $preview = [
             'configured' => $this->is_configured(),
             'enabled' => $this->is_enabled(),
@@ -237,7 +245,8 @@ class sync_manager {
      *
      * @return array User preview data.
      */
-    protected function preview_users(): array {
+    protected function preview_users(): array
+    {
         $preview = [
             'to_create' => [],
             'to_update' => [],
@@ -289,7 +298,8 @@ class sync_manager {
      *
      * @return array Group preview data.
      */
-    protected function preview_groups(): array {
+    protected function preview_groups(): array
+    {
         $preview = [
             'to_create' => [],
             'to_update' => [],
@@ -330,7 +340,8 @@ class sync_manager {
      *
      * @return sync_report Sync report for users.
      */
-    public function sync_users_only(): sync_report {
+    public function sync_users_only(): sync_report
+    {
         if (!$this->is_enabled()) {
             $report = new sync_report();
             $report->add_error('sync', 'Keycloak sync is not enabled or configured');
@@ -345,7 +356,8 @@ class sync_manager {
      *
      * @return sync_report Sync report for groups.
      */
-    public function sync_groups_only(): sync_report {
+    public function sync_groups_only(): sync_report
+    {
         if (!$this->is_enabled()) {
             $report = new sync_report();
             $report->add_error('sync', 'Keycloak sync is not enabled or configured');
@@ -367,7 +379,8 @@ class sync_manager {
      *
      * @return int|null Unix timestamp or null if never synced.
      */
-    public function get_last_sync_time(): ?int {
+    public function get_last_sync_time(): ?int
+    {
         $time = get_config('local_edulution', self::CONFIG_LAST_SYNC);
         return $time ? (int) $time : null;
     }
@@ -377,7 +390,8 @@ class sync_manager {
      *
      * @return array|null Statistics array or null.
      */
-    public function get_sync_statistics(): ?array {
+    public function get_sync_statistics(): ?array
+    {
         $stats = get_config('local_edulution', self::CONFIG_LAST_STATS);
 
         if (!$stats) {
@@ -393,7 +407,8 @@ class sync_manager {
      *
      * @param int $start_time Sync start timestamp.
      */
-    protected function store_sync_stats(int $start_time): void {
+    protected function store_sync_stats(int $start_time): void
+    {
         $end_time = time();
 
         $stats = [
@@ -412,7 +427,8 @@ class sync_manager {
      *
      * @return array Test results with 'success' and 'message'.
      */
-    public function test_connection(): array {
+    public function test_connection(): array
+    {
         if (!$this->is_configured()) {
             return [
                 'success' => false,
@@ -428,7 +444,8 @@ class sync_manager {
      *
      * @return array Configuration details.
      */
-    public function get_config_status(): array {
+    public function get_config_status(): array
+    {
         return [
             'configured' => $this->is_configured(),
             'enabled' => $this->is_enabled(),
@@ -444,7 +461,8 @@ class sync_manager {
      *
      * @return sync_report Report instance.
      */
-    public function get_report(): sync_report {
+    public function get_report(): sync_report
+    {
         return $this->report;
     }
 
@@ -453,7 +471,8 @@ class sync_manager {
      *
      * @return keycloak_client|null Client instance or null if not configured.
      */
-    public function get_client(): ?keycloak_client {
+    public function get_client(): ?keycloak_client
+    {
         return $this->client ?? null;
     }
 
@@ -462,7 +481,8 @@ class sync_manager {
      *
      * @return user_sync|null Handler instance or null if not configured.
      */
-    public function get_user_sync(): ?user_sync {
+    public function get_user_sync(): ?user_sync
+    {
         return $this->user_sync ?? null;
     }
 
@@ -471,7 +491,8 @@ class sync_manager {
      *
      * @return group_sync|null Handler instance or null if not configured.
      */
-    public function get_group_sync(): ?group_sync {
+    public function get_group_sync(): ?group_sync
+    {
         return $this->group_sync ?? null;
     }
 
@@ -481,7 +502,8 @@ class sync_manager {
      * @param string $mode One of MODE_FULL, MODE_USERS, MODE_COURSES, MODE_ENROLLMENTS.
      * @return self
      */
-    public function set_mode(string $mode): self {
+    public function set_mode(string $mode): self
+    {
         $valid_modes = [self::MODE_FULL, self::MODE_USERS, self::MODE_COURSES, self::MODE_ENROLLMENTS];
         if (in_array($mode, $valid_modes)) {
             $this->mode = $mode;
@@ -495,7 +517,8 @@ class sync_manager {
      * @param bool $dry_run Whether to run in dry run mode.
      * @return self
      */
-    public function set_dry_run(bool $dry_run): self {
+    public function set_dry_run(bool $dry_run): self
+    {
         $this->dry_run = $dry_run;
         return $this;
     }
@@ -506,7 +529,8 @@ class sync_manager {
      * @param bool $verbose Whether to output verbose messages.
      * @return self
      */
-    public function set_verbose(bool $verbose): self {
+    public function set_verbose(bool $verbose): self
+    {
         $this->verbose = $verbose;
         return $this;
     }
@@ -516,7 +540,8 @@ class sync_manager {
      *
      * @return sync_report Combined sync report.
      */
-    public function run(): sync_report {
+    public function run(): sync_report
+    {
         $this->report = new sync_report();
 
         if (!$this->is_configured() && !isset($this->client)) {
@@ -568,7 +593,8 @@ class sync_manager {
     /**
      * Run user synchronization.
      */
-    protected function run_user_sync(): void {
+    protected function run_user_sync(): void
+    {
         if ($this->verbose) {
             mtrace('  Syncing users...');
         }
@@ -604,7 +630,8 @@ class sync_manager {
      *
      * @return array Course sync results for use by enrollment sync.
      */
-    protected function run_course_sync(): array {
+    protected function run_course_sync(): array
+    {
         if ($this->verbose) {
             mtrace('  Syncing courses from groups...');
         }
@@ -667,7 +694,8 @@ class sync_manager {
      *
      * @param array $synced_courses Optional course sync results.
      */
-    protected function run_enrollment_sync(array $synced_courses = []): void {
+    protected function run_enrollment_sync(array $synced_courses = []): void
+    {
         if ($this->verbose) {
             mtrace('  Syncing enrollments...');
         }
@@ -725,7 +753,8 @@ class sync_manager {
      *
      * @return array User mapping.
      */
-    protected function get_synced_users_map(): array {
+    protected function get_synced_users_map(): array
+    {
         global $DB;
 
         $users = [];
@@ -749,7 +778,8 @@ class sync_manager {
      *
      * @return bool True if client is available.
      */
-    public function has_client(): bool {
+    public function has_client(): bool
+    {
         return isset($this->client);
     }
 }

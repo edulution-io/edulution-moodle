@@ -1,11 +1,11 @@
 /**
- * Sync page functionality for Edulution plugin.
+ * Sync page functionality for edulution plugin.
  *
  * Handles sync preview, sync start, real-time progress updates,
  * results display, and error handling.
  *
  * @module     local_edulution/sync
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates', 'local_edulution/common'],

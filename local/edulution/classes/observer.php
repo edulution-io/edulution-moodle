@@ -18,7 +18,7 @@
  * Event observer for local_edulution.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -27,7 +27,8 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Observer class for handling events.
  */
-class local_edulution_observer {
+class local_edulution_observer
+{
 
     /**
      * Handle config changes.
@@ -37,7 +38,8 @@ class local_edulution_observer {
      * @param \core\event\config_log_created $event The event.
      * @return void
      */
-    public static function config_changed(\core\event\config_log_created $event): void {
+    public static function config_changed(\core\event\config_log_created $event): void
+    {
         $data = $event->get_data();
         $other = $data['other'] ?? [];
 

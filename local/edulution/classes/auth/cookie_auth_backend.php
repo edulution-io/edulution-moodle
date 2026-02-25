@@ -22,7 +22,7 @@
  * a JWT token from Keycloak.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -33,7 +33,8 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Cookie authentication backend for JWT-based SSO.
  */
-class cookie_auth_backend {
+class cookie_auth_backend
+{
 
     /** @var string Session key for marking authenticated sessions */
     const SESSION_KEY = 'local_edulution_cookie_auth';
@@ -60,52 +61,64 @@ class cookie_auth_backend {
     /**
      * Try to auto-login the user based on JWT cookie.
      *
-     * @return bool True if login was successful, false otherwise.
+     * IMPORTANT: This method NEVER calls require_logout() because that can
+     * trigger a Keycloak/OIDC cascade logout which would log the user out
+     * of the edulution portal as well.
+     *
+     * @return bool True if user is logged in (or was already), false otherwise.
      */
-    public function try_auto_login(): bool {
-        global $SESSION, $USER, $DB;
+    public function try_auto_login(): bool
+    {
+        global $SESSION, $USER;
 
         // Check if cookie auth is enabled.
         if (!$this->is_enabled()) {
             return false;
         }
 
-        // Skip if user is already logged in.
-        if (isloggedin() && !isguestuser()) {
-            // Check if this is a different user than in the token.
-            $token = $this->get_token_from_cookie();
-            if ($token) {
-                $payload = $this->decode_token_payload($token);
-                if ($payload) {
-                    $username = $this->extract_username($payload);
-                    if ($username && $USER->username !== $username) {
-                        // Different user in token - log out current user first.
-                        require_logout();
-                    } else {
-                        return true; // Same user, already logged in.
-                    }
-                }
-            }
-            return true;
-        }
-
         // Get the JWT from cookie.
         $token = $this->get_token_from_cookie();
+
+        // No token cookie present - don't interfere with anything.
         if (empty($token)) {
             return false;
         }
 
-        // Check session cache to avoid redundant validation.
-        $token_hash = hash('sha256', $token);
-        if (isset($SESSION->{self::SESSION_TOKEN_HASH}) &&
-            $SESSION->{self::SESSION_TOKEN_HASH} === $token_hash &&
-            isset($SESSION->{self::SESSION_TOKEN_EXP}) &&
-            $SESSION->{self::SESSION_TOKEN_EXP} > time()) {
-            // Token already validated and not expired.
+        // If user is already logged in, just keep them logged in.
+        // NEVER log out an already-authenticated user - this prevents
+        // cascade logouts that would also log them out of edulution.
+        if (isloggedin() && !isguestuser()) {
+            $token_hash = hash('sha256', $token);
+
+            // Update session markers if token changed (e.g. token was refreshed).
+            if (!isset($SESSION->{self::SESSION_TOKEN_HASH}) ||
+                $SESSION->{self::SESSION_TOKEN_HASH} !== $token_hash) {
+                $payload = $this->decode_token_payload($token);
+                if ($payload) {
+                    $SESSION->{self::SESSION_TOKEN_HASH} = $token_hash;
+                    $SESSION->{self::SESSION_TOKEN_EXP} = $payload['exp'] ?? (time() + 3600);
+                }
+            }
+
             return true;
         }
 
-        // Validate the token.
+        // User is NOT logged in. Try auto-login with the token.
+
+        // Check session cache to avoid redundant validation on every request.
+        $token_hash = hash('sha256', $token);
+        if (
+            isset($SESSION->{self::SESSION_TOKEN_HASH}) &&
+            $SESSION->{self::SESSION_TOKEN_HASH} === $token_hash &&
+            isset($SESSION->{self::SESSION_TOKEN_EXP}) &&
+            $SESSION->{self::SESSION_TOKEN_EXP} > time()
+        ) {
+            // Token already validated and not expired, but user is not logged in.
+            // This can happen if the session was lost. Clear markers and retry.
+            $this->clear_session_markers();
+        }
+
+        // Validate the token (checks signature, expiration, issuer).
         $payload = $this->validate_token($token);
         if ($payload === null) {
             $this->clear_session_markers();
@@ -151,7 +164,8 @@ class cookie_auth_backend {
      *
      * @return bool True if enabled.
      */
-    public function is_enabled(): bool {
+    public function is_enabled(): bool
+    {
         return (bool) \local_edulution_get_config('cookie_auth_enabled');
     }
 
@@ -160,7 +174,8 @@ class cookie_auth_backend {
      *
      * @return string|null The token or null.
      */
-    protected function get_token_from_cookie(): ?string {
+    protected function get_token_from_cookie(): ?string
+    {
         $cookie_name = \local_edulution_get_config('cookie_auth_cookie_name', 'authToken');
 
         return $_COOKIE[$cookie_name] ?? null;
@@ -172,7 +187,8 @@ class cookie_auth_backend {
      * @param string $token The JWT token.
      * @return array|null The payload if valid, null otherwise.
      */
-    public function validate_token(string $token): ?array {
+    public function validate_token(string $token): ?array
+    {
         // Split the token.
         $parts = explode('.', $token);
         if (count($parts) !== 3) {
@@ -253,7 +269,8 @@ class cookie_auth_backend {
      * @param string $token The JWT token.
      * @return array|null The payload or null.
      */
-    protected function decode_token_payload(string $token): ?array {
+    protected function decode_token_payload(string $token): ?array
+    {
         $parts = explode('.', $token);
         if (count($parts) !== 3) {
             return null;
@@ -276,7 +293,8 @@ class cookie_auth_backend {
      * @param string $algorithm The algorithm to use.
      * @return bool True if signature is valid.
      */
-    protected function verify_signature(string $header_b64, string $payload_b64, string $signature_b64, string $algorithm): bool {
+    protected function verify_signature(string $header_b64, string $payload_b64, string $signature_b64, string $algorithm): bool
+    {
         $data = $header_b64 . '.' . $payload_b64;
         $signature = $this->base64url_decode($signature_b64);
 
@@ -308,7 +326,8 @@ class cookie_auth_backend {
      *
      * @return string|null The PEM-formatted public key or null.
      */
-    protected function get_public_key(): ?string {
+    protected function get_public_key(): ?string
+    {
         // Check for direct public key configuration.
         $public_key = get_config('local_edulution', 'cookie_auth_public_key');
         if (!empty($public_key)) {
@@ -343,7 +362,8 @@ class cookie_auth_backend {
      * @param string $realm_url The realm URL.
      * @return string|null The public key or null.
      */
-    protected function fetch_public_key_from_realm(string $realm_url): ?string {
+    protected function fetch_public_key_from_realm(string $realm_url): ?string
+    {
         // Check cache first.
         $cached_key = get_config('local_edulution', 'cookie_auth_cached_public_key');
         $cached_time = get_config('local_edulution', 'cookie_auth_cached_public_key_time');
@@ -380,8 +400,8 @@ class cookie_auth_backend {
 
         // Convert to PEM format.
         $pem = "-----BEGIN PUBLIC KEY-----\n" .
-               chunk_split($data['public_key'], 64, "\n") .
-               "-----END PUBLIC KEY-----";
+            chunk_split($data['public_key'], 64, "\n") .
+            "-----END PUBLIC KEY-----";
 
         // Cache the key.
         set_config('cookie_auth_cached_public_key', $pem, 'local_edulution');
@@ -396,7 +416,8 @@ class cookie_auth_backend {
      * @param array $payload The JWT payload.
      * @return string|null The username or null.
      */
-    protected function extract_username(array $payload): ?string {
+    protected function extract_username(array $payload): ?string
+    {
         $claim = get_config('local_edulution', 'cookie_auth_user_claim');
         if (empty($claim)) {
             $claim = 'preferred_username'; // Default.
@@ -423,7 +444,8 @@ class cookie_auth_backend {
      * @param array $payload The JWT payload (for email fallback).
      * @return \stdClass|null The user record or null.
      */
-    protected function find_user(string $username, array $payload): ?\stdClass {
+    protected function find_user(string $username, array $payload): ?\stdClass
+    {
         global $DB;
 
         // Try by username first.
@@ -456,7 +478,8 @@ class cookie_auth_backend {
      * @param \stdClass $user The user to log in.
      * @return bool True if successful.
      */
-    protected function login_user(\stdClass $user): bool {
+    protected function login_user(\stdClass $user): bool
+    {
         global $USER, $SESSION;
 
         try {
@@ -473,7 +496,8 @@ class cookie_auth_backend {
     /**
      * Clear session markers.
      */
-    protected function clear_session_markers(): void {
+    protected function clear_session_markers(): void
+    {
         global $SESSION;
 
         unset($SESSION->{self::SESSION_KEY});
@@ -487,7 +511,8 @@ class cookie_auth_backend {
      * @param string $data The data to decode.
      * @return string|null The decoded data or null.
      */
-    protected function base64url_decode(string $data): ?string {
+    protected function base64url_decode(string $data): ?string
+    {
         $remainder = strlen($data) % 4;
         if ($remainder) {
             $data .= str_repeat('=', 4 - $remainder);
@@ -502,9 +527,10 @@ class cookie_auth_backend {
      *
      * @param string $message The message.
      */
-    protected function log_debug(string $message): void {
+    protected function log_debug(string $message): void
+    {
         if (get_config('local_edulution', 'cookie_auth_debug')) {
-            debugging("[Edulution Cookie Auth] {$message}", DEBUG_DEVELOPER);
+            debugging("[edulution Cookie Auth] {$message}", DEBUG_DEVELOPER);
         }
     }
 
@@ -513,7 +539,8 @@ class cookie_auth_backend {
      *
      * @return array Debug information.
      */
-    public function get_debug_info(): array {
+    public function get_debug_info(): array
+    {
         global $USER, $SESSION;
 
         $cookie_name = get_config('local_edulution', 'cookie_auth_cookie_name') ?: 'authToken';
@@ -554,7 +581,8 @@ class cookie_auth_backend {
      *
      * @return array Test results.
      */
-    public function test_configuration(): array {
+    public function test_configuration(): array
+    {
         $results = [
             'success' => false,
             'messages' => [],

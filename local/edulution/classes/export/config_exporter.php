@@ -18,7 +18,7 @@
  * Configuration exporter.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -32,7 +32,8 @@ defined('MOODLE_INTERNAL') || die();
  * Exports admin settings to JSON, exports theme settings, and creates
  * a sanitized config backup (without passwords or sensitive data).
  */
-class config_exporter extends base_exporter {
+class config_exporter extends base_exporter
+{
 
     /** @var array Settings that contain sensitive data and should be sanitized */
     protected const SENSITIVE_SETTINGS = [
@@ -76,7 +77,8 @@ class config_exporter extends base_exporter {
      *
      * @return string Human-readable name.
      */
-    public function get_name(): string {
+    public function get_name(): string
+    {
         return get_string('exporter_config', 'local_edulution');
     }
 
@@ -85,7 +87,8 @@ class config_exporter extends base_exporter {
      *
      * @return string Language string key.
      */
-    public function get_string_key(): string {
+    public function get_string_key(): string
+    {
         return 'config';
     }
 
@@ -94,7 +97,8 @@ class config_exporter extends base_exporter {
      *
      * @return int Number of steps.
      */
-    public function get_total_count(): int {
+    public function get_total_count(): int
+    {
         // Steps: Core config, plugin configs, theme settings, write files.
         return 4;
     }
@@ -105,7 +109,8 @@ class config_exporter extends base_exporter {
      * @return array Exported configuration data.
      * @throws \moodle_exception On export failure.
      */
-    public function export(): array {
+    public function export(): array
+    {
         global $CFG, $DB;
 
         $this->log('info', 'Exporting configuration settings...');
@@ -193,7 +198,8 @@ class config_exporter extends base_exporter {
      *
      * @return array Core configuration settings.
      */
-    protected function export_core_config(): array {
+    protected function export_core_config(): array
+    {
         global $DB;
 
         // Get all config settings without plugin prefix.
@@ -219,7 +225,8 @@ class config_exporter extends base_exporter {
      *
      * @return array Plugin configuration settings grouped by plugin.
      */
-    protected function export_plugin_configs(): array {
+    protected function export_plugin_configs(): array
+    {
         global $DB;
 
         // Get all config settings with plugin prefix.
@@ -251,7 +258,8 @@ class config_exporter extends base_exporter {
      *
      * @return array Theme settings.
      */
-    protected function export_theme_settings(): array {
+    protected function export_theme_settings(): array
+    {
         global $CFG, $DB;
 
         $themeSettings = [];
@@ -317,7 +325,8 @@ class config_exporter extends base_exporter {
      * @param string|null $plugin Plugin name (optional).
      * @return bool True if sensitive.
      */
-    protected function is_sensitive_setting(string $name, ?string $plugin = null): bool {
+    protected function is_sensitive_setting(string $name, ?string $plugin = null): bool
+    {
         $nameLower = strtolower($name);
 
         // Check exact matches.
@@ -352,7 +361,8 @@ class config_exporter extends base_exporter {
      *
      * @return array List of hidden setting names.
      */
-    protected function get_hidden_settings(): array {
+    protected function get_hidden_settings(): array
+    {
         global $DB;
 
         $hidden = [];
@@ -381,7 +391,8 @@ class config_exporter extends base_exporter {
      *
      * @return array Site information.
      */
-    public function export_site_info(): array {
+    public function export_site_info(): array
+    {
         global $CFG, $SITE, $DB;
 
         return [
@@ -412,7 +423,8 @@ class config_exporter extends base_exporter {
      * @param string $section Admin tree section name.
      * @return array Settings from the section.
      */
-    public function export_admin_section(string $section): array {
+    public function export_admin_section(string $section): array
+    {
         global $DB;
 
         // This requires loading the admin tree which can be expensive.

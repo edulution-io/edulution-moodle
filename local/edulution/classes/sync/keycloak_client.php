@@ -25,7 +25,7 @@
  * - Access token caching
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -39,7 +39,8 @@ defined('MOODLE_INTERNAL') || die();
  * Uses OAuth2 client credentials flow for authentication and provides
  * methods for user and group management via the Keycloak Admin API.
  */
-class keycloak_client {
+class keycloak_client
+{
 
     /** @var string Keycloak server base URL */
     protected string $url;
@@ -76,7 +77,8 @@ class keycloak_client {
      * @param string $client_id OAuth2 client ID.
      * @param string $client_secret OAuth2 client secret.
      */
-    public function __construct(string $url, string $realm, string $client_id, string $client_secret) {
+    public function __construct(string $url, string $realm, string $client_id, string $client_secret)
+    {
         $this->url = rtrim($url, '/');
         $this->realm = $realm;
         $this->client_id = $client_id;
@@ -92,7 +94,8 @@ class keycloak_client {
      * @return string Access token.
      * @throws \moodle_exception If authentication fails.
      */
-    public function get_access_token(bool $force = false): string {
+    public function get_access_token(bool $force = false): string
+    {
         // Return cached token if still valid (with 30-second buffer).
         if (!$force && $this->access_token && time() < ($this->token_expires - 30)) {
             return $this->access_token;
@@ -155,7 +158,8 @@ class keycloak_client {
      * @return array Array of user objects with full attributes (LDAP_ENTRY_DN, etc.).
      * @throws \moodle_exception On API errors.
      */
-    public function get_users(string $search = '', int $max = 100, int $first = 0): array {
+    public function get_users(string $search = '', int $max = 100, int $first = 0): array
+    {
         $params = [
             'max' => $max,
             'first' => $first,
@@ -175,7 +179,8 @@ class keycloak_client {
      * @return array All user objects.
      * @throws \moodle_exception On API errors.
      */
-    public function get_all_users(): array {
+    public function get_all_users(): array
+    {
         $all_users = [];
         $batch_size = 100;
         $offset = 0;
@@ -196,7 +201,8 @@ class keycloak_client {
      * @return array User data.
      * @throws \moodle_exception On API errors.
      */
-    public function get_user(string $id): array {
+    public function get_user(string $id): array
+    {
         return $this->api_request('GET', "users/{$id}");
     }
 
@@ -205,7 +211,8 @@ class keycloak_client {
      *
      * @return int Total user count.
      */
-    public function count_users(): int {
+    public function count_users(): int
+    {
         try {
             $token = $this->get_access_token();
             $url = "{$this->url}/admin/realms/{$this->realm}/users/count";
@@ -225,7 +232,7 @@ class keycloak_client {
             curl_close($ch);
 
             if ($httpcode === 200 && is_numeric($response)) {
-                return (int)$response;
+                return (int) $response;
             }
 
             // Fallback: count by fetching users
@@ -244,7 +251,8 @@ class keycloak_client {
      * @return array Array of group objects.
      * @throws \moodle_exception On API errors.
      */
-    public function get_groups(int $max = 100, int $first = 0): array {
+    public function get_groups(int $max = 100, int $first = 0): array
+    {
         $params = [
             'max' => $max,
             'first' => $first,
@@ -259,7 +267,8 @@ class keycloak_client {
      * @return array All group objects.
      * @throws \moodle_exception On API errors.
      */
-    public function get_all_groups(): array {
+    public function get_all_groups(): array
+    {
         $all_groups = [];
         $batch_size = 100;
         $offset = 0;
@@ -280,7 +289,8 @@ class keycloak_client {
      * @return array Array of group objects.
      * @throws \moodle_exception On API errors.
      */
-    public function get_user_groups(string $userid): array {
+    public function get_user_groups(string $userid): array
+    {
         return $this->api_request('GET', "users/{$userid}/groups");
     }
 
@@ -291,7 +301,8 @@ class keycloak_client {
      * @return string The created user's ID (from Location header).
      * @throws \moodle_exception On API errors.
      */
-    public function create_user(array $data): string {
+    public function create_user(array $data): string
+    {
         $response = $this->api_request('POST', 'users', [], $data, true);
 
         // The user ID is returned in the Location header.
@@ -311,7 +322,8 @@ class keycloak_client {
      * @return bool True on success.
      * @throws \moodle_exception On API errors.
      */
-    public function update_user(string $id, array $data): bool {
+    public function update_user(string $id, array $data): bool
+    {
         $this->api_request('PUT', "users/{$id}", [], $data);
         return true;
     }
@@ -324,7 +336,8 @@ class keycloak_client {
      * @return bool True on success.
      * @throws \moodle_exception On API errors.
      */
-    public function add_user_to_group(string $userid, string $groupid): bool {
+    public function add_user_to_group(string $userid, string $groupid): bool
+    {
         $this->api_request('PUT', "users/{$userid}/groups/{$groupid}");
         return true;
     }
@@ -337,7 +350,8 @@ class keycloak_client {
      * @return bool True on success.
      * @throws \moodle_exception On API errors.
      */
-    public function remove_user_from_group(string $userid, string $groupid): bool {
+    public function remove_user_from_group(string $userid, string $groupid): bool
+    {
         $this->api_request('DELETE', "users/{$userid}/groups/{$groupid}");
         return true;
     }
@@ -348,7 +362,8 @@ class keycloak_client {
      * @return array All group objects in a flat array.
      * @throws \moodle_exception On API errors.
      */
-    public function get_all_groups_flat(): array {
+    public function get_all_groups_flat(): array
+    {
         $groups = $this->get_all_groups();
         return $this->flatten_groups($groups);
     }
@@ -359,7 +374,8 @@ class keycloak_client {
      * @param array $groups Groups array (may include nested subGroups).
      * @return array Flattened array of groups.
      */
-    protected function flatten_groups(array $groups): array {
+    protected function flatten_groups(array $groups): array
+    {
         $flat = [];
 
         foreach ($groups as $group) {
@@ -386,7 +402,8 @@ class keycloak_client {
      * @return array Array of user objects.
      * @throws \moodle_exception On API errors.
      */
-    public function get_group_members(string $groupid, int $first = 0, int $max = 100): array {
+    public function get_group_members(string $groupid, int $first = 0, int $max = 100): array
+    {
         return $this->api_request('GET', "groups/{$groupid}/members", [
             'first' => $first,
             'max' => $max,
@@ -401,7 +418,8 @@ class keycloak_client {
      * @return array All member user objects.
      * @throws \moodle_exception On API errors.
      */
-    public function get_all_group_members(string $groupid): array {
+    public function get_all_group_members(string $groupid): array
+    {
         $all_members = [];
         $batch_size = 100;
         $offset = 0;
@@ -423,7 +441,8 @@ class keycloak_client {
      *
      * @return array Test results with 'success', 'message', and optionally 'realm' keys.
      */
-    public function test_connection(): array {
+    public function test_connection(): array
+    {
         try {
             // First, try to get an access token.
             $this->get_access_token(true);
@@ -576,7 +595,8 @@ class keycloak_client {
      *
      * @return array Statistics array with 'api_calls' and 'errors' keys.
      */
-    public function get_stats(): array {
+    public function get_stats(): array
+    {
         return $this->stats;
     }
 
@@ -585,7 +605,8 @@ class keycloak_client {
      *
      * @return string Realm name.
      */
-    public function get_realm(): string {
+    public function get_realm(): string
+    {
         return $this->realm;
     }
 
@@ -594,7 +615,8 @@ class keycloak_client {
      *
      * @return string Base URL.
      */
-    public function get_url(): string {
+    public function get_url(): string
+    {
         return $this->url;
     }
 
@@ -604,7 +626,8 @@ class keycloak_client {
      * @param int $timeout Timeout in seconds.
      * @return self
      */
-    public function set_timeout(int $timeout): self {
+    public function set_timeout(int $timeout): self
+    {
         $this->timeout = $timeout;
         return $this;
     }

@@ -24,7 +24,7 @@
  * - Emails report to administrators
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -39,21 +39,24 @@ use local_edulution\sync\phased_sync;
 /**
  * Scheduled task for Keycloak synchronization.
  */
-class sync_users_task extends \core\task\scheduled_task {
+class sync_users_task extends \core\task\scheduled_task
+{
 
     /**
      * Get task name.
      *
      * @return string Task name.
      */
-    public function get_name(): string {
+    public function get_name(): string
+    {
         return get_string('task_sync_users', 'local_edulution');
     }
 
     /**
      * Execute the task.
      */
-    public function execute(): void {
+    public function execute(): void
+    {
         global $CFG;
 
         mtrace('========================================');
@@ -164,7 +167,8 @@ class sync_users_task extends \core\task\scheduled_task {
      * @param array $stats Sync statistics.
      * @param array $errors Sync errors.
      */
-    protected function send_summary_email(array $stats, array $errors): void {
+    protected function send_summary_email(array $stats, array $errors): void
+    {
         global $CFG;
 
         mtrace('');
@@ -173,7 +177,7 @@ class sync_users_task extends \core\task\scheduled_task {
         $admins = get_admins();
         $site_name = $CFG->shortname ?? 'Moodle';
 
-        $subject = "Edulution Sync Report - {$site_name}";
+        $subject = "edulution Sync Report - {$site_name}";
 
         $message = "Keycloak Synchronization Report\n";
         $message .= "================================\n\n";
@@ -213,7 +217,8 @@ class sync_users_task extends \core\task\scheduled_task {
      *
      * @param \Exception $exception The exception that occurred.
      */
-    protected function send_error_notification(\Exception $exception): void {
+    protected function send_error_notification(\Exception $exception): void
+    {
         global $CFG;
 
         $admins = get_admins();
@@ -241,7 +246,8 @@ class sync_users_task extends \core\task\scheduled_task {
      *
      * @return int Hour of day (0-23).
      */
-    public function get_default_scheduled_task_hour(): int {
+    public function get_default_scheduled_task_hour(): int
+    {
         return 4; // 4 AM.
     }
 
@@ -250,7 +256,8 @@ class sync_users_task extends \core\task\scheduled_task {
      *
      * @return int Minute (0-59).
      */
-    public function get_default_scheduled_task_minute(): int {
+    public function get_default_scheduled_task_minute(): int
+    {
         return 0;
     }
 
@@ -259,7 +266,8 @@ class sync_users_task extends \core\task\scheduled_task {
      *
      * @return bool True.
      */
-    public function can_run_from_web(): bool {
+    public function can_run_from_web(): bool
+    {
         return true;
     }
 }

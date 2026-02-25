@@ -15,13 +15,13 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Full importer - orchestrates complete Moodle site import from Edulution export.
+ * Full importer - orchestrates complete Moodle site import from edulution export.
  *
  * This class can run BEFORE Moodle is fully installed, using minimal PHP
  * and direct MySQL connections where needed.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -37,7 +37,8 @@ namespace local_edulution\import;
  * 4. Plugin Installation - Download and install missing plugins
  * 5. Finalization - Config generation, upgrade, cache purge, health check
  */
-class full_importer {
+class full_importer
+{
 
     /** @var string Path to the export ZIP file */
     protected string $zipfile;
@@ -104,7 +105,8 @@ class full_importer {
      *
      * @param array $options Import options.
      */
-    public function __construct(array $options) {
+    public function __construct(array $options)
+    {
         $this->zipfile = $options['file'] ?? '';
         $this->wwwroot = rtrim($options['wwwroot'] ?? '', '/');
         $this->dataroot = rtrim($options['dataroot'] ?? '/var/moodledata', '/');
@@ -112,7 +114,7 @@ class full_importer {
         $this->dbname = $options['dbname'] ?? getenv('MOODLE_DOCKER_DBNAME') ?: 'moodle';
         $this->dbuser = $options['dbuser'] ?? getenv('MOODLE_DOCKER_DBUSER') ?: 'moodle';
         $this->dbpass = $options['dbpass'] ?? getenv('MOODLE_DOCKER_DBPASS') ?: '';
-        $this->dbport = (int)($options['dbport'] ?? getenv('MOODLE_DOCKER_DBPORT') ?: 3306);
+        $this->dbport = (int) ($options['dbport'] ?? getenv('MOODLE_DOCKER_DBPORT') ?: 3306);
         $this->dbprefix = $options['dbprefix'] ?? 'mdl_';
         $this->adminpass = $options['adminpass'] ?? null;
         $this->agreelicense = !empty($options['agree-license']);
@@ -126,7 +128,8 @@ class full_importer {
      *
      * @param callable $callback Function that receives (phase, step, message).
      */
-    public function set_progress_callback(callable $callback): void {
+    public function set_progress_callback(callable $callback): void
+    {
         $this->progresscallback = $callback;
     }
 
@@ -137,7 +140,8 @@ class full_importer {
      * @param int $step Step number.
      * @param string $message Progress message.
      */
-    protected function progress(string $phase, int $step, string $message): void {
+    protected function progress(string $phase, int $step, string $message): void
+    {
         if ($this->progresscallback) {
             call_user_func($this->progresscallback, $phase, $step, $message);
         }
@@ -149,7 +153,8 @@ class full_importer {
      * @return array Import results.
      * @throws \Exception On failure.
      */
-    public function execute(): array {
+    public function execute(): array
+    {
         $starttime = time();
         $results = [
             'success' => false,
@@ -207,7 +212,8 @@ class full_importer {
      * @return array Phase results.
      * @throws \Exception On failure.
      */
-    protected function phase_preparation(): array {
+    protected function phase_preparation(): array
+    {
         $this->progress('preparation', 1, 'Starting preparation phase...');
 
         $result = [
@@ -316,7 +322,8 @@ class full_importer {
      * @return array Phase results.
      * @throws \Exception On failure.
      */
-    protected function phase_database_import(): array {
+    protected function phase_database_import(): array
+    {
         $this->progress('database', 1, 'Starting database import phase...');
 
         $result = [
@@ -390,7 +397,8 @@ class full_importer {
      * @return array Phase results.
      * @throws \Exception On failure.
      */
-    protected function phase_moodledata(): array {
+    protected function phase_moodledata(): array
+    {
         $this->progress('moodledata', 1, 'Starting moodledata phase...');
 
         $result = [
@@ -460,7 +468,8 @@ class full_importer {
      * @return array Phase results.
      * @throws \Exception On failure.
      */
-    protected function phase_plugin_installation(): array {
+    protected function phase_plugin_installation(): array
+    {
         $this->progress('plugins', 1, 'Starting plugin installation phase...');
 
         $result = [
@@ -490,7 +499,7 @@ class full_importer {
         }
 
         // Filter to non-core plugins only
-        $additionalPlugins = array_filter($pluginsdata['plugins'], function($p) {
+        $additionalPlugins = array_filter($pluginsdata['plugins'], function ($p) {
             return !($p['is_core'] ?? true);
         });
 
@@ -503,7 +512,7 @@ class full_importer {
 
         // Use plugin installer
         $installer = new plugin_installer($this->dirroot);
-        $installer->set_progress_callback(function($step, $message) {
+        $installer->set_progress_callback(function ($step, $message) {
             $this->progress('plugins', $step, $message);
         });
 
@@ -538,7 +547,8 @@ class full_importer {
      * @return array Phase results.
      * @throws \Exception On failure.
      */
-    protected function phase_finalization(): array {
+    protected function phase_finalization(): array
+    {
         $this->progress('finalization', 1, 'Starting finalization phase...');
 
         $result = [
@@ -587,7 +597,8 @@ class full_importer {
      *
      * @throws \Exception If connection fails.
      */
-    protected function test_database_connection(): void {
+    protected function test_database_connection(): void
+    {
         $conn = @new \mysqli($this->dbhost, $this->dbuser, $this->dbpass, $this->dbname, $this->dbport);
         if ($conn->connect_error) {
             throw new \Exception("Database connection failed: " . $conn->connect_error);
@@ -600,7 +611,8 @@ class full_importer {
      *
      * @throws \Exception If connection fails.
      */
-    protected function connect_database(): void {
+    protected function connect_database(): void
+    {
         $this->db = new \mysqli($this->dbhost, $this->dbuser, $this->dbpass, $this->dbname, $this->dbport);
         if ($this->db->connect_error) {
             throw new \Exception("Database connection failed: " . $this->db->connect_error);
@@ -611,7 +623,8 @@ class full_importer {
     /**
      * Disconnect from database.
      */
-    protected function disconnect_database(): void {
+    protected function disconnect_database(): void
+    {
         if ($this->db) {
             $this->db->close();
             $this->db = null;
@@ -623,7 +636,8 @@ class full_importer {
      *
      * @return int Number of tables dropped.
      */
-    protected function drop_all_tables(): int {
+    protected function drop_all_tables(): int
+    {
         $count = 0;
 
         // Disable foreign key checks
@@ -650,7 +664,8 @@ class full_importer {
      * @return int Number of tables created.
      * @throws \Exception On import failure.
      */
-    protected function import_sql_dump(string $dumpfile): int {
+    protected function import_sql_dump(string $dumpfile): int
+    {
         $isgzipped = substr($dumpfile, -3) === '.gz';
 
         // Use mysql command for import (more reliable for large files)
@@ -709,7 +724,8 @@ class full_importer {
      * @param string $dumpfile Path to SQL dump.
      * @return int Number of tables created.
      */
-    protected function import_sql_dump_php(string $dumpfile): int {
+    protected function import_sql_dump_php(string $dumpfile): int
+    {
         $isgzipped = substr($dumpfile, -3) === '.gz';
 
         if ($isgzipped) {
@@ -770,7 +786,8 @@ class full_importer {
      *
      * @return string|null Path to mysql command.
      */
-    protected function find_mysql_command(): ?string {
+    protected function find_mysql_command(): ?string
+    {
         $paths = [
             '/usr/bin/mysql',
             '/usr/local/bin/mysql',
@@ -800,7 +817,8 @@ class full_importer {
     /**
      * Reset admin user password.
      */
-    protected function reset_admin_password(): void {
+    protected function reset_admin_password(): void
+    {
         // Generate password hash using Moodle's format
         $hash = password_hash($this->adminpass, PASSWORD_BCRYPT);
 
@@ -815,7 +833,8 @@ class full_importer {
     /**
      * Update site configuration in database.
      */
-    protected function update_site_config(): void {
+    protected function update_site_config(): void
+    {
         // Update wwwroot
         $stmt = $this->db->prepare(
             "UPDATE {$this->dbprefix}config SET value = ? WHERE name = 'wwwroot'"
@@ -838,7 +857,8 @@ class full_importer {
      *
      * @param string $dir Directory path.
      */
-    protected function clear_directory(string $dir): void {
+    protected function clear_directory(string $dir): void
+    {
         if (!is_dir($dir)) {
             return;
         }
@@ -864,7 +884,8 @@ class full_importer {
      * @param string $dest Destination directory.
      * @return array Copy statistics.
      */
-    protected function copy_directory_recursive(string $source, string $dest): array {
+    protected function copy_directory_recursive(string $source, string $dest): array
+    {
         $stats = ['files' => 0, 'size' => 0];
 
         if (!is_dir($dest)) {
@@ -899,7 +920,8 @@ class full_importer {
      *
      * @param string $dir Directory path.
      */
-    protected function set_directory_permissions(string $dir): void {
+    protected function set_directory_permissions(string $dir): void
+    {
         // Try to set www-data ownership if running as root
         if (function_exists('posix_getuid') && posix_getuid() === 0) {
             exec("chown -R www-data:www-data " . escapeshellarg($dir));
@@ -923,7 +945,8 @@ class full_importer {
     /**
      * Generate config.php file.
      */
-    protected function generate_config_php(): void {
+    protected function generate_config_php(): void
+    {
         $configpath = $this->dirroot . '/config.php';
 
         $config = "<?php  // Moodle configuration file\n\n";
@@ -965,7 +988,8 @@ class full_importer {
      * @param int $timeout Timeout in seconds.
      * @return string Output from script.
      */
-    protected function run_cli_script(string $script, array $args = [], int $timeout = 300): string {
+    protected function run_cli_script(string $script, array $args = [], int $timeout = 300): string
+    {
         $scriptpath = $this->dirroot . '/' . $script;
         if (!file_exists($scriptpath)) {
             throw new \Exception("CLI script not found: {$scriptpath}");
@@ -1039,7 +1063,8 @@ class full_importer {
      *
      * @return array Health check results.
      */
-    protected function perform_health_check(): array {
+    protected function perform_health_check(): array
+    {
         $results = [
             'passed' => true,
             'checks' => [],
@@ -1103,7 +1128,8 @@ class full_importer {
     /**
      * Attempt to rollback changes made during import.
      */
-    protected function rollback(): void {
+    protected function rollback(): void
+    {
         $this->progress('rollback', 1, 'Attempting rollback...');
 
         // Note: Full rollback is not always possible, especially after database changes
@@ -1123,7 +1149,8 @@ class full_importer {
     /**
      * Cleanup temporary files.
      */
-    protected function cleanup(): void {
+    protected function cleanup(): void
+    {
         if (!empty($this->tempdir) && is_dir($this->tempdir)) {
             $this->delete_directory_recursive($this->tempdir);
         }
@@ -1136,7 +1163,8 @@ class full_importer {
      *
      * @param string $dir Directory path.
      */
-    protected function delete_directory_recursive(string $dir): void {
+    protected function delete_directory_recursive(string $dir): void
+    {
         if (!is_dir($dir)) {
             return;
         }
@@ -1159,7 +1187,8 @@ class full_importer {
      * @param int $bytes Size in bytes.
      * @return string Formatted size.
      */
-    protected function format_size(int $bytes): string {
+    protected function format_size(int $bytes): string
+    {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
         $bytes = max($bytes, 0);
         $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
@@ -1173,7 +1202,8 @@ class full_importer {
      *
      * @return array
      */
-    public function get_manifest(): array {
+    public function get_manifest(): array
+    {
         return $this->manifest;
     }
 
@@ -1182,7 +1212,8 @@ class full_importer {
      *
      * @return array Array of validation errors.
      */
-    public function validate(): array {
+    public function validate(): array
+    {
         $errors = [];
 
         if (empty($this->zipfile)) {

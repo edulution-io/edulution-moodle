@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Keycloak synchronization CLI script for Edulution.
+ * Keycloak synchronization CLI script for edulution.
  *
  * Synchronizes users, courses, and enrollments between Keycloak and Moodle.
  *
@@ -29,7 +29,7 @@
  *   php sync.php --force             # Skip confirmations
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -83,7 +83,7 @@ if ($unrecognized) {
 // Print help.
 if ($options['help']) {
     $help = <<<EOF
-Keycloak synchronization CLI for Edulution.
+Keycloak synchronization CLI for edulution.
 
 Synchronizes users, courses, and enrollments between Keycloak and Moodle.
 Creates courses based on Keycloak groups and syncs user enrollments.
@@ -125,7 +125,7 @@ Examples:
 
 Configuration:
   Keycloak settings are configured in:
-  Site administration > Plugins > Local plugins > Edulution
+  Site administration > Plugins > Local plugins > edulution
 
 EOF;
     echo $help;
@@ -152,7 +152,8 @@ $quiet = $options['quiet'];
  * @param string $message The message to output.
  * @param bool $error Whether this is an error.
  */
-function sync_output(string $message, bool $error = false): void {
+function sync_output(string $message, bool $error = false): void
+{
     global $quiet;
     if (!$quiet || $error) {
         if ($error) {
@@ -168,7 +169,8 @@ function sync_output(string $message, bool $error = false): void {
  *
  * @param string $message The message to output.
  */
-function sync_verbose(string $message): void {
+function sync_verbose(string $message): void
+{
     global $verbose, $quiet;
     if ($verbose && !$quiet) {
         mtrace("  " . $message);
@@ -181,7 +183,8 @@ function sync_verbose(string $message): void {
  * @param int $seconds Duration in seconds.
  * @return string Formatted duration.
  */
-function format_duration(int $seconds): string {
+function format_duration(int $seconds): string
+{
     if ($seconds < 60) {
         return "{$seconds}s";
     }
@@ -236,7 +239,7 @@ if ($options['test-connection']) {
 
     if (!empty($missing)) {
         cli_error("Keycloak is not configured. Missing: " . implode(', ', $missing) . "\n" .
-                  "Configure in: Site administration > Plugins > Local plugins > Edulution");
+            "Configure in: Site administration > Plugins > Local plugins > edulution");
     }
 
     $result = $client->test_connection();
@@ -309,9 +312,9 @@ if ($options['patterns']) {
 // Check configuration.
 if (!empty($missing)) {
     cli_error("Keycloak is not configured. Missing: " . implode(', ', $missing) . "\n" .
-              "Use --test-connection to check settings.\n" .
-              "Configure in: Site administration > Plugins > Local plugins > Edulution\n" .
-              "Or use CLI options: --url, --realm, --client-id, --client-secret");
+        "Use --test-connection to check settings.\n" .
+        "Configure in: Site administration > Plugins > Local plugins > edulution\n" .
+        "Or use CLI options: --url, --realm, --client-id, --client-secret");
 }
 
 // Determine sync mode.

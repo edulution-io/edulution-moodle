@@ -18,7 +18,7 @@
  * Full database exporter using mysqldump.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -36,7 +36,8 @@ defined('MOODLE_INTERNAL') || die();
  * WARNING: This export contains sensitive data including password hashes.
  * Handle the export file with extreme care and delete after migration.
  */
-class database_exporter extends base_exporter {
+class database_exporter extends base_exporter
+{
 
     /** @var array Default tables to exclude from dump */
     protected const DEFAULT_EXCLUDE_TABLES = [
@@ -62,7 +63,8 @@ class database_exporter extends base_exporter {
      *
      * @return string Human-readable name.
      */
-    public function get_name(): string {
+    public function get_name(): string
+    {
         return get_string('exporter_database', 'local_edulution');
     }
 
@@ -71,7 +73,8 @@ class database_exporter extends base_exporter {
      *
      * @return string Language string key.
      */
-    public function get_string_key(): string {
+    public function get_string_key(): string
+    {
         return 'database';
     }
 
@@ -80,7 +83,8 @@ class database_exporter extends base_exporter {
      *
      * @return int Number of steps.
      */
-    public function get_total_count(): int {
+    public function get_total_count(): int
+    {
         // Steps: Find mysqldump, create dump, compress (if enabled), verify.
         return $this->options->compress_database ? 4 : 3;
     }
@@ -91,7 +95,8 @@ class database_exporter extends base_exporter {
      * @return array Exported data metadata.
      * @throws \moodle_exception On export failure.
      */
-    public function export(): array {
+    public function export(): array
+    {
         global $CFG;
 
         $this->log('info', 'Starting full database export...');
@@ -163,7 +168,8 @@ class database_exporter extends base_exporter {
      *
      * @return array List of table names to exclude (with prefix).
      */
-    protected function get_exclude_tables(): array {
+    protected function get_exclude_tables(): array
+    {
         global $CFG;
 
         $exclude = self::DEFAULT_EXCLUDE_TABLES;
@@ -201,7 +207,8 @@ class database_exporter extends base_exporter {
      * @return array Result metadata.
      * @throws \moodle_exception If dump fails.
      */
-    protected function create_database_dump(): array {
+    protected function create_database_dump(): array
+    {
         global $CFG;
 
         // Ensure database subdirectory exists.
@@ -313,7 +320,8 @@ class database_exporter extends base_exporter {
      * @return array Updated result with compressed file info.
      * @throws \moodle_exception If compression fails.
      */
-    protected function compress_dump(array $dumpResult): array {
+    protected function compress_dump(array $dumpResult): array
+    {
         $sourcePath = $dumpResult['full_path'];
         $gzipPath = $sourcePath . '.gz';
 
@@ -374,7 +382,8 @@ class database_exporter extends base_exporter {
      *
      * @return string|null Path to mysqldump, or null if not found.
      */
-    protected function find_mysqldump(): ?string {
+    protected function find_mysqldump(): ?string
+    {
         // Common locations for mysqldump/mariadb-dump.
         $paths = [
             // Linux standard paths.
@@ -439,7 +448,8 @@ class database_exporter extends base_exporter {
      * @param string $dumpFile Path to dump file.
      * @return int Number of CREATE TABLE statements.
      */
-    protected function count_tables_in_dump(string $dumpFile): int {
+    protected function count_tables_in_dump(string $dumpFile): int
+    {
         $count = 0;
         $handle = fopen($dumpFile, 'r');
 
@@ -460,7 +470,8 @@ class database_exporter extends base_exporter {
      *
      * @return array Database statistics.
      */
-    public function get_database_stats(): array {
+    public function get_database_stats(): array
+    {
         global $DB, $CFG;
 
         $stats = [

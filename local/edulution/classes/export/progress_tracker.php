@@ -18,7 +18,7 @@
  * Progress tracker for export operations.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -32,7 +32,8 @@ defined('MOODLE_INTERNAL') || die();
  * Provides both file-based progress tracking for AJAX polling
  * and CLI output support for command-line exports.
  */
-class progress_tracker {
+class progress_tracker
+{
 
     /** @var int Total steps across all phases */
     protected int $total_steps = 0;
@@ -92,7 +93,8 @@ class progress_tracker {
      * @param bool $verbose Enable verbose output.
      * @param bool $quiet Enable quiet mode.
      */
-    public function __construct(bool $cli_mode = false, bool $verbose = false, bool $quiet = false) {
+    public function __construct(bool $cli_mode = false, bool $verbose = false, bool $quiet = false)
+    {
         $this->cli_mode = $cli_mode;
         $this->verbose = $verbose;
         $this->quiet = $quiet;
@@ -109,7 +111,8 @@ class progress_tracker {
      *
      * @param string $path Full path to progress file.
      */
-    public function set_progress_file(string $path): void {
+    public function set_progress_file(string $path): void
+    {
         $this->progress_file = $path;
 
         // Create directory if needed.
@@ -124,7 +127,8 @@ class progress_tracker {
      *
      * @return string|null Progress file path or null if not set.
      */
-    public function get_progress_file(): ?string {
+    public function get_progress_file(): ?string
+    {
         return $this->progress_file;
     }
 
@@ -134,7 +138,8 @@ class progress_tracker {
      * @param string $phase_name Human-readable phase name.
      * @param int $steps Number of steps in this phase.
      */
-    public function start_phase(string $phase_name, int $steps): void {
+    public function start_phase(string $phase_name, int $steps): void
+    {
         // Record completed phase.
         if (!empty($this->current_phase)) {
             $this->phases[] = [
@@ -161,7 +166,8 @@ class progress_tracker {
      * @param int $step Current step number within phase.
      * @param string $message Status message.
      */
-    public function update(int $step, string $message = ''): void {
+    public function update(int $step, string $message = ''): void
+    {
         $this->phase_current = min($step, $this->phase_steps);
         $this->current_step++;
         $this->status_message = $message;
@@ -179,7 +185,8 @@ class progress_tracker {
      *
      * @param string $message Status message.
      */
-    public function increment(string $message = ''): void {
+    public function increment(string $message = ''): void
+    {
         $this->phase_current = min($this->phase_current + 1, $this->phase_steps);
         $this->current_step++;
         $this->status_message = $message;
@@ -195,7 +202,8 @@ class progress_tracker {
     /**
      * Complete current phase.
      */
-    public function complete_phase(): void {
+    public function complete_phase(): void
+    {
         $this->phase_current = $this->phase_steps;
         $this->log('info', "Completed phase: {$this->current_phase}");
         $this->output_progress();
@@ -208,7 +216,8 @@ class progress_tracker {
      * @param string $level Log level (info, warning, error, debug).
      * @param string $message Log message.
      */
-    public function log(string $level, string $message): void {
+    public function log(string $level, string $message): void
+    {
         $entry = [
             'time' => date('Y-m-d H:i:s'),
             'timestamp' => time(),
@@ -246,7 +255,8 @@ class progress_tracker {
      *
      * @param string $message Error message.
      */
-    public function error(string $message): void {
+    public function error(string $message): void
+    {
         $this->log('error', $message);
         $this->success = false;
     }
@@ -256,7 +266,8 @@ class progress_tracker {
      *
      * @param string $message Warning message.
      */
-    public function warning(string $message): void {
+    public function warning(string $message): void
+    {
         $this->log('warning', $message);
     }
 
@@ -265,7 +276,8 @@ class progress_tracker {
      *
      * @param string $message Info message.
      */
-    public function info(string $message): void {
+    public function info(string $message): void
+    {
         $this->log('info', $message);
     }
 
@@ -274,7 +286,8 @@ class progress_tracker {
      *
      * @param string $message Debug message.
      */
-    public function debug(string $message): void {
+    public function debug(string $message): void
+    {
         $this->log('debug', $message);
     }
 
@@ -283,7 +296,8 @@ class progress_tracker {
      *
      * @return float Progress percentage (0-100).
      */
-    public function get_percentage(): float {
+    public function get_percentage(): float
+    {
         if ($this->total_steps === 0) {
             return 0;
         }
@@ -295,7 +309,8 @@ class progress_tracker {
      *
      * @return float Phase progress percentage (0-100).
      */
-    public function get_phase_percentage(): float {
+    public function get_phase_percentage(): float
+    {
         if ($this->phase_steps === 0) {
             return 0;
         }
@@ -307,7 +322,8 @@ class progress_tracker {
      *
      * @return int Elapsed seconds.
      */
-    public function get_elapsed_time(): int {
+    public function get_elapsed_time(): int
+    {
         return time() - $this->start_time;
     }
 
@@ -316,7 +332,8 @@ class progress_tracker {
      *
      * @return string Formatted time (e.g., "5m 30s").
      */
-    public function get_elapsed_time_formatted(): string {
+    public function get_elapsed_time_formatted(): string
+    {
         $elapsed = $this->get_elapsed_time();
 
         if ($elapsed < 60) {
@@ -340,7 +357,8 @@ class progress_tracker {
      *
      * @return string Formatted estimated time remaining.
      */
-    public function get_estimated_time_remaining(): string {
+    public function get_estimated_time_remaining(): string
+    {
         $percentage = $this->get_percentage();
         if ($percentage <= 0) {
             return 'calculating...';
@@ -363,7 +381,8 @@ class progress_tracker {
      *
      * @return array Progress data.
      */
-    public function get_progress(): array {
+    public function get_progress(): array
+    {
         return [
             'phase' => $this->current_phase,
             'message' => $this->status_message,
@@ -388,7 +407,8 @@ class progress_tracker {
      *
      * @return array Log entries.
      */
-    public function get_log(): array {
+    public function get_log(): array
+    {
         return $this->log;
     }
 
@@ -397,7 +417,8 @@ class progress_tracker {
      *
      * @return array Error log entries.
      */
-    public function get_errors(): array {
+    public function get_errors(): array
+    {
         return array_filter($this->log, function ($entry) {
             return $entry['level'] === 'error';
         });
@@ -408,7 +429,8 @@ class progress_tracker {
      *
      * @return array Warning log entries.
      */
-    public function get_warnings(): array {
+    public function get_warnings(): array
+    {
         return array_filter($this->log, function ($entry) {
             return $entry['level'] === 'warning';
         });
@@ -419,7 +441,8 @@ class progress_tracker {
      *
      * @return bool True if errors occurred.
      */
-    public function has_errors(): bool {
+    public function has_errors(): bool
+    {
         return !empty($this->get_errors());
     }
 
@@ -430,7 +453,8 @@ class progress_tracker {
      * @param string $message Completion message.
      * @param string $download_url Optional download URL.
      */
-    public function complete(bool $success, string $message = '', string $download_url = ''): void {
+    public function complete(bool $success, string $message = '', string $download_url = ''): void
+    {
         $this->completed = true;
         $this->success = $success;
         $this->download_url = $download_url;
@@ -464,7 +488,8 @@ class progress_tracker {
     /**
      * Output progress for CLI.
      */
-    protected function output_progress(): void {
+    protected function output_progress(): void
+    {
         if (!$this->cli_mode || $this->quiet) {
             return;
         }
@@ -498,7 +523,8 @@ class progress_tracker {
     /**
      * Persist progress to session and/or file.
      */
-    protected function persist_progress(): void {
+    protected function persist_progress(): void
+    {
         $progress = $this->get_progress();
 
         // Store in session for web UI.
@@ -520,7 +546,8 @@ class progress_tracker {
      * @param string|null $progress_file Progress file to check.
      * @return array|null Progress data or null if not found.
      */
-    public static function load_progress(?string $session_key = null, ?string $progress_file = null): ?array {
+    public static function load_progress(?string $session_key = null, ?string $progress_file = null): ?array
+    {
         // Try session first.
         if ($session_key && isset($_SESSION[$session_key])) {
             return $_SESSION[$session_key];
@@ -544,7 +571,8 @@ class progress_tracker {
      * @param string|null $export_id Optional export ID.
      * @return string Progress file path.
      */
-    public static function generate_progress_file(?string $export_id = null): string {
+    public static function generate_progress_file(?string $export_id = null): string
+    {
         global $CFG;
 
         $id = $export_id ?: uniqid('export_', true);
@@ -563,7 +591,8 @@ class progress_tracker {
      * @param int $max_age Maximum age in seconds (default: 1 day).
      * @return int Number of files cleaned up.
      */
-    public static function cleanup_progress_files(int $max_age = 86400): int {
+    public static function cleanup_progress_files(int $max_age = 86400): int
+    {
         global $CFG;
 
         $dir = $CFG->tempdir . '/edulution_progress';

@@ -18,7 +18,7 @@
  * Moodledata directory exporter.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -32,7 +32,8 @@ defined('MOODLE_INTERNAL') || die();
  * Copies essential moodledata directories (filedir, lang, repository)
  * while skipping temporary, cache, and session directories.
  */
-class moodledata_exporter extends base_exporter {
+class moodledata_exporter extends base_exporter
+{
 
     /** @var array Directories to include in export */
     protected const INCLUDE_DIRS = [
@@ -64,7 +65,8 @@ class moodledata_exporter extends base_exporter {
      *
      * @return string Human-readable name.
      */
-    public function get_name(): string {
+    public function get_name(): string
+    {
         return get_string('exporter_moodledata', 'local_edulution');
     }
 
@@ -73,7 +75,8 @@ class moodledata_exporter extends base_exporter {
      *
      * @return string Language string key.
      */
-    public function get_string_key(): string {
+    public function get_string_key(): string
+    {
         return 'moodledata';
     }
 
@@ -82,7 +85,8 @@ class moodledata_exporter extends base_exporter {
      *
      * @return int Number of directories to process.
      */
-    public function get_total_count(): int {
+    public function get_total_count(): int
+    {
         return count(self::INCLUDE_DIRS);
     }
 
@@ -92,7 +96,8 @@ class moodledata_exporter extends base_exporter {
      * @return array Exported data metadata.
      * @throws \moodle_exception On export failure.
      */
-    public function export(): array {
+    public function export(): array
+    {
         global $CFG;
 
         $this->log('info', 'Starting moodledata export...');
@@ -191,7 +196,8 @@ class moodledata_exporter extends base_exporter {
      * @param string $dirName Directory name for logging.
      * @return array Copy statistics.
      */
-    protected function copy_directory_recursive(string $source, string $destination, string $dirName): array {
+    protected function copy_directory_recursive(string $source, string $destination, string $dirName): array
+    {
         $stats = [
             'size' => 0,
             'files' => 0,
@@ -261,7 +267,8 @@ class moodledata_exporter extends base_exporter {
      * @param string $path Relative path.
      * @return bool True if path should be skipped.
      */
-    protected function should_skip_path(string $path): bool {
+    protected function should_skip_path(string $path): bool
+    {
         // Check for excluded directories in path.
         $pathParts = explode(DIRECTORY_SEPARATOR, $path);
         foreach ($pathParts as $part) {
@@ -285,7 +292,8 @@ class moodledata_exporter extends base_exporter {
      *
      * @return array Summary data.
      */
-    public function get_summary(): array {
+    public function get_summary(): array
+    {
         global $CFG;
 
         $dataroot = $CFG->dataroot;
@@ -327,7 +335,8 @@ class moodledata_exporter extends base_exporter {
      * @param string $path Directory path.
      * @return array Statistics array.
      */
-    protected function get_directory_stats(string $path): array {
+    protected function get_directory_stats(string $path): array
+    {
         $stats = [
             'size' => 0,
             'files' => 0,
@@ -364,7 +373,8 @@ class moodledata_exporter extends base_exporter {
      * @param string $path Filedir path.
      * @return array Statistics array.
      */
-    protected function get_filedir_stats(string $path): array {
+    protected function get_filedir_stats(string $path): array
+    {
         $stats = [
             'size' => 0,
             'files' => 0,

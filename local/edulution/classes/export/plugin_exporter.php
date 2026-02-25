@@ -18,7 +18,7 @@
  * Plugin information exporter.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -35,7 +35,8 @@ use core_plugin_manager;
  * Moodle Plugin Directory API, and creates plugins/installed.json
  * and plugins/sources.json files.
  */
-class plugin_exporter extends base_exporter {
+class plugin_exporter extends base_exporter
+{
 
     /** @var string Moodle Plugin Directory API URL */
     protected const PLUGIN_DIRECTORY_API = 'https://moodle.org/plugins/api/1.3/get_plugin_info.php';
@@ -48,7 +49,8 @@ class plugin_exporter extends base_exporter {
      *
      * @return string Human-readable name.
      */
-    public function get_name(): string {
+    public function get_name(): string
+    {
         return get_string('exporter_plugins', 'local_edulution');
     }
 
@@ -57,7 +59,8 @@ class plugin_exporter extends base_exporter {
      *
      * @return string Language string key.
      */
-    public function get_string_key(): string {
+    public function get_string_key(): string
+    {
         return 'plugins';
     }
 
@@ -66,7 +69,8 @@ class plugin_exporter extends base_exporter {
      *
      * @return int Number of steps.
      */
-    public function get_total_count(): int {
+    public function get_total_count(): int
+    {
         // Steps: Collect plugins, check sources, write files.
         return 3;
     }
@@ -77,7 +81,8 @@ class plugin_exporter extends base_exporter {
      * @return array Exported plugin data.
      * @throws \moodle_exception On export failure.
      */
-    public function export(): array {
+    public function export(): array
+    {
         global $CFG, $DB;
 
         $this->log('info', 'Exporting plugin information...');
@@ -153,7 +158,8 @@ class plugin_exporter extends base_exporter {
      *
      * @return array Array of plugin data.
      */
-    protected function collect_plugins(): array {
+    protected function collect_plugins(): array
+    {
         $pluginManager = core_plugin_manager::instance();
         $allPlugins = $pluginManager->get_plugins();
 
@@ -206,7 +212,8 @@ class plugin_exporter extends base_exporter {
      * @param array $plugins All plugins.
      * @return array Source information for additional plugins.
      */
-    protected function get_plugin_sources(array $plugins): array {
+    protected function get_plugin_sources(array $plugins): array
+    {
         $sources = [];
 
         foreach ($plugins as $plugin) {
@@ -245,7 +252,8 @@ class plugin_exporter extends base_exporter {
      * @param string $component Plugin component name.
      * @return array|null Plugin info or null if not found.
      */
-    protected function query_plugin_directory(string $component): ?array {
+    protected function query_plugin_directory(string $component): ?array
+    {
         global $CFG;
 
         // Build API URL.
@@ -293,7 +301,8 @@ class plugin_exporter extends base_exporter {
      * @param object $pluginInfo Plugin information object.
      * @return bool True if core plugin.
      */
-    protected function is_core_plugin(string $component, object $pluginInfo): bool {
+    protected function is_core_plugin(string $component, object $pluginInfo): bool
+    {
         // Check source if available.
         if (isset($pluginInfo->source)) {
             return $pluginInfo->source === 'core';
@@ -307,17 +316,60 @@ class plugin_exporter extends base_exporter {
 
         // Fallback: check if it's in the standard plugin types.
         $standardTypes = [
-            'mod', 'block', 'qtype', 'qformat', 'qbehaviour', 'qbank',
-            'auth', 'enrol', 'filter', 'format', 'gradeexport', 'gradeimport',
-            'gradereport', 'gradingform', 'report', 'repository', 'portfolio',
-            'search', 'message', 'media', 'theme', 'editor', 'atto',
-            'assignsubmission', 'assignfeedback', 'booktool', 'datafield',
-            'datapreset', 'fileconverter', 'forumreport', 'ltiservice',
-            'mlbackend', 'paygw', 'plagiarism', 'profilefield', 'quizaccess',
-            'scormreport', 'workshopallocation', 'workshopeval', 'workshopform',
-            'availability', 'calendartype', 'contenttype', 'customfield',
-            'dataformat', 'tool', 'cachelock', 'cachestore', 'antivirus',
-            'webservice', 'tiny', 'communication', 'ai', 'aiplacement',
+            'mod',
+            'block',
+            'qtype',
+            'qformat',
+            'qbehaviour',
+            'qbank',
+            'auth',
+            'enrol',
+            'filter',
+            'format',
+            'gradeexport',
+            'gradeimport',
+            'gradereport',
+            'gradingform',
+            'report',
+            'repository',
+            'portfolio',
+            'search',
+            'message',
+            'media',
+            'theme',
+            'editor',
+            'atto',
+            'assignsubmission',
+            'assignfeedback',
+            'booktool',
+            'datafield',
+            'datapreset',
+            'fileconverter',
+            'forumreport',
+            'ltiservice',
+            'mlbackend',
+            'paygw',
+            'plagiarism',
+            'profilefield',
+            'quizaccess',
+            'scormreport',
+            'workshopallocation',
+            'workshopeval',
+            'workshopform',
+            'availability',
+            'calendartype',
+            'contenttype',
+            'customfield',
+            'dataformat',
+            'tool',
+            'cachelock',
+            'cachestore',
+            'antivirus',
+            'webservice',
+            'tiny',
+            'communication',
+            'ai',
+            'aiplacement',
         ];
 
         $type = explode('_', $component)[0];
@@ -330,7 +382,8 @@ class plugin_exporter extends base_exporter {
      * @param object $pluginInfo Plugin information object.
      * @return bool True if enabled.
      */
-    protected function is_plugin_enabled(object $pluginInfo): bool {
+    protected function is_plugin_enabled(object $pluginInfo): bool
+    {
         if (method_exists($pluginInfo, 'is_enabled')) {
             $result = $pluginInfo->is_enabled();
             return $result !== false && $result !== null;
@@ -344,7 +397,8 @@ class plugin_exporter extends base_exporter {
      * @param int|null $maturity Maturity constant.
      * @return string Maturity string.
      */
-    protected function get_maturity_string(?int $maturity): string {
+    protected function get_maturity_string(?int $maturity): string
+    {
         if ($maturity === null) {
             return 'unknown';
         }
@@ -364,7 +418,8 @@ class plugin_exporter extends base_exporter {
      *
      * @return string Database version string.
      */
-    protected function get_database_version(): string {
+    protected function get_database_version(): string
+    {
         global $DB, $CFG;
 
         try {
@@ -387,7 +442,8 @@ class plugin_exporter extends base_exporter {
      * @param array $targetPlugins List of target plugin components.
      * @return array Comparison results.
      */
-    public function compare_with_target(array $targetPlugins): array {
+    public function compare_with_target(array $targetPlugins): array
+    {
         $exported = $this->collect_plugins();
         $exportedComponents = array_column($exported, 'component');
 
@@ -427,7 +483,8 @@ class plugin_exporter extends base_exporter {
      *
      * @return array Additional plugins.
      */
-    public function get_additional_plugins(): array {
+    public function get_additional_plugins(): array
+    {
         $plugins = $this->collect_plugins();
         return array_filter($plugins, fn($p) => !$p['is_core']);
     }

@@ -23,7 +23,7 @@
  * - Automatic category assignment based on group hierarchy
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -36,7 +36,8 @@ require_once($GLOBALS['CFG']->dirroot . '/course/lib.php');
 /**
  * Course synchronization class.
  */
-class course_sync {
+class course_sync
+{
 
     /** Sync prefix for class courses */
     public const PREFIX_CLASS = 'sync_class_';
@@ -92,7 +93,8 @@ class course_sync {
      * @param keycloak_client $client Keycloak API client.
      * @param group_classifier $classifier Group classifier.
      */
-    public function __construct(keycloak_client $client, group_classifier $classifier) {
+    public function __construct(keycloak_client $client, group_classifier $classifier)
+    {
         $this->client = $client;
         $this->classifier = $classifier;
         $this->load_import_settings();
@@ -101,7 +103,8 @@ class course_sync {
     /**
      * Load import settings from configuration.
      */
-    protected function load_import_settings(): void {
+    protected function load_import_settings(): void
+    {
         $this->import_settings = [
             'course_name_template' => get_config('local_edulution', 'course_name_template') ?: '{group_name}',
             'course_shortname_template' => get_config('local_edulution', 'course_shortname_template') ?: '{group_name}',
@@ -135,7 +138,8 @@ class course_sync {
      * @param array $default Default value.
      * @return array Parsed array.
      */
-    protected function parse_list_config(string $name, array $default): array {
+    protected function parse_list_config(string $name, array $default): array
+    {
         $value = get_config('local_edulution', $name);
         if (empty($value)) {
             return $default;
@@ -149,7 +153,8 @@ class course_sync {
      * @param bool $dry_run Whether to enable dry run.
      * @return self
      */
-    public function set_dry_run(bool $dry_run): self {
+    public function set_dry_run(bool $dry_run): self
+    {
         $this->dry_run = $dry_run;
         return $this;
     }
@@ -160,7 +165,8 @@ class course_sync {
      * @param array $settings Settings to merge.
      * @return self
      */
-    public function set_import_settings(array $settings): self {
+    public function set_import_settings(array $settings): self
+    {
         $this->import_settings = array_merge($this->import_settings, $settings);
         return $this;
     }
@@ -171,7 +177,8 @@ class course_sync {
      * @param array|null $groups Optional array of groups (or null to fetch from Keycloak).
      * @return array Sync results.
      */
-    public function sync(?array $groups = null): array {
+    public function sync(?array $groups = null): array
+    {
         $this->log('info', 'Starting course synchronization...');
 
         // Setup categories and custom fields.
@@ -212,7 +219,7 @@ class course_sync {
 
         $this->log('info', 'Course synchronization complete');
         $this->log('info', "Created: {$this->stats['courses_created']}, Updated: {$this->stats['courses_updated']}, " .
-                          "Skipped: {$this->stats['courses_skipped']}");
+            "Skipped: {$this->stats['courses_skipped']}");
 
         return $this->get_results();
     }
@@ -220,14 +227,21 @@ class course_sync {
     /**
      * Setup the category structure for synced courses.
      */
-    protected function setup_categories(): void {
+    protected function setup_categories(): void
+    {
         $this->log('debug', 'Setting up category structure...');
 
         // Main categories.
-        $this->categories['klassen'] = $this->get_or_create_category('Klassen', 0,
-            'Automatisch synchronisierte Klassenkurse');
-        $this->categories['projekte'] = $this->get_or_create_category('Projekte', 0,
-            'Automatisch synchronisierte Projektkurse');
+        $this->categories['klassen'] = $this->get_or_create_category(
+            'Klassen',
+            0,
+            'Automatisch synchronisierte Klassenkurse'
+        );
+        $this->categories['projekte'] = $this->get_or_create_category(
+            'Projekte',
+            0,
+            'Automatisch synchronisierte Projektkurse'
+        );
 
         // Grade level sub-categories under Klassen.
         for ($i = 5; $i <= 10; $i++) {
@@ -273,7 +287,8 @@ class course_sync {
      * @param string $description Category description.
      * @return int Category ID.
      */
-    protected function get_or_create_category(string $name, int $parent_id, string $description = ''): int {
+    protected function get_or_create_category(string $name, int $parent_id, string $description = ''): int
+    {
         global $DB;
 
         $category = $DB->get_record('course_categories', [
@@ -310,7 +325,8 @@ class course_sync {
      * @param string $class_name Cleaned class name.
      * @return int Category ID.
      */
-    protected function get_class_category(string $class_name): int {
+    protected function get_class_category(string $class_name): int
+    {
         $name_lower = strtolower($class_name);
 
         // Kursstufe patterns.
@@ -335,7 +351,8 @@ class course_sync {
      * @param string $group_name Group name.
      * @return int Category ID.
      */
-    protected function get_project_category(string $group_name): int {
+    protected function get_project_category(string $group_name): int
+    {
         // Fachgruppen: p_alle-* (all teachers of a subject).
         if (preg_match('/^p_alle[-_]/', $group_name)) {
             return $this->categories['fachgruppen'];
@@ -350,7 +367,8 @@ class course_sync {
      * @param array $group Keycloak group data.
      * @param array $teacher_groups All teacher groups (for finding matching teachers).
      */
-    protected function sync_class_course(array $group, array $teacher_groups): void {
+    protected function sync_class_course(array $group, array $teacher_groups): void
+    {
         $group_name = $group['name'];
         $group_id = $group['id'];
 
@@ -382,7 +400,8 @@ class course_sync {
      *
      * @param array $group Keycloak group data.
      */
-    protected function sync_project_course(array $group): void {
+    protected function sync_project_course(array $group): void
+    {
         $group_name = $group['name'];
         $group_id = $group['id'];
 
@@ -416,7 +435,8 @@ class course_sync {
      * @param string $extracted_name Extracted name.
      * @return string Generated full name.
      */
-    protected function generate_fullname(string $group_name, string $type, string $extracted_name): string {
+    protected function generate_fullname(string $group_name, string $type, string $extracted_name): string
+    {
         $template = $this->import_settings['course_name_template'];
 
         // Use default behavior if template is default.
@@ -445,7 +465,8 @@ class course_sync {
      * @param string $extracted_name Extracted name.
      * @return string Generated short name.
      */
-    protected function generate_shortname(string $group_name, string $type, string $extracted_name): string {
+    protected function generate_shortname(string $group_name, string $type, string $extracted_name): string
+    {
         $template = $this->import_settings['course_shortname_template'];
 
         if ($template !== '{group_name}') {
@@ -472,7 +493,8 @@ class course_sync {
      * @param string $group_name Original group name.
      * @return string Cleaned name.
      */
-    protected function apply_name_stripping(string $group_name): string {
+    protected function apply_name_stripping(string $group_name): string
+    {
         $name = $group_name;
 
         // Strip suffixes.
@@ -500,7 +522,8 @@ class course_sync {
      * @param string $group_name Group name.
      * @return string Project name.
      */
-    protected function extract_project_name(string $group_name): string {
+    protected function extract_project_name(string $group_name): string
+    {
         $name = preg_replace('/^p_/', '', $group_name);
         return strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', substr($name, 0, 20)));
     }
@@ -511,18 +534,36 @@ class course_sync {
      * @param string $group_name Group name.
      * @return string Full name.
      */
-    protected function create_project_fullname(string $group_name): string {
+    protected function create_project_fullname(string $group_name): string
+    {
         $name = preg_replace('/^p_/', '', $group_name);
 
         // Fachgruppen: p_alle-bio -> "Fachschaft Biologie".
         if (preg_match('/^alle[-_](.+)$/', $name, $matches)) {
             $subject_map = [
-                'bio' => 'Biologie', 'm' => 'Mathematik', 'd' => 'Deutsch', 'e' => 'Englisch',
-                'f' => 'Französisch', 'l' => 'Latein', 'g' => 'Geschichte', 'geo' => 'Geografie',
-                'ph' => 'Physik', 'ch' => 'Chemie', 'mus' => 'Musik', 'bk' => 'Bildende Kunst',
-                'spo' => 'Sport', 'eth' => 'Ethik', 'evrel' => 'Ev. Religion', 'krel' => 'Kath. Religion',
-                'spa' => 'Spanisch', 'rus' => 'Russisch', 'nwt' => 'NwT', 'bnt' => 'BNT',
-                'gk' => 'Gemeinschaftskunde', 'wbs' => 'WBS', 'lehrer' => 'Alle Lehrer',
+                'bio' => 'Biologie',
+                'm' => 'Mathematik',
+                'd' => 'Deutsch',
+                'e' => 'Englisch',
+                'f' => 'Französisch',
+                'l' => 'Latein',
+                'g' => 'Geschichte',
+                'geo' => 'Geografie',
+                'ph' => 'Physik',
+                'ch' => 'Chemie',
+                'mus' => 'Musik',
+                'bk' => 'Bildende Kunst',
+                'spo' => 'Sport',
+                'eth' => 'Ethik',
+                'evrel' => 'Ev. Religion',
+                'krel' => 'Kath. Religion',
+                'spa' => 'Spanisch',
+                'rus' => 'Russisch',
+                'nwt' => 'NwT',
+                'bnt' => 'BNT',
+                'gk' => 'Gemeinschaftskunde',
+                'wbs' => 'WBS',
+                'lehrer' => 'Alle Lehrer',
             ];
             $subject = $subject_map[strtolower($matches[1])] ?? ucfirst($matches[1]);
             return "Fachschaft {$subject}";
@@ -713,7 +754,8 @@ class course_sync {
     /**
      * Ensure custom fields exist for courses.
      */
-    protected function ensure_custom_fields(): void {
+    protected function ensure_custom_fields(): void
+    {
         global $DB, $CFG;
 
         require_once($CFG->dirroot . '/customfield/fieldcontroller.php');
@@ -802,7 +844,8 @@ class course_sync {
      * @param string $name Category name.
      * @return int Category ID.
      */
-    protected function get_or_create_customfield_category(string $component, string $area, string $name): int {
+    protected function get_or_create_customfield_category(string $component, string $area, string $name): int
+    {
         global $DB;
 
         $category = $DB->get_record('customfield_category', [
@@ -839,7 +882,8 @@ class course_sync {
      * @param int $course_id Course ID.
      * @param string $keycloak_group_id Keycloak group ID.
      */
-    protected function set_course_keycloak_group_id(int $course_id, string $keycloak_group_id): void {
+    protected function set_course_keycloak_group_id(int $course_id, string $keycloak_group_id): void
+    {
         global $DB;
 
         if ($this->group_field_id === null || $this->dry_run) {
@@ -884,7 +928,8 @@ class course_sync {
      * @param string $keycloak_group_id Keycloak group ID.
      * @return \stdClass|null Course or null.
      */
-    public function get_course_by_keycloak_group_id(string $keycloak_group_id): ?\stdClass {
+    public function get_course_by_keycloak_group_id(string $keycloak_group_id): ?\stdClass
+    {
         global $DB;
 
         $course = $DB->get_record_sql(
@@ -908,7 +953,8 @@ class course_sync {
      * @param string $level Log level.
      * @param string $message Log message.
      */
-    protected function log(string $level, string $message): void {
+    protected function log(string $level, string $message): void
+    {
         $this->log[] = [
             'time' => time(),
             'level' => $level,
@@ -926,7 +972,8 @@ class course_sync {
      *
      * @return array Results.
      */
-    public function get_results(): array {
+    public function get_results(): array
+    {
         return [
             'success' => $this->stats['errors'] === 0,
             'stats' => $this->stats,
@@ -941,7 +988,8 @@ class course_sync {
      *
      * @return array Statistics.
      */
-    public function get_stats(): array {
+    public function get_stats(): array
+    {
         return $this->stats;
     }
 
@@ -950,7 +998,8 @@ class course_sync {
      *
      * @return array Synced courses [group_name => info].
      */
-    public function get_synced_courses(): array {
+    public function get_synced_courses(): array
+    {
         return $this->synced_courses;
     }
 
@@ -959,7 +1008,8 @@ class course_sync {
      *
      * @return array Log entries.
      */
-    public function get_log(): array {
+    public function get_log(): array
+    {
         return $this->log;
     }
 
@@ -968,7 +1018,8 @@ class course_sync {
      *
      * @return array Categories.
      */
-    public function get_categories(): array {
+    public function get_categories(): array
+    {
         return $this->categories;
     }
 }

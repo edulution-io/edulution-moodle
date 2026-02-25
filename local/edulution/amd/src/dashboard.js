@@ -1,11 +1,11 @@
 /**
- * Dashboard functionality for Edulution plugin.
+ * Dashboard functionality for edulution plugin.
  *
  * Handles auto-refresh of status cards, quick action handlers,
  * and activity log updates.
  *
  * @module     local_edulution/dashboard
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates', 'local_edulution/common'],
@@ -381,7 +381,7 @@ function($, Ajax, Notification, Str, Templates, Common) {
     var handleClearCache = function($button) {
         Common.confirm(
             'Clear Cache',
-            'Are you sure you want to clear the Edulution cache? This may temporarily slow down operations.',
+            'Are you sure you want to clear the edulution cache? This may temporarily slow down operations.',
             'Clear Cache',
             'Cancel'
         ).then(function() {

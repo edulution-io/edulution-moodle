@@ -18,7 +18,7 @@
  * Reports page for local_edulution.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -53,7 +53,7 @@ switch ($tab) {
         break;
     case 'errors':
         $allactivity = local_edulution_get_recent_activity(100);
-        $records = array_filter($allactivity, function($r) {
+        $records = array_filter($allactivity, function ($r) {
             return ($r->status ?? '') === 'failed' || ($r->status ?? '') === 'error';
         });
         $records = array_values($records);
@@ -77,24 +77,120 @@ echo local_edulution_render_nav('reports');
 ?>
 
 <style>
-.reports-container { max-width: 1000px; margin: 0 auto; }
-.stat-row { display: flex; gap: 12px; margin-bottom: 16px; }
-.stat-item { flex: 1; background: #f8f9fa; border-radius: 4px; padding: 12px; text-align: center; border: 1px solid #e9ecef; }
-.stat-item .num { font-size: 20px; font-weight: 600; color: #212529; }
-.stat-item .lbl { font-size: 11px; color: #6c757d; margin-top: 2px; }
-.tab-row { display: flex; gap: 4px; margin-bottom: 16px; }
-.tab-btn { padding: 8px 16px; border: 1px solid #dee2e6; background: #fff; border-radius: 4px; color: #495057; text-decoration: none; font-size: 13px; }
-.tab-btn:hover { background: #f8f9fa; color: #212529; text-decoration: none; }
-.tab-btn.active { background: #0d6efd; border-color: #0d6efd; color: #fff; }
-.tab-btn i { margin-right: 4px; }
-.report-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.report-table th { background: #f8f9fa; padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid #dee2e6; }
-.report-table td { padding: 8px 10px; border-bottom: 1px solid #e9ecef; }
-.report-table tr:hover { background: #f8f9fa; }
-.badge-ok { background: #d4edda; color: #155724; padding: 2px 6px; border-radius: 3px; font-size: 11px; }
-.badge-err { background: #f8d7da; color: #721c24; padding: 2px 6px; border-radius: 3px; font-size: 11px; }
-.empty-state { text-align: center; padding: 40px; color: #6c757d; }
-.empty-state i { font-size: 32px; margin-bottom: 8px; display: block; }
+    .reports-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .stat-row {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .stat-item {
+        flex: 1;
+        background: #f8f9fa;
+        border-radius: 4px;
+        padding: 12px;
+        text-align: center;
+        border: 1px solid #e9ecef;
+    }
+
+    .stat-item .num {
+        font-size: 20px;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .stat-item .lbl {
+        font-size: 11px;
+        color: #6c757d;
+        margin-top: 2px;
+    }
+
+    .tab-row {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 16px;
+    }
+
+    .tab-btn {
+        padding: 8px 16px;
+        border: 1px solid #dee2e6;
+        background: #fff;
+        border-radius: 4px;
+        color: #495057;
+        text-decoration: none;
+        font-size: 13px;
+    }
+
+    .tab-btn:hover {
+        background: #f8f9fa;
+        color: #212529;
+        text-decoration: none;
+    }
+
+    .tab-btn.active {
+        background: #0d6efd;
+        border-color: #0d6efd;
+        color: #fff;
+    }
+
+    .tab-btn i {
+        margin-right: 4px;
+    }
+
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .report-table th {
+        background: #f8f9fa;
+        padding: 8px 10px;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .report-table td {
+        padding: 8px 10px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .report-table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .badge-ok {
+        background: #d4edda;
+        color: #155724;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 11px;
+    }
+
+    .badge-err {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 11px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 32px;
+        margin-bottom: 8px;
+        display: block;
+    }
 </style>
 
 <div class="reports-container">
@@ -117,98 +213,101 @@ echo local_edulution_render_nav('reports');
 
     <!-- Tabs -->
     <div class="tab-row">
-        <a href="<?php echo new moodle_url('/local/edulution/pages/reports.php', ['tab' => 'sync']); ?>" class="tab-btn <?php echo $tab === 'sync' ? 'active' : ''; ?>">
+        <a href="<?php echo new moodle_url('/local/edulution/pages/reports.php', ['tab' => 'sync']); ?>"
+            class="tab-btn <?php echo $tab === 'sync' ? 'active' : ''; ?>">
             <i class="fa fa-refresh"></i> <?php echo get_string('sync_history', 'local_edulution'); ?>
         </a>
-        <a href="<?php echo new moodle_url('/local/edulution/pages/reports.php', ['tab' => 'export']); ?>" class="tab-btn <?php echo $tab === 'export' ? 'active' : ''; ?>">
+        <a href="<?php echo new moodle_url('/local/edulution/pages/reports.php', ['tab' => 'export']); ?>"
+            class="tab-btn <?php echo $tab === 'export' ? 'active' : ''; ?>">
             <i class="fa fa-download"></i> <?php echo get_string('export_history', 'local_edulution'); ?>
         </a>
-        <a href="<?php echo new moodle_url('/local/edulution/pages/reports.php', ['tab' => 'errors']); ?>" class="tab-btn <?php echo $tab === 'errors' ? 'active' : ''; ?>">
+        <a href="<?php echo new moodle_url('/local/edulution/pages/reports.php', ['tab' => 'errors']); ?>"
+            class="tab-btn <?php echo $tab === 'errors' ? 'active' : ''; ?>">
             <i class="fa fa-exclamation-triangle"></i> <?php echo get_string('error_logs', 'local_edulution'); ?>
         </a>
     </div>
 
     <!-- Content -->
     <?php if (empty($records)): ?>
-    <div class="empty-state">
-        <i class="fa fa-inbox"></i>
-        <?php echo get_string('no_records', 'local_edulution'); ?>
-    </div>
+        <div class="empty-state">
+            <i class="fa fa-inbox"></i>
+            <?php echo get_string('no_records', 'local_edulution'); ?>
+        </div>
     <?php elseif ($tab === 'sync'): ?>
-    <table class="report-table">
-        <thead>
-            <tr>
-                <th><?php echo get_string('date', 'local_edulution'); ?></th>
-                <th><?php echo get_string('status', 'local_edulution'); ?></th>
-                <th><?php echo get_string('users_created', 'local_edulution'); ?></th>
-                <th><?php echo get_string('users_updated', 'local_edulution'); ?></th>
-                <th><?php echo get_string('duration', 'local_edulution'); ?></th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($records as $r): ?>
-            <tr>
-                <td><?php echo isset($r->timecreated) ? userdate($r->timecreated, '%d.%m.%Y %H:%M') : '-'; ?></td>
-                <td>
-                    <?php if (($r->status ?? '') === 'success'): ?>
-                    <span class="badge-ok"><?php echo get_string('success', 'local_edulution'); ?></span>
-                    <?php else: ?>
-                    <span class="badge-err"><?php echo get_string('failed', 'local_edulution'); ?></span>
-                    <?php endif; ?>
-                </td>
-                <td><?php echo (int)($r->users_created ?? 0); ?></td>
-                <td><?php echo (int)($r->users_updated ?? 0); ?></td>
-                <td><?php echo isset($r->duration) ? gmdate('i:s', $r->duration) : '-'; ?></td>
-            </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th><?php echo get_string('date', 'local_edulution'); ?></th>
+                    <th><?php echo get_string('status', 'local_edulution'); ?></th>
+                    <th><?php echo get_string('users_created', 'local_edulution'); ?></th>
+                    <th><?php echo get_string('users_updated', 'local_edulution'); ?></th>
+                    <th><?php echo get_string('duration', 'local_edulution'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($records as $r): ?>
+                    <tr>
+                        <td><?php echo isset($r->timecreated) ? userdate($r->timecreated, '%d.%m.%Y %H:%M') : '-'; ?></td>
+                        <td>
+                            <?php if (($r->status ?? '') === 'success'): ?>
+                                <span class="badge-ok"><?php echo get_string('success', 'local_edulution'); ?></span>
+                            <?php else: ?>
+                                <span class="badge-err"><?php echo get_string('failed', 'local_edulution'); ?></span>
+                            <?php endif; ?>
+                        </td>
+                        <td><?php echo (int) ($r->users_created ?? 0); ?></td>
+                        <td><?php echo (int) ($r->users_updated ?? 0); ?></td>
+                        <td><?php echo isset($r->duration) ? gmdate('i:s', $r->duration) : '-'; ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
     <?php elseif ($tab === 'export'): ?>
-    <table class="report-table">
-        <thead>
-            <tr>
-                <th><?php echo get_string('date', 'local_edulution'); ?></th>
-                <th><?php echo get_string('filename', 'local_edulution'); ?></th>
-                <th><?php echo get_string('file_size', 'local_edulution'); ?></th>
-                <th><?php echo get_string('status', 'local_edulution'); ?></th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($records as $r): ?>
-            <tr>
-                <td><?php echo isset($r->timecreated) ? userdate($r->timecreated, '%d.%m.%Y %H:%M') : '-'; ?></td>
-                <td><code style="font-size: 11px;"><?php echo s($r->filename ?? '-'); ?></code></td>
-                <td><?php echo isset($r->filesize) ? local_edulution_format_filesize($r->filesize) : '-'; ?></td>
-                <td>
-                    <?php if (($r->status ?? '') === 'success'): ?>
-                    <span class="badge-ok"><?php echo get_string('success', 'local_edulution'); ?></span>
-                    <?php else: ?>
-                    <span class="badge-err"><?php echo get_string('failed', 'local_edulution'); ?></span>
-                    <?php endif; ?>
-                </td>
-            </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th><?php echo get_string('date', 'local_edulution'); ?></th>
+                    <th><?php echo get_string('filename', 'local_edulution'); ?></th>
+                    <th><?php echo get_string('file_size', 'local_edulution'); ?></th>
+                    <th><?php echo get_string('status', 'local_edulution'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($records as $r): ?>
+                    <tr>
+                        <td><?php echo isset($r->timecreated) ? userdate($r->timecreated, '%d.%m.%Y %H:%M') : '-'; ?></td>
+                        <td><code style="font-size: 11px;"><?php echo s($r->filename ?? '-'); ?></code></td>
+                        <td><?php echo isset($r->filesize) ? local_edulution_format_filesize($r->filesize) : '-'; ?></td>
+                        <td>
+                            <?php if (($r->status ?? '') === 'success'): ?>
+                                <span class="badge-ok"><?php echo get_string('success', 'local_edulution'); ?></span>
+                            <?php else: ?>
+                                <span class="badge-err"><?php echo get_string('failed', 'local_edulution'); ?></span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
     <?php else: ?>
-    <table class="report-table">
-        <thead>
-            <tr>
-                <th><?php echo get_string('date', 'local_edulution'); ?></th>
-                <th><?php echo get_string('type', 'local_edulution'); ?></th>
-                <th><?php echo get_string('description', 'local_edulution'); ?></th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($records as $r): ?>
-            <tr>
-                <td><?php echo isset($r->timecreated) ? userdate($r->timecreated, '%d.%m.%Y %H:%M') : '-'; ?></td>
-                <td><span class="badge-err"><?php echo s($r->type ?? '-'); ?></span></td>
-                <td><?php echo s($r->description ?? '-'); ?></td>
-            </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th><?php echo get_string('date', 'local_edulution'); ?></th>
+                    <th><?php echo get_string('type', 'local_edulution'); ?></th>
+                    <th><?php echo get_string('description', 'local_edulution'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($records as $r): ?>
+                    <tr>
+                        <td><?php echo isset($r->timecreated) ? userdate($r->timecreated, '%d.%m.%Y %H:%M') : '-'; ?></td>
+                        <td><span class="badge-err"><?php echo s($r->type ?? '-'); ?></span></td>
+                        <td><?php echo s($r->description ?? '-'); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
     <?php endif; ?>
 
 </div>

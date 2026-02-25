@@ -18,7 +18,7 @@
  * AJAX handler for import execution (runs import directly without CLI).
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -107,7 +107,7 @@ try {
     ignore_user_abort(true);
 
     // Progress update function.
-    $updateProgress = function($percent, $phase, $log = '', $complete = false, $success = true) use ($progressFile, $wwwroot, $dryRun) {
+    $updateProgress = function ($percent, $phase, $log = '', $complete = false, $success = true) use ($progressFile, $wwwroot, $dryRun) {
         static $fullLog = '';
         if (!empty($log)) {
             $fullLog .= $log . "\n";
@@ -533,16 +533,24 @@ try {
         exec("rm -rf " . escapeshellarg($tempDir));
 
         if ($dryRun) {
-            $updateProgress(100, 'Dry run complete!',
+            $updateProgress(
+                100,
+                'Dry run complete!',
                 "Dry run completed successfully!\n" .
                 "No changes were made to the database.",
-                true, true);
+                true,
+                true
+            );
         } else {
-            $updateProgress(100, 'Import complete!',
+            $updateProgress(
+                100,
+                'Import complete!',
                 "Import completed successfully!\n" .
                 "Please log in with credentials from the imported database.\n" .
                 "You will be redirected to the login page.",
-                true, true);
+                true,
+                true
+            );
         }
 
         // Log activity.

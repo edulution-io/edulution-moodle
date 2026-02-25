@@ -18,7 +18,7 @@
  * Abstract base class for data exporters.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -32,7 +32,8 @@ defined('MOODLE_INTERNAL') || die();
  * Provides common functionality for writing files, tracking progress,
  * and handling export options.
  */
-abstract class base_exporter {
+abstract class base_exporter
+{
 
     /** @var export_options Export options */
     protected export_options $options;
@@ -56,7 +57,8 @@ abstract class base_exporter {
      * @param progress_tracker $tracker Progress tracker.
      * @param string $basedir Base directory for export files.
      */
-    public function __construct(export_options $options, progress_tracker $tracker, string $basedir) {
+    public function __construct(export_options $options, progress_tracker $tracker, string $basedir)
+    {
         $this->options = $options;
         $this->tracker = $tracker;
         $this->basedir = $basedir;
@@ -96,7 +98,8 @@ abstract class base_exporter {
      *
      * @return array Statistics array.
      */
-    public function get_stats(): array {
+    public function get_stats(): array
+    {
         return $this->stats;
     }
 
@@ -105,7 +108,8 @@ abstract class base_exporter {
      *
      * @return array Exported files array.
      */
-    public function get_exported_files(): array {
+    public function get_exported_files(): array
+    {
         return $this->exported_files;
     }
 
@@ -115,7 +119,8 @@ abstract class base_exporter {
      * @param int $current Current item number.
      * @param string $message Optional status message.
      */
-    protected function update_progress(int $current, string $message = ''): void {
+    protected function update_progress(int $current, string $message = ''): void
+    {
         $this->tracker->update($current, $message);
     }
 
@@ -124,7 +129,8 @@ abstract class base_exporter {
      *
      * @param string $message Optional status message.
      */
-    protected function increment_progress(string $message = ''): void {
+    protected function increment_progress(string $message = ''): void
+    {
         $this->tracker->increment($message);
     }
 
@@ -134,7 +140,8 @@ abstract class base_exporter {
      * @param string $level Log level (info, warning, error, debug).
      * @param string $message Log message.
      */
-    protected function log(string $level, string $message): void {
+    protected function log(string $level, string $message): void
+    {
         $this->tracker->log($level, "[{$this->get_name()}] {$message}");
     }
 
@@ -145,7 +152,8 @@ abstract class base_exporter {
      * @param string $filename Filename (relative to basedir).
      * @return string Full path to written file.
      */
-    protected function write_json(array $data, string $filename): string {
+    protected function write_json(array $data, string $filename): string
+    {
         $path = $this->basedir . '/' . $filename;
         $dir = dirname($path);
 
@@ -176,7 +184,8 @@ abstract class base_exporter {
      * @param string $filename Filename (relative to basedir).
      * @return string Full path to written file.
      */
-    protected function write_file(string $data, string $filename): string {
+    protected function write_file(string $data, string $filename): string
+    {
         $path = $this->basedir . '/' . $filename;
         $dir = dirname($path);
 
@@ -204,7 +213,8 @@ abstract class base_exporter {
      * @param string $destination Destination path (relative to basedir).
      * @return string|null Full path to copied file, or null on failure.
      */
-    protected function copy_file(string $source, string $destination): ?string {
+    protected function copy_file(string $source, string $destination): ?string
+    {
         if (!file_exists($source)) {
             $this->log('warning', "Source file not found: {$source}");
             return null;
@@ -241,7 +251,8 @@ abstract class base_exporter {
      * @param string $subdir Subdirectory name.
      * @return string Full path to subdirectory.
      */
-    protected function get_subdir(string $subdir): string {
+    protected function get_subdir(string $subdir): string
+    {
         $path = $this->basedir . '/' . $subdir;
         if (!is_dir($path)) {
             mkdir($path, 0755, true);
@@ -255,7 +266,8 @@ abstract class base_exporter {
      * @param int $timestamp Unix timestamp.
      * @return string|null ISO 8601 formatted date, or null if timestamp is 0.
      */
-    protected function format_timestamp(int $timestamp): ?string {
+    protected function format_timestamp(int $timestamp): ?string
+    {
         if ($timestamp === 0) {
             return null;
         }
@@ -268,7 +280,8 @@ abstract class base_exporter {
      * @param int $timestamp Unix timestamp.
      * @return string|null Date string (Y-m-d), or null if timestamp is 0.
      */
-    protected function format_date(int $timestamp): ?string {
+    protected function format_date(int $timestamp): ?string
+    {
         if ($timestamp === 0) {
             return null;
         }
@@ -281,7 +294,8 @@ abstract class base_exporter {
      * @param int $bytes File size in bytes.
      * @return string Formatted size string.
      */
-    protected function format_size(int $bytes): string {
+    protected function format_size(int $bytes): string
+    {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
         $bytes = max($bytes, 0);
         $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
@@ -296,7 +310,8 @@ abstract class base_exporter {
      * @param int $userid User ID.
      * @return bool True if user should be exported.
      */
-    protected function should_export_user(int $userid): bool {
+    protected function should_export_user(int $userid): bool
+    {
         if (empty($this->options->user_ids)) {
             return true;
         }
@@ -309,7 +324,8 @@ abstract class base_exporter {
      * @param int $courseid Course ID.
      * @return bool True if course should be exported.
      */
-    protected function should_export_course(int $courseid): bool {
+    protected function should_export_course(int $courseid): bool
+    {
         if (empty($this->options->course_ids)) {
             return true;
         }
@@ -322,7 +338,8 @@ abstract class base_exporter {
      * @param int $categoryid Category ID.
      * @return bool True if category should be exported.
      */
-    protected function should_export_category(int $categoryid): bool {
+    protected function should_export_category(int $categoryid): bool
+    {
         if (empty($this->options->category_ids)) {
             return true;
         }
@@ -336,7 +353,8 @@ abstract class base_exporter {
      * @param array $conditions Optional conditions.
      * @return int Record count.
      */
-    protected function get_count(string $table, array $conditions = []): int {
+    protected function get_count(string $table, array $conditions = []): int
+    {
         global $DB;
         return $DB->count_records($table, $conditions);
     }
@@ -378,7 +396,8 @@ abstract class base_exporter {
      * @param string $algo Hash algorithm (default: sha256).
      * @return string|null Checksum or null on failure.
      */
-    protected function calculate_checksum(string $filepath, string $algo = 'sha256'): ?string {
+    protected function calculate_checksum(string $filepath, string $algo = 'sha256'): ?string
+    {
         if (!file_exists($filepath)) {
             return null;
         }
@@ -392,7 +411,8 @@ abstract class base_exporter {
      * @param string $key Statistic key.
      * @param mixed $value Statistic value.
      */
-    protected function add_stat(string $key, $value): void {
+    protected function add_stat(string $key, $value): void
+    {
         $this->stats[$key] = $value;
     }
 
@@ -402,7 +422,8 @@ abstract class base_exporter {
      * @param string $key Statistic key.
      * @param int $amount Amount to increment (default: 1).
      */
-    protected function increment_stat(string $key, int $amount = 1): void {
+    protected function increment_stat(string $key, int $amount = 1): void
+    {
         if (!isset($this->stats[$key])) {
             $this->stats[$key] = 0;
         }

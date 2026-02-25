@@ -18,7 +18,7 @@
  * Course backup exporter.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -34,7 +34,8 @@ require_once($GLOBALS['CFG']->dirroot . '/backup/util/includes/backup_includes.p
  * Uses Moodle's backup API to create .mbz backup files for courses,
  * with support for selective course export and progress tracking.
  */
-class course_exporter extends base_exporter {
+class course_exporter extends base_exporter
+{
 
     /** @var array Cached category paths */
     protected ?array $category_paths = null;
@@ -53,7 +54,8 @@ class course_exporter extends base_exporter {
      *
      * @return string Human-readable name.
      */
-    public function get_name(): string {
+    public function get_name(): string
+    {
         return get_string('exporter_courses', 'local_edulution');
     }
 
@@ -62,7 +64,8 @@ class course_exporter extends base_exporter {
      *
      * @return string Language string key.
      */
-    public function get_string_key(): string {
+    public function get_string_key(): string
+    {
         return 'courses';
     }
 
@@ -71,7 +74,8 @@ class course_exporter extends base_exporter {
      *
      * @return int Number of courses to export.
      */
-    public function get_total_count(): int {
+    public function get_total_count(): int
+    {
         global $DB;
 
         // Build query conditions.
@@ -98,7 +102,8 @@ class course_exporter extends base_exporter {
      * @return array Exported course data.
      * @throws \moodle_exception On export failure.
      */
-    public function export(): array {
+    public function export(): array
+    {
         global $DB;
 
         $this->log('info', 'Exporting courses...');
@@ -194,7 +199,8 @@ class course_exporter extends base_exporter {
      * @param string $backupsDir Backups directory path.
      * @return array Course data.
      */
-    protected function export_course(object $course, string $backupsDir): array {
+    protected function export_course(object $course, string $backupsDir): array
+    {
         // Get course statistics.
         $stats = $this->get_course_statistics($course->id);
 
@@ -257,7 +263,8 @@ class course_exporter extends base_exporter {
      * @param int $courseid Course ID.
      * @return array Statistics.
      */
-    protected function get_course_statistics(int $courseid): array {
+    protected function get_course_statistics(int $courseid): array
+    {
         global $DB;
 
         // Count sections.
@@ -323,7 +330,8 @@ class course_exporter extends base_exporter {
      * @param int $courseid Course ID.
      * @return array Custom field data.
      */
-    protected function get_course_custom_fields(int $courseid): array {
+    protected function get_course_custom_fields(int $courseid): array
+    {
         global $DB;
 
         $sql = "SELECT f.shortname, f.name, f.type, d.value, d.intvalue, d.charvalue
@@ -366,7 +374,8 @@ class course_exporter extends base_exporter {
      *
      * @return array Category ID => full path.
      */
-    protected function get_all_category_paths(): array {
+    protected function get_all_category_paths(): array
+    {
         global $DB;
 
         $categories = $DB->get_records('course_categories', null, 'sortorder');
@@ -399,7 +408,8 @@ class course_exporter extends base_exporter {
      * @return array|null Backup result or null on failure.
      * @throws \moodle_exception On backup failure.
      */
-    protected function create_course_backup(object $course, string $backupsDir): ?array {
+    protected function create_course_backup(object $course, string $backupsDir): ?array
+    {
         global $USER, $CFG;
 
         // Generate backup filename.
@@ -468,7 +478,8 @@ class course_exporter extends base_exporter {
      *
      * @param \backup_controller $bc Backup controller.
      */
-    protected function configure_backup_settings(\backup_controller $bc): void {
+    protected function configure_backup_settings(\backup_controller $bc): void
+    {
         $plan = $bc->get_plan();
         $settings = $plan->get_settings();
 
@@ -518,7 +529,8 @@ class course_exporter extends base_exporter {
      *
      * @return array Course list.
      */
-    public function get_course_list(): array {
+    public function get_course_list(): array
+    {
         global $DB;
 
         $where = 'id != 1';

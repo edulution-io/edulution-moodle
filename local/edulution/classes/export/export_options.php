@@ -18,7 +18,7 @@
  * Export options configuration class.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -32,7 +32,8 @@ defined('MOODLE_INTERNAL') || die();
  * This class holds all configuration settings for an export operation,
  * including what data to export, filtering options, and output settings.
  */
-class export_options {
+class export_options
+{
 
     // Export mode flags.
     /** @var bool Full database export mode (mysqldump + moodledata) */
@@ -151,7 +152,8 @@ class export_options {
      * @param array|object $formdata Form submission data.
      * @return self New export_options instance.
      */
-    public static function from_form($formdata): self {
+    public static function from_form($formdata): self
+    {
         $formdata = (array) $formdata;
         $options = new self();
 
@@ -223,7 +225,8 @@ class export_options {
      * @param array $args CLI arguments from get_cli_args().
      * @return self New export_options instance.
      */
-    public static function from_cli(array $args): self {
+    public static function from_cli(array $args): self
+    {
         $options = new self();
 
         // Check for full database mode.
@@ -334,7 +337,8 @@ class export_options {
      * @param array $data Options array.
      * @return self New export_options instance.
      */
-    public static function from_array(array $data): self {
+    public static function from_array(array $data): self
+    {
         $options = new self();
 
         foreach ($data as $key => $value) {
@@ -351,7 +355,8 @@ class export_options {
      *
      * @return array Array of validation errors (empty if valid).
      */
-    public function validate(): array {
+    public function validate(): array
+    {
         $errors = [];
 
         // Check that at least one data type is selected.
@@ -401,7 +406,8 @@ class export_options {
      *
      * @return bool True if at least one export type is enabled.
      */
-    public function has_any_export_enabled(): bool {
+    public function has_any_export_enabled(): bool
+    {
         return $this->include_users
             || $this->include_courses
             || $this->include_categories
@@ -420,7 +426,8 @@ class export_options {
      *
      * @return string Output directory path.
      */
-    public function get_output_directory(): string {
+    public function get_output_directory(): string
+    {
         global $CFG;
 
         if (!empty($this->output_directory)) {
@@ -446,7 +453,8 @@ class export_options {
      *
      * @return string Output filename.
      */
-    public function get_output_filename(): string {
+    public function get_output_filename(): string
+    {
         if (!empty($this->output_filename)) {
             return $this->output_filename;
         }
@@ -460,7 +468,8 @@ class export_options {
      *
      * @return string Full path to output file.
      */
-    public function get_output_path(): string {
+    public function get_output_path(): string
+    {
         return $this->get_output_directory() . '/' . $this->get_output_filename();
     }
 
@@ -469,7 +478,8 @@ class export_options {
      *
      * @return array Options as associative array.
      */
-    public function to_array(): array {
+    public function to_array(): array
+    {
         return [
             // Export mode.
             'full_db' => $this->full_db,
@@ -523,7 +533,8 @@ class export_options {
      * @param string|array $value Value to parse.
      * @return array Array of integers.
      */
-    private static function parse_id_list($value): array {
+    private static function parse_id_list($value): array
+    {
         if (empty($value)) {
             return [];
         }

@@ -12,7 +12,7 @@
 # Environment Variables:
 #   See .env.example for full list of supported variables
 #
-# @copyright 2024 Edulution
+# @copyright 2026 edulution
 # @license   MIT
 #
 

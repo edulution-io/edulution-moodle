@@ -26,7 +26,7 @@
  * Patterns are configurable via plugin settings or JSON config file.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -39,7 +39,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * Categorizes Keycloak groups based on regex patterns.
  */
-class group_classifier {
+class group_classifier
+{
 
     /** Group type constant: Class student group */
     public const TYPE_CLASS = 'class';
@@ -70,7 +71,8 @@ class group_classifier {
      *
      * @param array|null $categories Custom category configurations (or null to load from config).
      */
-    public function __construct(?array $categories = null) {
+    public function __construct(?array $categories = null)
+    {
         if ($categories !== null) {
             $this->categories = $categories;
             $this->config_source = 'custom';
@@ -88,7 +90,8 @@ class group_classifier {
      * 3. Environment variables
      * 4. Defaults
      */
-    protected function load_config(): void {
+    protected function load_config(): void
+    {
         // Try JSON config file first.
         $json_path = get_config('local_edulution', 'categories_config_path');
         if (empty($json_path)) {
@@ -124,7 +127,8 @@ class group_classifier {
      * @param string $path Path to JSON file.
      * @return bool True if loaded successfully.
      */
-    protected function load_from_json(string $path): bool {
+    protected function load_from_json(string $path): bool
+    {
         $content = @file_get_contents($path);
         if ($content === false) {
             return false;
@@ -188,15 +192,18 @@ class group_classifier {
      *
      * @return bool True if loaded successfully.
      */
-    protected function load_from_plugin_settings(): bool {
+    protected function load_from_plugin_settings(): bool
+    {
         $class_pattern = get_config('local_edulution', 'sync_class_pattern');
         $teacher_pattern = get_config('local_edulution', 'sync_teacher_pattern');
         $project_pattern = get_config('local_edulution', 'sync_project_pattern');
         $ignore_pattern = get_config('local_edulution', 'sync_ignore_pattern');
 
         // Check if any patterns are configured.
-        if (empty($class_pattern) && empty($teacher_pattern) &&
-            empty($project_pattern) && empty($ignore_pattern)) {
+        if (
+            empty($class_pattern) && empty($teacher_pattern) &&
+            empty($project_pattern) && empty($ignore_pattern)
+        ) {
             return false;
         }
 
@@ -255,15 +262,18 @@ class group_classifier {
      *
      * @return bool True if loaded successfully.
      */
-    protected function load_from_environment(): bool {
+    protected function load_from_environment(): bool
+    {
         $class_pattern = getenv('SYNC_CLASS_PATTERN');
         $teacher_pattern = getenv('SYNC_TEACHER_PATTERN');
         $project_pattern = getenv('SYNC_PROJECT_PATTERN');
         $ignore_pattern = getenv('SYNC_IGNORE_PATTERN');
 
         // Check if any patterns are set.
-        if (empty($class_pattern) && empty($teacher_pattern) &&
-            empty($project_pattern) && empty($ignore_pattern)) {
+        if (
+            empty($class_pattern) && empty($teacher_pattern) &&
+            empty($project_pattern) && empty($ignore_pattern)
+        ) {
             return false;
         }
 
@@ -320,7 +330,8 @@ class group_classifier {
     /**
      * Load default configuration.
      */
-    protected function load_defaults(): void {
+    protected function load_defaults(): void
+    {
         $this->categories = [
             [
                 'id' => 1,
@@ -370,7 +381,8 @@ class group_classifier {
      * @param mixed $regex The regex input.
      * @return array Array of regex patterns.
      */
-    protected function normalize_patterns($regex): array {
+    protected function normalize_patterns($regex): array
+    {
         if (is_array($regex)) {
             return array_values(array_filter(array_map('trim', $regex)));
         }
@@ -394,7 +406,8 @@ class group_classifier {
      * @param string $group_name The group name to classify.
      * @return array|null Matching category or null if no match.
      */
-    public function classify(string $group_name): ?array {
+    public function classify(string $group_name): ?array
+    {
         foreach ($this->categories as $category) {
             $patterns = $category['regex'];
 
@@ -414,7 +427,8 @@ class group_classifier {
      * @param string $group_name The group name.
      * @return string Group type (TYPE_* constant).
      */
-    public function get_type(string $group_name): string {
+    public function get_type(string $group_name): string
+    {
         $category = $this->classify($group_name);
 
         if ($category === null) {
@@ -440,34 +454,43 @@ class group_classifier {
      * @param string $name Category name.
      * @return string Inferred type.
      */
-    protected function infer_type_from_name(string $name): string {
+    protected function infer_type_from_name(string $name): string
+    {
         $name_lower = strtolower($name);
 
         // Class patterns.
-        if (strpos($name_lower, 'class') !== false ||
+        if (
+            strpos($name_lower, 'class') !== false ||
             strpos($name_lower, 'klasse') !== false ||
             strpos($name_lower, 'student') !== false ||
             strpos($name_lower, 'schüler') !== false ||
-            strpos($name_lower, 'schueler') !== false) {
+            strpos($name_lower, 'schueler') !== false
+        ) {
             return self::TYPE_CLASS;
         }
 
         // Teacher patterns.
-        if (strpos($name_lower, 'teach') !== false ||
-            strpos($name_lower, 'lehrer') !== false) {
+        if (
+            strpos($name_lower, 'teach') !== false ||
+            strpos($name_lower, 'lehrer') !== false
+        ) {
             return self::TYPE_TEACHER;
         }
 
         // Project patterns.
-        if (strpos($name_lower, 'project') !== false ||
-            strpos($name_lower, 'projekt') !== false) {
+        if (
+            strpos($name_lower, 'project') !== false ||
+            strpos($name_lower, 'projekt') !== false
+        ) {
             return self::TYPE_PROJECT;
         }
 
         // Ignore patterns.
-        if (strpos($name_lower, 'ignor') !== false ||
+        if (
+            strpos($name_lower, 'ignor') !== false ||
             strpos($name_lower, 'parent') !== false ||
-            strpos($name_lower, 'eltern') !== false) {
+            strpos($name_lower, 'eltern') !== false
+        ) {
             return self::TYPE_IGNORE;
         }
 
@@ -481,7 +504,8 @@ class group_classifier {
      * @param string $group_name The group name.
      * @return bool True if should be ignored.
      */
-    public function should_ignore(string $group_name): bool {
+    public function should_ignore(string $group_name): bool
+    {
         return $this->get_type($group_name) === self::TYPE_IGNORE;
     }
 
@@ -491,7 +515,8 @@ class group_classifier {
      * @param string $group_name The group name.
      * @return bool True if class group.
      */
-    public function is_class_group(string $group_name): bool {
+    public function is_class_group(string $group_name): bool
+    {
         return $this->get_type($group_name) === self::TYPE_CLASS;
     }
 
@@ -501,7 +526,8 @@ class group_classifier {
      * @param string $group_name The group name.
      * @return bool True if teacher group.
      */
-    public function is_teacher_group(string $group_name): bool {
+    public function is_teacher_group(string $group_name): bool
+    {
         return $this->get_type($group_name) === self::TYPE_TEACHER;
     }
 
@@ -511,7 +537,8 @@ class group_classifier {
      * @param string $group_name The group name.
      * @return bool True if project group.
      */
-    public function is_project_group(string $group_name): bool {
+    public function is_project_group(string $group_name): bool
+    {
         return $this->get_type($group_name) === self::TYPE_PROJECT;
     }
 
@@ -521,7 +548,8 @@ class group_classifier {
      * @param array $groups Array of groups (with 'name' key).
      * @return array Classified groups by type.
      */
-    public function classify_groups(array $groups): array {
+    public function classify_groups(array $groups): array
+    {
         $result = [
             self::TYPE_CLASS => [],
             self::TYPE_TEACHER => [],
@@ -549,7 +577,8 @@ class group_classifier {
      * @param string $group_name The group name.
      * @return string Base name.
      */
-    public function extract_base_name(string $group_name): string {
+    public function extract_base_name(string $group_name): string
+    {
         $category = $this->classify($group_name);
 
         if ($category === null) {
@@ -574,7 +603,8 @@ class group_classifier {
      * @param array $available_groups Available groups to search.
      * @return array|null Matching teacher group or null.
      */
-    public function find_teacher_group(string $class_group_name, array $available_groups): ?array {
+    public function find_teacher_group(string $class_group_name, array $available_groups): ?array
+    {
         $base_name = $this->extract_base_name($class_group_name);
 
         // Get teacher category patterns.
@@ -614,7 +644,8 @@ class group_classifier {
      *
      * @return array Category configurations.
      */
-    public function get_categories(): array {
+    public function get_categories(): array
+    {
         return $this->categories;
     }
 
@@ -623,7 +654,8 @@ class group_classifier {
      *
      * @return string Source identifier.
      */
-    public function get_config_source(): string {
+    public function get_config_source(): string
+    {
         return $this->config_source;
     }
 
@@ -632,7 +664,8 @@ class group_classifier {
      *
      * @return string|null File path or null.
      */
-    public function get_config_path(): ?string {
+    public function get_config_path(): ?string
+    {
         return $this->config_path;
     }
 
@@ -641,7 +674,8 @@ class group_classifier {
      *
      * @return array Configuration summary.
      */
-    public function get_config_summary(): array {
+    public function get_config_summary(): array
+    {
         $summary = [
             'source' => $this->config_source,
             'path' => $this->config_path,
@@ -666,7 +700,8 @@ class group_classifier {
      * @param array $group_names Array of group names.
      * @return array Test results by type.
      */
-    public function test_patterns(array $group_names): array {
+    public function test_patterns(array $group_names): array
+    {
         $results = [
             self::TYPE_CLASS => [],
             self::TYPE_TEACHER => [],

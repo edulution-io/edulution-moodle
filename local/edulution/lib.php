@@ -18,10 +18,10 @@
  * Core library functions for local_edulution.
  *
  * This file contains navigation hooks, helper functions, and constants
- * for the Edulution plugin.
+ * for the edulution plugin.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -37,7 +37,8 @@ define('LOCAL_EDULUTION_COMPONENT', 'local_edulution');
  *
  * This is the earliest hook available for plugins. Used for cookie-based SSO.
  */
-function local_edulution_after_config() {
+function local_edulution_after_config()
+{
     global $CFG, $SESSION;
 
     // Skip during installation/upgrade.
@@ -66,7 +67,7 @@ function local_edulution_after_config() {
         $auth->try_auto_login();
     } catch (\Exception $e) {
         // Silently fail - don't break the page.
-        debugging('[Edulution Cookie Auth] Error: ' . $e->getMessage(), DEBUG_DEVELOPER);
+        debugging('[edulution Cookie Auth] Error: ' . $e->getMessage(), DEBUG_DEVELOPER);
     }
 }
 
@@ -96,28 +97,30 @@ define('LOCAL_EDULUTION_FORMAT_CSV', 'csv');
 define('LOCAL_EDULUTION_FORMAT_XML', 'xml');
 
 /**
- * Extends the navigation with Edulution links.
+ * Extends the navigation with edulution links.
  *
  * This function is called by Moodle to extend the navigation tree.
  *
  * @param global_navigation $navigation The global navigation object.
  * @return void
  */
-function local_edulution_extend_navigation(global_navigation $navigation) {
+function local_edulution_extend_navigation(global_navigation $navigation)
+{
     // Navigation is handled through settings.php for admin pages.
 }
 
 /**
- * Extends the settings navigation with Edulution settings.
+ * Extends the settings navigation with edulution settings.
  *
- * This function adds Edulution-specific settings to the settings navigation
+ * This function adds edulution-specific settings to the settings navigation
  * block when viewing the plugin pages.
  *
  * @param settings_navigation $settingsnav The settings navigation object.
  * @param context $context The context object.
  * @return void
  */
-function local_edulution_extend_settings_navigation(settings_navigation $settingsnav, context $context) {
+function local_edulution_extend_settings_navigation(settings_navigation $settingsnav, context $context)
+{
     global $PAGE;
 
     // Only add settings for users with management capability.
@@ -125,7 +128,7 @@ function local_edulution_extend_settings_navigation(settings_navigation $setting
         return;
     }
 
-    // Check if we're on an Edulution page.
+    // Check if we're on an edulution page.
     if (strpos($PAGE->url->get_path(), '/local/edulution/') === false) {
         return;
     }
@@ -181,7 +184,8 @@ function local_edulution_extend_settings_navigation(settings_navigation $setting
  * @param int $precision Number of decimal places.
  * @return string Formatted file size string.
  */
-function local_edulution_format_filesize($bytes, $precision = 2) {
+function local_edulution_format_filesize($bytes, $precision = 2)
+{
     if ($bytes <= 0) {
         return '0 B';
     }
@@ -202,7 +206,8 @@ function local_edulution_format_filesize($bytes, $precision = 2) {
  *
  * @return string The export directory path.
  */
-function local_edulution_get_export_path() {
+function local_edulution_get_export_path()
+{
     global $CFG;
 
     $path = get_config('local_edulution', 'export_path');
@@ -218,7 +223,8 @@ function local_edulution_get_export_path() {
  *
  * @return string The import directory path.
  */
-function local_edulution_get_import_path() {
+function local_edulution_get_import_path()
+{
     global $CFG;
 
     $path = get_config('local_edulution', 'import_path');
@@ -235,7 +241,8 @@ function local_edulution_get_import_path() {
  * @param string $path The directory path to check/create.
  * @return bool True if directory exists and is writable, false otherwise.
  */
-function local_edulution_ensure_directory($path) {
+function local_edulution_ensure_directory($path)
+{
     if (!file_exists($path)) {
         if (!mkdir($path, 0755, true)) {
             return false;
@@ -252,7 +259,8 @@ function local_edulution_ensure_directory($path) {
  * @param string $extension File extension (without dot).
  * @return string Generated filename.
  */
-function local_edulution_generate_export_filename($prefix, $extension = 'json') {
+function local_edulution_generate_export_filename($prefix, $extension = 'json')
+{
     $timestamp = date('Y-m-d_His');
     $random = substr(md5(uniqid(mt_rand(), true)), 0, 8);
 
@@ -264,7 +272,8 @@ function local_edulution_generate_export_filename($prefix, $extension = 'json') 
  *
  * @return bool True if plugin is enabled, false otherwise.
  */
-function local_edulution_is_enabled() {
+function local_edulution_is_enabled()
+{
     return (bool) get_config('local_edulution', 'enabled');
 }
 
@@ -273,7 +282,8 @@ function local_edulution_is_enabled() {
  *
  * @return bool True if Keycloak sync is enabled, false otherwise.
  */
-function local_edulution_is_keycloak_sync_enabled() {
+function local_edulution_is_keycloak_sync_enabled()
+{
     return (bool) get_config('local_edulution', 'keycloak_sync_enabled');
 }
 
@@ -282,7 +292,8 @@ function local_edulution_is_keycloak_sync_enabled() {
  *
  * @return int Number of days to retain exports.
  */
-function local_edulution_get_retention_days() {
+function local_edulution_get_retention_days()
+{
     $days = get_config('local_edulution', 'export_retention_days');
     if (empty($days) || $days < 1) {
         return LOCAL_EDULUTION_DEFAULT_RETENTION_DAYS;
@@ -297,7 +308,8 @@ function local_edulution_get_retention_days() {
  *
  * @return int Number of files deleted.
  */
-function local_edulution_cleanup_old_exports() {
+function local_edulution_cleanup_old_exports()
+{
     $exportpath = local_edulution_get_export_path();
     $retentiondays = local_edulution_get_retention_days();
     $cutofftime = time() - ($retentiondays * 86400);
@@ -327,7 +339,8 @@ function local_edulution_cleanup_old_exports() {
  * @param int|null $userid The user ID (null for current user).
  * @return void
  */
-function local_edulution_log_action($action, array $data = [], $userid = null) {
+function local_edulution_log_action($action, array $data = [], $userid = null)
+{
     global $USER;
 
     if ($userid === null) {
@@ -336,7 +349,7 @@ function local_edulution_log_action($action, array $data = [], $userid = null) {
 
     // Event logging will be implemented through proper Moodle events.
     // This is a placeholder for the event system integration.
-    debugging("Edulution action logged: {$action}", DEBUG_DEVELOPER);
+    debugging("edulution action logged: {$action}", DEBUG_DEVELOPER);
 }
 
 /**
@@ -353,7 +366,8 @@ function local_edulution_log_action($action, array $data = [], $userid = null) {
  * @param array $options Additional options.
  * @return bool|void
  */
-function local_edulution_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = []) {
+function local_edulution_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = [])
+{
     global $CFG;
 
     require_login();
@@ -377,12 +391,13 @@ function local_edulution_pluginfile($course, $cm, $context, $filearea, $args, $f
 }
 
 /**
- * Render the navigation bar for Edulution pages.
+ * Render the navigation bar for edulution pages.
  *
  * @param string $active The active page identifier.
  * @return string HTML for the navigation bar.
  */
-function local_edulution_render_nav(string $active = 'dashboard'): string {
+function local_edulution_render_nav(string $active = 'dashboard'): string
+{
     $context = context_system::instance();
 
     // Check if Keycloak is configured.
@@ -463,7 +478,8 @@ function local_edulution_render_nav(string $active = 'dashboard'): string {
  *
  * @return array Status information.
  */
-function local_edulution_get_system_status(): array {
+function local_edulution_get_system_status(): array
+{
     global $DB, $CFG;
 
     $status = [
@@ -499,7 +515,8 @@ function local_edulution_get_system_status(): array {
  *
  * @return int|null Timestamp of last sync or null.
  */
-function local_edulution_get_last_sync_time(): ?int {
+function local_edulution_get_last_sync_time(): ?int
+{
     global $DB;
 
     $dbman = $DB->get_manager();
@@ -513,7 +530,7 @@ function local_edulution_get_last_sync_time(): ?int {
         IGNORE_MISSING
     );
 
-    return $record && $record->lasttime ? (int)$record->lasttime : null;
+    return $record && $record->lasttime ? (int) $record->lasttime : null;
 }
 
 /**
@@ -522,7 +539,8 @@ function local_edulution_get_last_sync_time(): ?int {
  * @param int $limit Number of records to return.
  * @return array Recent activity records.
  */
-function local_edulution_get_recent_activity(int $limit = 10): array {
+function local_edulution_get_recent_activity(int $limit = 10): array
+{
     global $DB;
 
     $dbman = $DB->get_manager();
@@ -542,7 +560,8 @@ function local_edulution_get_recent_activity(int $limit = 10): array {
  * @param string $status Activity status.
  * @param array $data Additional data.
  */
-function local_edulution_log_activity_record(string $type, string $description, string $status = 'success', array $data = []): void {
+function local_edulution_log_activity_record(string $type, string $description, string $status = 'success', array $data = []): void
+{
     global $DB, $USER;
 
     $dbman = $DB->get_manager();
@@ -568,7 +587,8 @@ function local_edulution_log_activity_record(string $type, string $description, 
  * @param int $offset Offset for pagination.
  * @return array Export history records.
  */
-function local_edulution_get_export_history(int $limit = 50, int $offset = 0): array {
+function local_edulution_get_export_history(int $limit = 50, int $offset = 0): array
+{
     global $DB;
 
     $dbman = $DB->get_manager();
@@ -587,7 +607,8 @@ function local_edulution_get_export_history(int $limit = 50, int $offset = 0): a
  * @param int $offset Offset for pagination.
  * @return array Sync history records.
  */
-function local_edulution_get_sync_history(int $limit = 50, int $offset = 0): array {
+function local_edulution_get_sync_history(int $limit = 50, int $offset = 0): array
+{
     global $DB;
 
     $dbman = $DB->get_manager();
@@ -604,7 +625,8 @@ function local_edulution_get_sync_history(int $limit = 50, int $offset = 0): arr
  *
  * @return array Categories indexed by ID.
  */
-function local_edulution_get_categories_list(): array {
+function local_edulution_get_categories_list(): array
+{
     global $DB;
 
     $categories = $DB->get_records('course_categories', [], 'sortorder', 'id, name, parent, depth');
@@ -624,7 +646,8 @@ function local_edulution_get_categories_list(): array {
  * @param int|null $categoryid Filter by category.
  * @return array Courses indexed by ID.
  */
-function local_edulution_get_courses_list(?int $categoryid = null): array {
+function local_edulution_get_courses_list(?int $categoryid = null): array
+{
     global $DB;
 
     $conditions = [];
@@ -679,7 +702,8 @@ define('LOCAL_EDULUTION_ENV_CONFIG_MAP', [
  * @param mixed $default Default value if neither env nor db value exists.
  * @return mixed The configuration value.
  */
-function local_edulution_get_config(string $name, $default = null) {
+function local_edulution_get_config(string $name, $default = null)
+{
     // Check if there's an environment variable mapping for this config.
     $envMap = LOCAL_EDULUTION_ENV_CONFIG_MAP;
 
@@ -715,7 +739,8 @@ function local_edulution_get_config(string $name, $default = null) {
  * @param string $name The configuration key name.
  * @return bool True if the value comes from an environment variable.
  */
-function local_edulution_config_from_env(string $name): bool {
+function local_edulution_config_from_env(string $name): bool
+{
     $envMap = LOCAL_EDULUTION_ENV_CONFIG_MAP;
 
     if (isset($envMap[$name])) {
@@ -733,7 +758,8 @@ function local_edulution_config_from_env(string $name): bool {
  *
  * @return array Array of config keys that have env var overrides.
  */
-function local_edulution_get_env_configs(): array {
+function local_edulution_get_env_configs(): array
+{
     $envConfigs = [];
     $envMap = LOCAL_EDULUTION_ENV_CONFIG_MAP;
 
@@ -752,7 +778,8 @@ function local_edulution_get_env_configs(): array {
  *
  * @return bool True if configured.
  */
-function local_edulution_is_keycloak_configured(): bool {
+function local_edulution_is_keycloak_configured(): bool
+{
     $url = local_edulution_get_config('keycloak_url');
     $realm = local_edulution_get_config('keycloak_realm');
     $clientId = local_edulution_get_config('keycloak_client_id');
@@ -767,7 +794,8 @@ function local_edulution_is_keycloak_configured(): bool {
  *
  * @return bool True if updated successfully.
  */
-function local_edulution_update_sync_schedule(): bool {
+function local_edulution_update_sync_schedule(): bool
+{
     global $DB;
 
     $interval = get_config('local_edulution', 'sync_interval');
@@ -821,7 +849,8 @@ function local_edulution_update_sync_schedule(): bool {
  * @param string $name Setting name.
  * @return void
  */
-function local_edulution_config_updated($name): void {
+function local_edulution_config_updated($name): void
+{
     if ($name === 'sync_interval' || $name === 'local_edulution/sync_interval') {
         local_edulution_update_sync_schedule();
     }
@@ -832,7 +861,8 @@ function local_edulution_config_updated($name): void {
  *
  * @return array|null Last export info or null.
  */
-function local_edulution_get_last_export(): ?array {
+function local_edulution_get_last_export(): ?array
+{
     $exportPath = local_edulution_get_export_path();
 
     if (!is_dir($exportPath)) {
@@ -845,7 +875,7 @@ function local_edulution_get_last_export(): ?array {
     }
 
     // Sort by modification time descending.
-    usort($files, function($a, $b) {
+    usort($files, function ($a, $b) {
         return filemtime($b) - filemtime($a);
     });
 

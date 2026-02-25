@@ -18,7 +18,7 @@
  * Scheduled task to cleanup old export files.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -29,21 +29,24 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Cleanup old export files task.
  */
-class cleanup_exports_task extends \core\task\scheduled_task {
+class cleanup_exports_task extends \core\task\scheduled_task
+{
 
     /**
      * Get task name.
      *
      * @return string Task name.
      */
-    public function get_name(): string {
+    public function get_name(): string
+    {
         return get_string('task_cleanup_exports', 'local_edulution');
     }
 
     /**
      * Execute the task.
      */
-    public function execute(): void {
+    public function execute(): void
+    {
         global $CFG;
 
         mtrace('Cleaning up old export files...');

@@ -18,12 +18,12 @@
  * Installation script for local_edulution.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 /**
- * Performs installation tasks for the Edulution plugin.
+ * Performs installation tasks for the edulution plugin.
  *
  * This function is called when the plugin is first installed.
  * It sets up default configuration values and any required
@@ -31,7 +31,8 @@
  *
  * @return bool True on success.
  */
-function xmldb_local_edulution_install() {
+function xmldb_local_edulution_install()
+{
     global $CFG;
 
     // Set default configuration values.

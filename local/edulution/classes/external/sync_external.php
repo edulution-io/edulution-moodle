@@ -18,7 +18,7 @@
  * External functions for Keycloak synchronization.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -42,14 +42,16 @@ use local_edulution\task\adhoc_sync_task;
 /**
  * External functions for sync operations.
  */
-class sync_external extends external_api {
+class sync_external extends external_api
+{
 
     /**
      * Parameters for get_sync_preview.
      *
      * @return external_function_parameters
      */
-    public static function get_sync_preview_parameters(): external_function_parameters {
+    public static function get_sync_preview_parameters(): external_function_parameters
+    {
         return new external_function_parameters([
             'direction' => new external_value(PARAM_ALPHANUMEXT, 'Sync direction', VALUE_DEFAULT, 'from_keycloak'),
             'options' => new external_value(PARAM_RAW, 'JSON options', VALUE_DEFAULT, '{}'),
@@ -65,7 +67,8 @@ class sync_external extends external_api {
      * @param string $options JSON-encoded options.
      * @return array Preview data.
      */
-    public static function get_sync_preview(string $direction = 'from_keycloak', string $options = '{}'): array {
+    public static function get_sync_preview(string $direction = 'from_keycloak', string $options = '{}'): array
+    {
         global $DB;
 
         // Validate parameters.
@@ -471,7 +474,8 @@ class sync_external extends external_api {
      *
      * @return external_single_structure
      */
-    public static function get_sync_preview_returns(): external_single_structure {
+    public static function get_sync_preview_returns(): external_single_structure
+    {
         return new external_single_structure([
             'success' => new external_value(PARAM_BOOL, 'Whether the preview was successful'),
             'message' => new external_value(PARAM_RAW, 'Error message if failed'),
@@ -546,7 +550,8 @@ class sync_external extends external_api {
      *
      * @return external_function_parameters
      */
-    public static function start_sync_parameters(): external_function_parameters {
+    public static function start_sync_parameters(): external_function_parameters
+    {
         return new external_function_parameters([
             'direction' => new external_value(PARAM_ALPHANUMEXT, 'Sync direction', VALUE_DEFAULT, 'from_keycloak'),
             'selectedItems' => new external_value(PARAM_RAW, 'JSON selected items', VALUE_DEFAULT, '{}'),
@@ -565,7 +570,8 @@ class sync_external extends external_api {
      * @param string $options JSON-encoded options.
      * @return array Sync start result.
      */
-    public static function start_sync(string $direction = 'from_keycloak', string $selectedItems = '{}', string $options = '{}'): array {
+    public static function start_sync(string $direction = 'from_keycloak', string $selectedItems = '{}', string $options = '{}'): array
+    {
         global $DB, $USER;
 
         // Validate parameters.
@@ -671,7 +677,8 @@ class sync_external extends external_api {
      *
      * @return external_single_structure
      */
-    public static function start_sync_returns(): external_single_structure {
+    public static function start_sync_returns(): external_single_structure
+    {
         return new external_single_structure([
             'success' => new external_value(PARAM_BOOL, 'Whether sync started successfully'),
             'syncId' => new external_value(PARAM_RAW, 'Sync job ID'),
@@ -684,7 +691,8 @@ class sync_external extends external_api {
      *
      * @return external_function_parameters
      */
-    public static function get_sync_status_parameters(): external_function_parameters {
+    public static function get_sync_status_parameters(): external_function_parameters
+    {
         return new external_function_parameters([
             'syncId' => new external_value(PARAM_RAW, 'Sync job ID'),
         ]);
@@ -696,7 +704,8 @@ class sync_external extends external_api {
      * @param string $syncId Sync job ID.
      * @return array Status data.
      */
-    public static function get_sync_status(string $syncId): array {
+    public static function get_sync_status(string $syncId): array
+    {
         global $DB;
 
         // Validate parameters.
@@ -764,7 +773,8 @@ class sync_external extends external_api {
      * @param \stdClass $job Sync job record.
      * @return string Status message.
      */
-    protected static function get_status_message_from_record(\stdClass $job): string {
+    protected static function get_status_message_from_record(\stdClass $job): string
+    {
         $error_details = json_decode($job->error_details ?: '[]', true) ?: [];
 
         switch ($job->status) {
@@ -795,7 +805,8 @@ class sync_external extends external_api {
      *
      * @return external_single_structure
      */
-    public static function get_sync_status_returns(): external_single_structure {
+    public static function get_sync_status_returns(): external_single_structure
+    {
         return new external_single_structure([
             'success' => new external_value(PARAM_BOOL, 'Whether status was retrieved'),
             'status' => new external_value(PARAM_ALPHA, 'Sync status'),
@@ -838,7 +849,8 @@ class sync_external extends external_api {
      *
      * @return external_function_parameters
      */
-    public static function cancel_sync_parameters(): external_function_parameters {
+    public static function cancel_sync_parameters(): external_function_parameters
+    {
         return new external_function_parameters([
             'syncId' => new external_value(PARAM_RAW, 'Sync job ID'),
         ]);
@@ -850,7 +862,8 @@ class sync_external extends external_api {
      * @param string $syncId Sync job ID.
      * @return array Result.
      */
-    public static function cancel_sync(string $syncId): array {
+    public static function cancel_sync(string $syncId): array
+    {
         global $DB;
 
         // Validate parameters.
@@ -894,7 +907,8 @@ class sync_external extends external_api {
      *
      * @return external_single_structure
      */
-    public static function cancel_sync_returns(): external_single_structure {
+    public static function cancel_sync_returns(): external_single_structure
+    {
         return new external_single_structure([
             'success' => new external_value(PARAM_BOOL, 'Whether cancellation was successful'),
             'message' => new external_value(PARAM_RAW, 'Status message'),
@@ -906,7 +920,8 @@ class sync_external extends external_api {
      *
      * @return external_function_parameters
      */
-    public static function get_ongoing_sync_parameters(): external_function_parameters {
+    public static function get_ongoing_sync_parameters(): external_function_parameters
+    {
         return new external_function_parameters([]);
     }
 
@@ -915,7 +930,8 @@ class sync_external extends external_api {
      *
      * @return array Ongoing sync data.
      */
-    public static function get_ongoing_sync(): array {
+    public static function get_ongoing_sync(): array
+    {
         global $DB, $USER;
 
         // Check capability.
@@ -954,7 +970,8 @@ class sync_external extends external_api {
      *
      * @return external_single_structure
      */
-    public static function get_ongoing_sync_returns(): external_single_structure {
+    public static function get_ongoing_sync_returns(): external_single_structure
+    {
         return new external_single_structure([
             'syncId' => new external_value(PARAM_RAW, 'Sync job ID'),
             'status' => new external_value(PARAM_RAW, 'Sync status'),
@@ -972,7 +989,8 @@ class sync_external extends external_api {
      * @param array $kc_user Keycloak user data with attributes.
      * @return bool True if user is a teacher or admin.
      */
-    protected static function is_teacher_user_static(array $kc_user): bool {
+    protected static function is_teacher_user_static(array $kc_user): bool
+    {
         $username = strtolower($kc_user['username'] ?? '');
         $attributes = $kc_user['attributes'] ?? [];
 

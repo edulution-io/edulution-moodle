@@ -18,7 +18,7 @@
  * German language strings for local_edulution.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -27,8 +27,8 @@ defined('MOODLE_INTERNAL') || die();
 // ============================================================================
 // PLUGIN-INFORMATIONEN
 // ============================================================================
-$string['pluginname'] = 'Edulution';
-$string['plugindescription'] = 'Komplettloesung fuer Migration, Synchronisation und Verwaltung von Edulution Moodle';
+$string['pluginname'] = 'edulution';
+$string['plugindescription'] = 'Komplettloesung fuer Migration, Synchronisation und Verwaltung von edulution Moodle';
 $string['pluginversion'] = 'Version';
 $string['pluginauthor'] = 'Autor';
 $string['pluginlicense'] = 'Lizenz';
@@ -38,12 +38,12 @@ $string['plugindocumentation'] = 'Dokumentation';
 // ============================================================================
 // BERECHTIGUNGEN
 // ============================================================================
-$string['edulution:manage'] = 'Edulution-Einstellungen verwalten';
+$string['edulution:manage'] = 'edulution-Einstellungen verwalten';
 $string['edulution:export'] = 'Daten aus Moodle exportieren';
 $string['edulution:import'] = 'Daten in Moodle importieren';
 $string['edulution:sync'] = 'Mit Keycloak synchronisieren';
-$string['edulution:viewreports'] = 'Edulution-Berichte anzeigen';
-$string['edulution:viewdashboard'] = 'Edulution-Dashboard anzeigen';
+$string['edulution:viewreports'] = 'edulution-Berichte anzeigen';
+$string['edulution:viewdashboard'] = 'edulution-Dashboard anzeigen';
 $string['edulution:managekeycloak'] = 'Keycloak-Integration verwalten';
 $string['edulution:manageusers'] = 'Benutzersynchronisation verwalten';
 $string['edulution:managecourses'] = 'Kurs-Export/Import verwalten';
@@ -81,9 +81,9 @@ $string['reports'] = 'Berichte';
 // ============================================================================
 // DASHBOARD
 // ============================================================================
-$string['dashboard_title'] = 'Edulution Dashboard';
-$string['dashboard_subtitle'] = 'Uebersicht Ihrer Edulution-Integration';
-$string['dashboard_welcome'] = 'Willkommen bei Edulution';
+$string['dashboard_title'] = 'edulution Dashboard';
+$string['dashboard_subtitle'] = 'Uebersicht Ihrer edulution-Integration';
+$string['dashboard_welcome'] = 'Willkommen bei edulution';
 $string['dashboard_welcome_message'] = 'Verwalten Sie Ihre Moodle-Migration, Synchronisation und Datenverwaltung von diesem zentralen Hub aus.';
 $string['dashboard_description'] = 'Verwalten Sie Ihre Moodle-Exporte, Importe und Keycloak-Synchronisation von einem Ort aus.';
 
@@ -121,7 +121,7 @@ $string['dashboard_card_import_desc'] = 'Daten aus externen Quellen in Moodle im
 $string['dashboard_card_sync'] = 'Keycloak-Synchronisation';
 $string['dashboard_card_sync_desc'] = 'Benutzer mit Keycloak-Identitaetsanbieter synchronisieren';
 $string['dashboard_card_settings'] = 'Einstellungen';
-$string['dashboard_card_settings_desc'] = 'Edulution-Plugin-Einstellungen konfigurieren';
+$string['dashboard_card_settings_desc'] = 'edulution-Plugin-Einstellungen konfigurieren';
 $string['dashboard_card_reports'] = 'Berichte';
 $string['dashboard_card_reports_desc'] = 'Detaillierte Berichte und Analysen anzeigen';
 $string['dashboard_card_logs'] = 'Aktivitaetsprotokolle';
@@ -332,7 +332,7 @@ $string['export_schedule_next'] = 'Naechster geplanter Lauf: {$a}';
 // ============================================================================
 $string['import_title'] = 'Daten importieren';
 $string['import_subtitle'] = 'Daten aus externen Quellen in Moodle importieren';
-$string['import_description'] = 'Daten aus einem Edulution-Exportpaket importieren.';
+$string['import_description'] = 'Daten aus einem edulution-Exportpaket importieren.';
 
 // Import-Typen
 $string['import_type'] = 'Import-Typ';
@@ -373,7 +373,7 @@ $string['import_skiprows_help'] = 'Anzahl der Zeilen, die am Anfang uebersprunge
 
 // Import-Optionen (Legacy)
 $string['upload_export'] = 'Exportdatei hochladen';
-$string['upload_export_help'] = 'Laden Sie eine mit Edulution-Export erstellte ZIP-Datei hoch.';
+$string['upload_export_help'] = 'Laden Sie eine mit edulution-Export erstellte ZIP-Datei hoch.';
 $string['preview_contents'] = 'Inhalte voranzeigen';
 $string['import_options'] = 'Import-Optionen';
 $string['import_users'] = 'Benutzer importieren';
@@ -751,16 +751,16 @@ $string['keycloak_setup_view_users'] = 'Synchronisierte Benutzer anzeigen';
 // ============================================================================
 // EINSTELLUNGEN
 // ============================================================================
-$string['settings_title'] = 'Edulution-Einstellungen';
+$string['settings_title'] = 'edulution-Einstellungen';
 $string['settings_subtitle'] = 'Plugin-Einstellungen konfigurieren';
 $string['settings_saved'] = 'Einstellungen erfolgreich gespeichert';
 $string['settings_error'] = 'Fehler beim Speichern der Einstellungen';
-$string['settings_description'] = 'Edulution-Plugin-Einstellungen konfigurieren.';
+$string['settings_description'] = 'edulution-Plugin-Einstellungen konfigurieren.';
 
 // Allgemeine Einstellungen
 $string['settings_general'] = 'Allgemeine Einstellungen';
 $string['settings_enabled'] = 'Plugin aktivieren';
-$string['settings_enabled_help'] = 'Edulution-Plugin aktivieren oder deaktivieren';
+$string['settings_enabled_help'] = 'edulution-Plugin aktivieren oder deaktivieren';
 $string['settings_debug'] = 'Debug-Modus';
 $string['settings_debug_help'] = 'Ausfuehrliches Logging fuer Fehlersuche aktivieren';
 $string['settings_log_level'] = 'Log-Level';
@@ -775,7 +775,7 @@ $string['settings_log_retention_help'] = 'Anzahl der Tage, die Log-Eintraege auf
 // Einstellungen Legacy
 $string['general_settings'] = 'Allgemeine Einstellungen';
 $string['enable_plugin'] = 'Plugin aktivieren';
-$string['enable_plugin_help'] = 'Aktivieren oder deaktivieren Sie die Edulution-Plugin-Funktionalitaet.';
+$string['enable_plugin_help'] = 'Aktivieren oder deaktivieren Sie die edulution-Plugin-Funktionalitaet.';
 $string['export_settings'] = 'Export-Einstellungen';
 $string['export_directory'] = 'Export-Verzeichnis';
 $string['export_directory_help'] = 'Verzeichnis, in dem Exportdateien gespeichert werden.';
@@ -881,8 +881,8 @@ $string['keycloaksettings'] = 'Keycloak-Einstellungen';
 $string['keycloaksettings_desc'] = 'Konfigurieren Sie die Verbindung zu Ihrem Keycloak-Identitaetsserver.';
 $string['generalsettings'] = 'Allgemeine Einstellungen';
 $string['generalsettings_desc'] = 'Allgemeine Plugin-Konfigurationsoptionen.';
-$string['enabled'] = 'Edulution aktivieren';
-$string['enabled_desc'] = 'Aktivieren oder deaktivieren Sie die Edulution-Plugin-Funktionalitaet.';
+$string['enabled'] = 'edulution aktivieren';
+$string['enabled_desc'] = 'Aktivieren oder deaktivieren Sie die edulution-Plugin-Funktionalitaet.';
 $string['keycloak_sync_enabled'] = 'Keycloak-Synchronisation aktivieren';
 $string['keycloak_sync_enabled_desc'] = 'Automatische Benutzersynchronisation mit Keycloak aktivieren.';
 $string['keycloak_url'] = 'Keycloak-Server-URL';
@@ -1337,7 +1337,7 @@ $string['activity_keycloak_configured'] = 'Keycloak-Konfiguration aktualisiert';
 // HILFE-TOOLTIPS
 // ============================================================================
 $string['help_export'] = 'Erstellen Sie eine Sicherung Ihrer Moodle-Daten, die in eine andere Moodle-Instanz importiert werden kann.';
-$string['help_import'] = 'Stellen Sie Daten aus einem frueheren Edulution-Export wieder her.';
+$string['help_import'] = 'Stellen Sie Daten aus einem frueheren edulution-Export wieder her.';
 $string['help_sync'] = 'Halten Sie Benutzerkonten zwischen Keycloak und Moodle synchron.';
 $string['help_keycloak'] = 'Konfigurieren Sie die Verbindung zu Ihrem Keycloak-Identitaetsanbieter.';
 
@@ -1360,7 +1360,7 @@ $string['coursecategorysettings'] = 'Kurs- & Kategorieeinstellungen';
 $string['coursecategorysettings_desc'] = 'Konfigurieren Sie, wo synchronisierte Kurse erstellt werden und wie sie benannt werden.';
 $string['parentcategory'] = 'Uebergeordnete Kategorie';
 $string['parentcategory_desc'] = 'Waehlen Sie eine bestehende Kategorie als Elternkategorie fuer synchronisierte Kurse, oder erstellen Sie eine neue.';
-$string['createnewcategory'] = '-- Neue "Edulution Sync" Kategorie erstellen --';
+$string['createnewcategory'] = '-- Neue "edulution Sync" Kategorie erstellen --';
 $string['categorynamemain'] = 'Name der Hauptkategorie';
 $string['categorynamemain_desc'] = 'Name fuer die Hauptkategorie (nur bei Neuerstellung verwendet).';
 $string['categorynameclasses'] = 'Name der Klassenkategorie';

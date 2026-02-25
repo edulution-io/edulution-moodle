@@ -1,11 +1,11 @@
 /**
- * Import page functionality for Edulution plugin.
+ * Import page functionality for edulution plugin.
  *
  * Handles drag & drop file upload, file validation, upload progress,
  * preview display, and import progress tracking.
  *
  * @module     local_edulution/import
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates', 'local_edulution/common'],

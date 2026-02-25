@@ -21,7 +21,7 @@
  * or custom URLs, extracting them, and installing to the correct location.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -30,7 +30,8 @@ namespace local_edulution\import;
 /**
  * Plugin installer class for downloading and installing Moodle plugins.
  */
-class plugin_installer {
+class plugin_installer
+{
 
     /** @var string Moodle Plugin Directory API URL */
     const MOODLE_PLUGINS_API = 'https://download.moodle.org/api/1.3/pluginfo.php';
@@ -52,7 +53,8 @@ class plugin_installer {
      *
      * @param string $dirroot Moodle dirroot path.
      */
-    public function __construct(string $dirroot) {
+    public function __construct(string $dirroot)
+    {
         $this->dirroot = rtrim($dirroot, '/');
         $this->init_plugin_type_dirs();
     }
@@ -60,7 +62,8 @@ class plugin_installer {
     /**
      * Initialize plugin type to directory mappings.
      */
-    protected function init_plugin_type_dirs(): void {
+    protected function init_plugin_type_dirs(): void
+    {
         // Standard Moodle plugin types and their directories
         $this->plugintypedirs = [
             'mod' => 'mod',
@@ -131,7 +134,8 @@ class plugin_installer {
      *
      * @param callable $callback Function that receives (step, message).
      */
-    public function set_progress_callback(callable $callback): void {
+    public function set_progress_callback(callable $callback): void
+    {
         $this->progresscallback = $callback;
     }
 
@@ -141,7 +145,8 @@ class plugin_installer {
      * @param int $step Step number.
      * @param string $message Progress message.
      */
-    protected function progress(int $step, string $message): void {
+    protected function progress(int $step, string $message): void
+    {
         if ($this->progresscallback) {
             call_user_func($this->progresscallback, $step, $message);
         }
@@ -154,7 +159,8 @@ class plugin_installer {
      * @return bool True if installed, false if skipped.
      * @throws \Exception On installation failure.
      */
-    public function install_plugin(array $plugindata): bool {
+    public function install_plugin(array $plugindata): bool
+    {
         $component = $plugindata['component'] ?? '';
         if (empty($component)) {
             throw new \Exception("Plugin component name is required");
@@ -212,7 +218,8 @@ class plugin_installer {
      * @return bool True if installed.
      * @throws \Exception On failure.
      */
-    public function install_from_url(string $component, string $url): bool {
+    public function install_from_url(string $component, string $url): bool
+    {
         list($type, $name) = $this->parse_component($component);
         if (!$type || !$name) {
             throw new \Exception("Invalid plugin component: {$component}");
@@ -245,7 +252,8 @@ class plugin_installer {
      * @return bool True if installed.
      * @throws \Exception On failure.
      */
-    public function install_from_zip(string $component, string $zippath): bool {
+    public function install_from_zip(string $component, string $zippath): bool
+    {
         list($type, $name) = $this->parse_component($component);
         if (!$type || !$name) {
             throw new \Exception("Invalid plugin component: {$component}");
@@ -273,7 +281,8 @@ class plugin_installer {
      * @param string $component Component name (e.g., 'mod_forum').
      * @return array [type, name] or [null, null] if invalid.
      */
-    protected function parse_component(string $component): array {
+    protected function parse_component(string $component): array
+    {
         if (strpos($component, '_') === false) {
             return [null, null];
         }
@@ -294,7 +303,8 @@ class plugin_installer {
      * @return string Full path to plugin directory.
      * @throws \Exception If plugin type is unknown.
      */
-    protected function get_plugin_directory(string $type, string $name): string {
+    protected function get_plugin_directory(string $type, string $name): string
+    {
         if (!isset($this->plugintypedirs[$type])) {
             throw new \Exception("Unknown plugin type: {$type}");
         }
@@ -310,7 +320,8 @@ class plugin_installer {
      * @param array $plugindata Plugin data from export.
      * @return string|null Download URL or null if not found.
      */
-    protected function get_plugin_download_url(string $component, array $plugindata): ?string {
+    protected function get_plugin_download_url(string $component, array $plugindata): ?string
+    {
         // First check if URL is provided in plugin data
         if (!empty($plugindata['download_url'])) {
             return $plugindata['download_url'];
@@ -332,7 +343,8 @@ class plugin_installer {
      * @param int|null $version Specific version to download.
      * @return string|null Download URL or null.
      */
-    protected function get_moodle_plugin_url(string $component, ?int $version = null): ?string {
+    protected function get_moodle_plugin_url(string $component, ?int $version = null): ?string
+    {
         // Query the Moodle Plugin API
         $apiurl = self::MOODLE_PLUGINS_API . '?plugin=' . urlencode($component);
 
@@ -365,7 +377,8 @@ class plugin_installer {
      * @return string Path to downloaded file.
      * @throws \Exception On download failure.
      */
-    protected function download_plugin(string $url): string {
+    protected function download_plugin(string $url): string
+    {
         $tempfile = tempnam(sys_get_temp_dir(), 'moodle_plugin_');
         $tempfile .= '.zip';
 
@@ -381,7 +394,7 @@ class plugin_installer {
         curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
         curl_setopt($ch, CURLOPT_TIMEOUT, 300);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Edulution-Importer/1.0');
+        curl_setopt($ch, CURLOPT_USERAGENT, 'edulution-Importer/1.0');
 
         $result = curl_exec($ch);
         $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -412,7 +425,8 @@ class plugin_installer {
      * @param string $name Plugin name.
      * @throws \Exception On extraction failure.
      */
-    protected function extract_plugin(string $zipfile, string $type, string $name): void {
+    protected function extract_plugin(string $zipfile, string $type, string $name): void
+    {
         $targetbase = $this->get_plugin_directory($type, $name);
         $targetparent = dirname($targetbase);
 
@@ -471,7 +485,8 @@ class plugin_installer {
      * @param string $expectedname Expected plugin name.
      * @return string|null Path to plugin root or null.
      */
-    protected function find_plugin_root(string $extractdir, string $expectedname): ?string {
+    protected function find_plugin_root(string $extractdir, string $expectedname): ?string
+    {
         // Check if the expected name exists directly
         if (is_dir($extractdir . '/' . $expectedname)) {
             return $extractdir . '/' . $expectedname;
@@ -511,7 +526,8 @@ class plugin_installer {
      * @param string $filepath Path to file.
      * @return bool True if valid ZIP.
      */
-    protected function is_valid_zip(string $filepath): bool {
+    protected function is_valid_zip(string $filepath): bool
+    {
         $zip = new \ZipArchive();
         $result = $zip->open($filepath, \ZipArchive::CHECKCONS);
         if ($result === true) {
@@ -527,7 +543,8 @@ class plugin_installer {
      * @param string $source Source directory.
      * @param string $dest Destination directory.
      */
-    protected function copy_directory(string $source, string $dest): void {
+    protected function copy_directory(string $source, string $dest): void
+    {
         if (!is_dir($dest)) {
             mkdir($dest, 0755, true);
         }
@@ -555,7 +572,8 @@ class plugin_installer {
      *
      * @param string $dir Directory path.
      */
-    protected function delete_directory_recursive(string $dir): void {
+    protected function delete_directory_recursive(string $dir): void
+    {
         if (!is_dir($dir)) {
             return;
         }
@@ -578,13 +596,14 @@ class plugin_installer {
      * @param string $url URL to fetch.
      * @return string|false Response body or false on failure.
      */
-    protected function http_get(string $url) {
+    protected function http_get(string $url)
+    {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Edulution-Importer/1.0');
+        curl_setopt($ch, CURLOPT_USERAGENT, 'edulution-Importer/1.0');
 
         $response = curl_exec($ch);
         $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -602,7 +621,8 @@ class plugin_installer {
      *
      * @return array List of component names.
      */
-    public function get_installed_plugins(): array {
+    public function get_installed_plugins(): array
+    {
         return $this->installedplugins;
     }
 
@@ -613,7 +633,8 @@ class plugin_installer {
      * @param int $moodleversion Moodle version to check against.
      * @return bool True if compatible.
      */
-    public function check_compatibility(array $plugindata, int $moodleversion): bool {
+    public function check_compatibility(array $plugindata, int $moodleversion): bool
+    {
         $requires = $plugindata['requires'] ?? 0;
         return $requires <= $moodleversion;
     }
@@ -623,7 +644,8 @@ class plugin_installer {
      *
      * @return array Plugin type to directory mapping.
      */
-    public function get_plugin_types(): array {
+    public function get_plugin_types(): array
+    {
         return $this->plugintypedirs;
     }
 
@@ -633,7 +655,8 @@ class plugin_installer {
      * @param string $type Plugin type.
      * @param string $dir Directory relative to dirroot.
      */
-    public function add_plugin_type(string $type, string $dir): void {
+    public function add_plugin_type(string $type, string $dir): void
+    {
         $this->plugintypedirs[$type] = $dir;
     }
 
@@ -643,7 +666,8 @@ class plugin_installer {
      * @param string $component Plugin component name.
      * @return bool True if properly installed.
      */
-    public function verify_installation(string $component): bool {
+    public function verify_installation(string $component): bool
+    {
         list($type, $name) = $this->parse_component($component);
         if (!$type || !$name) {
             return false;

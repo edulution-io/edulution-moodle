@@ -25,7 +25,7 @@
  *   php full_export.php --output=/path/to/export.zip --full-db --include-moodledata
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -73,7 +73,7 @@ list($options, $unrecognized) = cli_get_params([
 if ($options['help']) {
     $help = <<<EOT
 
-Edulution Full Export CLI
+edulution Full Export CLI
 =========================
 
 Create a complete export package for migration to another Moodle instance.
@@ -161,7 +161,8 @@ if (!is_dir($outputdir)) {
  * @param int $bytes Size in bytes.
  * @return string Formatted size.
  */
-function local_edulution_format_size(int $bytes): string {
+function local_edulution_format_size(int $bytes): string
+{
     $units = ['B', 'KB', 'MB', 'GB', 'TB'];
     $bytes = max($bytes, 0);
     $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
@@ -175,7 +176,8 @@ function local_edulution_format_size(int $bytes): string {
  *
  * @return string|null Path to mysqldump or null.
  */
-function local_edulution_find_mysqldump(): ?string {
+function local_edulution_find_mysqldump(): ?string
+{
     $paths = [
         '/usr/bin/mysqldump',
         '/usr/local/bin/mysqldump',
@@ -214,7 +216,8 @@ function local_edulution_find_mysqldump(): ?string {
  * @param string $dest Destination directory.
  * @return array Stats with 'files' and 'size'.
  */
-function local_edulution_copy_directory(string $source, string $dest): array {
+function local_edulution_copy_directory(string $source, string $dest): array
+{
     $stats = ['files' => 0, 'size' => 0];
 
     if (!is_dir($dest)) {
@@ -248,7 +251,8 @@ function local_edulution_copy_directory(string $source, string $dest): array {
  *
  * @param string $dir Directory path.
  */
-function local_edulution_delete_directory(string $dir): void {
+function local_edulution_delete_directory(string $dir): void
+{
     if (!is_dir($dir)) {
         return;
     }
@@ -272,7 +276,8 @@ function local_edulution_delete_directory(string $dir): void {
  * @param string $dir Directory to add.
  * @param string $base Base path within archive.
  */
-function local_edulution_add_to_zip(ZipArchive $zip, string $dir, string $base): void {
+function local_edulution_add_to_zip(ZipArchive $zip, string $dir, string $base): void
+{
     $iterator = new RecursiveIteratorIterator(
         new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
         RecursiveIteratorIterator::SELF_FIRST
@@ -301,7 +306,8 @@ $progresslog = '';
  * @param bool $complete Whether export is complete.
  * @param bool $success Whether export was successful (only used when complete=true).
  */
-function local_edulution_update_progress(int $percent, string $phase, string $log = '', bool $complete = false, bool $success = true): void {
+function local_edulution_update_progress(int $percent, string $phase, string $log = '', bool $complete = false, bool $success = true): void
+{
     global $options, $progresslog;
 
     if (empty($options['progress-file'])) {
@@ -339,7 +345,8 @@ function local_edulution_update_progress(int $percent, string $phase, string $lo
  *
  * @return array Plugin data.
  */
-function local_edulution_export_plugins(): array {
+function local_edulution_export_plugins(): array
+{
     global $CFG;
 
     $pluginManager = core_plugin_manager::instance();
@@ -370,7 +377,7 @@ function local_edulution_export_plugins(): array {
     }
 
     // Sort by component name
-    usort($plugins, function($a, $b) {
+    usort($plugins, function ($a, $b) {
         return strcmp($a['component'], $b['component']);
     });
 
@@ -382,15 +389,17 @@ function local_edulution_export_plugins(): array {
         'plugins' => $plugins,
         'statistics' => [
             'total_plugins' => count($plugins),
-            'additional_plugins' => count(array_filter($plugins, function($p) { return !$p['is_core']; })),
-            'core_plugins' => count(array_filter($plugins, function($p) { return $p['is_core']; })),
+            'additional_plugins' => count(array_filter($plugins, function ($p) {
+                return !$p['is_core']; })),
+            'core_plugins' => count(array_filter($plugins, function ($p) {
+                return $p['is_core']; })),
         ],
     ];
 }
 
 // Print banner
 if (!$options['quiet']) {
-    cli_heading('Edulution Full Export');
+    cli_heading('edulution Full Export');
     mtrace('');
     mtrace('Configuration:');
     mtrace('  - Output: ' . $options['output']);

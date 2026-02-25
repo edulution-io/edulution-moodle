@@ -22,7 +22,7 @@
  * and determine category placement.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -33,7 +33,8 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Represents a single naming schema rule.
  */
-class naming_schema {
+class naming_schema
+{
 
     /** @var string Unique identifier */
     protected string $id;
@@ -70,7 +71,8 @@ class naming_schema {
      *
      * @param array $config Schema configuration from JSON.
      */
-    public function __construct(array $config) {
+    public function __construct(array $config)
+    {
         $this->id = $config['id'] ?? '';
         $this->description = $config['description'] ?? '';
         $this->priority = (int) ($config['priority'] ?? 999);
@@ -89,7 +91,8 @@ class naming_schema {
      * @param string $group_name The group name to test.
      * @return bool True if the pattern matches.
      */
-    public function matches(string $group_name): bool {
+    public function matches(string $group_name): bool
+    {
         if (!$this->enabled || empty($this->pattern)) {
             return false;
         }
@@ -104,7 +107,8 @@ class naming_schema {
      * @param string $group_name The group name to parse.
      * @return array|null Captured groups or null if no match.
      */
-    public function extract(string $group_name): ?array {
+    public function extract(string $group_name): ?array
+    {
         $regex = $this->build_regex();
 
         if (preg_match($regex, $group_name, $matches) !== 1) {
@@ -131,7 +135,8 @@ class naming_schema {
      *
      * @return string PCRE regex with delimiters.
      */
-    protected function build_regex(): string {
+    protected function build_regex(): string
+    {
         $delimiter = substr($this->pattern, 0, 1) === '/' ? '' : '/';
         return $delimiter . $this->pattern . $delimiter . 'u';
     }
@@ -143,7 +148,8 @@ class naming_schema {
      * @param template_transformer $transformer Transformer instance.
      * @return string Generated course name.
      */
-    public function generate_course_name(array $groups, template_transformer $transformer): string {
+    public function generate_course_name(array $groups, template_transformer $transformer): string
+    {
         return $transformer->apply($this->course_name_template, $groups);
     }
 
@@ -154,7 +160,8 @@ class naming_schema {
      * @param template_transformer $transformer Transformer instance.
      * @return string Generated shortname.
      */
-    public function generate_course_shortname(array $groups, template_transformer $transformer): string {
+    public function generate_course_shortname(array $groups, template_transformer $transformer): string
+    {
         $shortname = $transformer->apply($this->course_shortname_template, $groups);
         // Ensure shortname is valid (no spaces, limited characters).
         $shortname = preg_replace('/[^a-zA-Z0-9_-]/', '_', $shortname);
@@ -168,7 +175,8 @@ class naming_schema {
      * @param template_transformer $transformer Transformer instance.
      * @return string Category path (/ separated).
      */
-    public function generate_category_path(array $groups, template_transformer $transformer): string {
+    public function generate_category_path(array $groups, template_transformer $transformer): string
+    {
         return $transformer->apply($this->category_path_template, $groups);
     }
 
@@ -178,33 +186,40 @@ class naming_schema {
      * @param string $group_name Original group name.
      * @return string Course idnumber.
      */
-    public function generate_idnumber(string $group_name): string {
+    public function generate_idnumber(string $group_name): string
+    {
         $safe_name = preg_replace('/[^a-z0-9_-]/', '_', strtolower($group_name));
         return $this->idnumber_prefix . $safe_name;
     }
 
     // Getters.
-    public function get_id(): string {
+    public function get_id(): string
+    {
         return $this->id;
     }
 
-    public function get_description(): string {
+    public function get_description(): string
+    {
         return $this->description;
     }
 
-    public function get_priority(): int {
+    public function get_priority(): int
+    {
         return $this->priority;
     }
 
-    public function get_pattern(): string {
+    public function get_pattern(): string
+    {
         return $this->pattern;
     }
 
-    public function get_role_map(): array {
+    public function get_role_map(): array
+    {
         return $this->role_map;
     }
 
-    public function is_enabled(): bool {
+    public function is_enabled(): bool
+    {
         return $this->enabled;
     }
 
@@ -213,7 +228,8 @@ class naming_schema {
      *
      * @return array Schema configuration.
      */
-    public function export(): array {
+    public function export(): array
+    {
         return [
             'id' => $this->id,
             'description' => $this->description,

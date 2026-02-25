@@ -18,7 +18,7 @@
  * Upgrade script for local_edulution.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -30,7 +30,8 @@ defined('MOODLE_INTERNAL') || die();
  * @param int $oldversion The old version of the plugin.
  * @return bool Always returns true.
  */
-function xmldb_local_edulution_upgrade($oldversion) {
+function xmldb_local_edulution_upgrade($oldversion)
+{
     global $DB;
 
     $dbman = $DB->get_manager();

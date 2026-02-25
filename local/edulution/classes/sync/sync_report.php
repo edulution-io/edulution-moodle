@@ -21,7 +21,7 @@
  * skipped items, and any errors that occurred.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -34,7 +34,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * Collects and reports on synchronization results.
  */
-class sync_report {
+class sync_report
+{
 
     /** @var array Created items */
     protected array $created = [];
@@ -57,7 +58,8 @@ class sync_report {
     /**
      * Constructor.
      */
-    public function __construct() {
+    public function __construct()
+    {
         $this->start_time = time();
     }
 
@@ -68,7 +70,8 @@ class sync_report {
      * @param array $details Optional additional details.
      * @return self
      */
-    public function add_created(string $identifier, array $details = []): self {
+    public function add_created(string $identifier, array $details = []): self
+    {
         $this->created[] = [
             'identifier' => $identifier,
             'time' => time(),
@@ -84,7 +87,8 @@ class sync_report {
      * @param array $details Optional additional details.
      * @return self
      */
-    public function add_updated(string $identifier, array $details = []): self {
+    public function add_updated(string $identifier, array $details = []): self
+    {
         $this->updated[] = [
             'identifier' => $identifier,
             'time' => time(),
@@ -100,7 +104,8 @@ class sync_report {
      * @param string $reason Reason for skipping.
      * @return self
      */
-    public function add_skipped(string $identifier, string $reason): self {
+    public function add_skipped(string $identifier, string $reason): self
+    {
         $this->skipped[] = [
             'identifier' => $identifier,
             'reason' => $reason,
@@ -116,7 +121,8 @@ class sync_report {
      * @param string $message Error message.
      * @return self
      */
-    public function add_error(string $identifier, string $message): self {
+    public function add_error(string $identifier, string $message): self
+    {
         $this->errors[] = [
             'identifier' => $identifier,
             'message' => $message,
@@ -130,7 +136,8 @@ class sync_report {
      *
      * @return array Summary with counts.
      */
-    public function get_summary(): array {
+    public function get_summary(): array
+    {
         if ($this->end_time === 0) {
             $this->end_time = time();
         }
@@ -153,7 +160,8 @@ class sync_report {
      *
      * @return array Full details of all items.
      */
-    public function get_details(): array {
+    public function get_details(): array
+    {
         return [
             'created' => $this->created,
             'updated' => $this->updated,
@@ -167,7 +175,8 @@ class sync_report {
      *
      * @return array Created items.
      */
-    public function get_created(): array {
+    public function get_created(): array
+    {
         return $this->created;
     }
 
@@ -176,7 +185,8 @@ class sync_report {
      *
      * @return array Updated items.
      */
-    public function get_updated(): array {
+    public function get_updated(): array
+    {
         return $this->updated;
     }
 
@@ -185,7 +195,8 @@ class sync_report {
      *
      * @return array Skipped items with reasons.
      */
-    public function get_skipped(): array {
+    public function get_skipped(): array
+    {
         return $this->skipped;
     }
 
@@ -194,7 +205,8 @@ class sync_report {
      *
      * @return array Errors.
      */
-    public function get_errors(): array {
+    public function get_errors(): array
+    {
         return $this->errors;
     }
 
@@ -203,7 +215,8 @@ class sync_report {
      *
      * @return bool True if no errors.
      */
-    public function is_success(): bool {
+    public function is_success(): bool
+    {
         return count($this->errors) === 0;
     }
 
@@ -213,7 +226,8 @@ class sync_report {
      * @param bool $pretty Use pretty printing.
      * @return string JSON representation.
      */
-    public function to_json(bool $pretty = false): string {
+    public function to_json(bool $pretty = false): string
+    {
         $data = [
             'summary' => $this->get_summary(),
             'details' => $this->get_details(),
@@ -233,7 +247,8 @@ class sync_report {
      * @param sync_report $other Report to merge.
      * @return self
      */
-    public function merge(sync_report $other): self {
+    public function merge(sync_report $other): self
+    {
         $this->created = array_merge($this->created, $other->get_created());
         $this->updated = array_merge($this->updated, $other->get_updated());
         $this->skipped = array_merge($this->skipped, $other->get_skipped());
@@ -246,7 +261,8 @@ class sync_report {
      *
      * @return self
      */
-    public function reset(): self {
+    public function reset(): self
+    {
         $this->created = [];
         $this->updated = [];
         $this->skipped = [];
@@ -261,7 +277,8 @@ class sync_report {
      *
      * @return string Summary text.
      */
-    public function get_summary_text(): string {
+    public function get_summary_text(): string
+    {
         $summary = $this->get_summary();
 
         $lines = [];
@@ -280,7 +297,8 @@ class sync_report {
      *
      * @return int Duration in seconds.
      */
-    public function get_duration(): int {
+    public function get_duration(): int
+    {
         if ($this->end_time === 0) {
             return time() - $this->start_time;
         }
@@ -293,7 +311,8 @@ class sync_report {
      * @param int $time Unix timestamp.
      * @return self
      */
-    public function set_start_time(int $time): self {
+    public function set_start_time(int $time): self
+    {
         $this->start_time = $time;
         return $this;
     }
@@ -304,7 +323,8 @@ class sync_report {
      * @param int $time Unix timestamp.
      * @return self
      */
-    public function set_end_time(int $time): self {
+    public function set_end_time(int $time): self
+    {
         $this->end_time = $time;
         return $this;
     }
@@ -314,7 +334,8 @@ class sync_report {
      *
      * @return string Formatted text summary.
      */
-    public function get_text_summary(): string {
+    public function get_text_summary(): string
+    {
         $summary = $this->get_summary();
 
         $lines = [];
@@ -352,7 +373,8 @@ class sync_report {
      * @param int $seconds Duration in seconds.
      * @return string Formatted duration.
      */
-    protected function format_duration(int $seconds): string {
+    protected function format_duration(int $seconds): string
+    {
         if ($seconds < 60) {
             return "{$seconds}s";
         }
@@ -371,7 +393,8 @@ class sync_report {
      *
      * @return int|null The report ID or null on failure.
      */
-    public function save(): ?int {
+    public function save(): ?int
+    {
         global $DB, $USER;
 
         if ($this->end_time === 0) {
@@ -423,7 +446,8 @@ class sync_report {
      * @param array|null $recipients Array of user objects or null for all admins.
      * @return int Number of emails sent.
      */
-    public function send_email(?array $recipients = null): int {
+    public function send_email(?array $recipients = null): int
+    {
         global $CFG;
 
         if ($recipients === null) {

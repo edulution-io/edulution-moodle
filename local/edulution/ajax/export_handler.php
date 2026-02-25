@@ -18,7 +18,7 @@
  * AJAX handler to perform export directly (without CLI).
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -127,7 +127,7 @@ try {
     file_put_contents($debugLog, date('Y-m-d H:i:s') . " - ignore_user_abort set, starting export\n", FILE_APPEND);
 
     // Update progress function.
-    $updateProgress = function($percent, $phase, $log = '', $complete = false, $success = true) use ($progressFile, $outputFile, $jobId) {
+    $updateProgress = function ($percent, $phase, $log = '', $complete = false, $success = true) use ($progressFile, $outputFile, $jobId) {
         static $fullLog = '';
         if (!empty($log)) {
             $fullLog .= $log . "\n";
@@ -289,7 +289,7 @@ try {
                         $exportedPlugins++;
                         // Get directory size.
                         $sizeCmd = "du -sb " . escapeshellarg($targetDir) . " 2>/dev/null | cut -f1";
-                        $size = (int)trim(shell_exec($sizeCmd));
+                        $size = (int) trim(shell_exec($sizeCmd));
                         $totalSize += $size;
                     }
                 }
@@ -429,7 +429,7 @@ try {
                         // Count files (approximate).
                         $countCmd = "find " . escapeshellarg($dstDir) . " -type f | wc -l";
                         $count = trim(shell_exec($countCmd));
-                        $filesCopied += (int)$count;
+                        $filesCopied += (int) $count;
                     }
                 }
             }
@@ -486,11 +486,15 @@ try {
         // Complete
         // ========================================
         $finalSize = filesize($outputFile);
-        $updateProgress(100, 'Export complete!',
+        $updateProgress(
+            100,
+            'Export complete!',
             "Export completed successfully!\n" .
             "File: " . basename($outputFile) . "\n" .
             "Size: " . local_edulution_format_filesize($finalSize),
-            true, true);
+            true,
+            true
+        );
 
         // Log activity.
         local_edulution_log_activity_record('export', 'Export completed successfully', 'success', [

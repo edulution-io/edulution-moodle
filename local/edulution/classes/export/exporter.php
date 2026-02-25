@@ -18,7 +18,7 @@
  * Main exporter orchestrator class.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -32,7 +32,8 @@ defined('MOODLE_INTERNAL') || die();
  * Coordinates all sub-exporters, generates manifest.json, and creates
  * the final ZIP package.
  */
-class exporter {
+class exporter
+{
 
     /** @var string Export format version */
     public const EXPORT_VERSION = '2.0.0';
@@ -76,7 +77,8 @@ class exporter {
      * @param export_options $options Export configuration options.
      * @param progress_tracker|null $tracker Progress tracker instance.
      */
-    public function __construct(export_options $options, ?progress_tracker $tracker = null) {
+    public function __construct(export_options $options, ?progress_tracker $tracker = null)
+    {
         $this->options = $options;
         $this->export_id = uniqid('export_', true);
         $this->start_time = time();
@@ -106,10 +108,11 @@ class exporter {
      * @return array Export results including package path, statistics, and any errors.
      * @throws \moodle_exception On critical export failure.
      */
-    public function execute(): array {
+    public function execute(): array
+    {
         global $CFG;
 
-        $this->tracker->log('info', 'Starting Edulution export...');
+        $this->tracker->log('info', 'Starting edulution export...');
         $this->tracker->log('info', 'Export ID: ' . $this->export_id);
 
         try {
@@ -174,7 +177,8 @@ class exporter {
      *
      * @return array Summary of what would be exported.
      */
-    protected function perform_dry_run(): array {
+    protected function perform_dry_run(): array
+    {
         $this->tracker->log('info', 'Dry run mode - no files will be created');
 
         $summary = [
@@ -234,7 +238,8 @@ class exporter {
      *
      * @throws \moodle_exception If directory cannot be created.
      */
-    protected function create_temp_directory(): void {
+    protected function create_temp_directory(): void
+    {
         global $CFG;
 
         // Get configured export directory or use default.
@@ -262,7 +267,8 @@ class exporter {
     /**
      * Run all configured exporters.
      */
-    protected function run_exporters(): void {
+    protected function run_exporters(): void
+    {
         // Determine export mode.
         if ($this->options->full_db) {
             $this->run_full_database_export();
@@ -274,7 +280,8 @@ class exporter {
     /**
      * Run full database export mode.
      */
-    protected function run_full_database_export(): void {
+    protected function run_full_database_export(): void
+    {
         $this->tracker->log('info', 'Running full database export mode...');
 
         // Always export plugins first (for compatibility checking).
@@ -297,7 +304,8 @@ class exporter {
     /**
      * Run selective export mode.
      */
-    protected function run_selective_export(): void {
+    protected function run_selective_export(): void
+    {
         $this->tracker->log('info', 'Running selective export mode...');
 
         // Plugins (always first for compatibility checking).
@@ -342,7 +350,8 @@ class exporter {
      * @param string $key Exporter key.
      * @param string $exporterClass Exporter class name.
      */
-    protected function run_single_exporter(string $key, string $exporterClass): void {
+    protected function run_single_exporter(string $key, string $exporterClass): void
+    {
         $this->tracker->log('info', "Starting exporter: {$key}");
 
         try {
@@ -388,7 +397,8 @@ class exporter {
     /**
      * Export categories (standalone).
      */
-    protected function export_categories(): void {
+    protected function export_categories(): void
+    {
         global $DB;
 
         $this->tracker->start_phase(get_string('exporter_categories', 'local_edulution'), 1);
@@ -434,7 +444,8 @@ class exporter {
     /**
      * Export groups.
      */
-    protected function export_groups(): void {
+    protected function export_groups(): void
+    {
         global $DB;
 
         $this->tracker->start_phase(get_string('exporter_groups', 'local_edulution'), 1);
@@ -535,7 +546,8 @@ class exporter {
     /**
      * Export enrollments (standalone).
      */
-    protected function export_enrollments(): void {
+    protected function export_enrollments(): void
+    {
         global $DB;
 
         $this->tracker->start_phase(get_string('exporter_enrollments', 'local_edulution'), 1);
@@ -590,7 +602,8 @@ class exporter {
     /**
      * Generate the manifest file.
      */
-    protected function generate_manifest(): void {
+    protected function generate_manifest(): void
+    {
         global $CFG, $SITE;
 
         $duration = time() - $this->start_time;
@@ -678,7 +691,8 @@ class exporter {
      *
      * @throws \moodle_exception If ZIP creation fails.
      */
-    protected function create_package(): void {
+    protected function create_package(): void
+    {
         $this->tracker->increment('Creating ZIP archive...');
 
         // Determine output path.
@@ -724,7 +738,8 @@ class exporter {
      * @param string $filename Filename (relative to temp_dir).
      * @return string Full path to written file.
      */
-    protected function write_json(array $data, string $filename): string {
+    protected function write_json(array $data, string $filename): string
+    {
         $path = $this->temp_dir . '/' . $filename;
         $dir = dirname($path);
 
@@ -744,7 +759,8 @@ class exporter {
      * @param string $dir Directory path.
      * @return int Size in bytes.
      */
-    protected function calculate_directory_size(string $dir): int {
+    protected function calculate_directory_size(string $dir): int
+    {
         $size = 0;
 
         if (!is_dir($dir)) {
@@ -769,7 +785,8 @@ class exporter {
      *
      * @param bool $force Force cleanup even if keep_temp option is set.
      */
-    protected function cleanup(bool $force = false): void {
+    protected function cleanup(bool $force = false): void
+    {
         if (!empty($this->temp_dir) && is_dir($this->temp_dir)) {
             $this->delete_directory($this->temp_dir);
             $this->tracker->log('debug', 'Cleaned up temporary directory');
@@ -784,7 +801,8 @@ class exporter {
      * @param string $dir Directory path.
      * @return bool True on success.
      */
-    protected function delete_directory(string $dir): bool {
+    protected function delete_directory(string $dir): bool
+    {
         if (!is_dir($dir)) {
             return false;
         }
@@ -808,7 +826,8 @@ class exporter {
      *
      * @return string Download URL.
      */
-    protected function get_download_url(): string {
+    protected function get_download_url(): string
+    {
         global $CFG;
 
         if (empty($this->package_path) || !file_exists($this->package_path)) {
@@ -830,7 +849,8 @@ class exporter {
      *
      * @return array Export results.
      */
-    public function get_results(): array {
+    public function get_results(): array
+    {
         return [
             'success' => empty($this->errors),
             'export_id' => $this->export_id,
@@ -850,7 +870,8 @@ class exporter {
      *
      * @return string Export ID.
      */
-    public function get_export_id(): string {
+    public function get_export_id(): string
+    {
         return $this->export_id;
     }
 
@@ -859,7 +880,8 @@ class exporter {
      *
      * @return string Package file path.
      */
-    public function get_package_path(): string {
+    public function get_package_path(): string
+    {
         return $this->package_path;
     }
 
@@ -868,7 +890,8 @@ class exporter {
      *
      * @return progress_tracker Progress tracker instance.
      */
-    public function get_tracker(): progress_tracker {
+    public function get_tracker(): progress_tracker
+    {
         return $this->tracker;
     }
 
@@ -877,7 +900,8 @@ class exporter {
      *
      * @return export_options Export options.
      */
-    public function get_options(): export_options {
+    public function get_options(): export_options
+    {
         return $this->options;
     }
 
@@ -887,7 +911,8 @@ class exporter {
      * @param int $bytes File size in bytes.
      * @return string Formatted size string.
      */
-    protected function format_size(int $bytes): string {
+    protected function format_size(int $bytes): string
+    {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
         $bytes = max($bytes, 0);
         $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
@@ -902,7 +927,8 @@ class exporter {
      * @param int|null $retention_days Number of days to retain exports.
      * @return int Number of files deleted.
      */
-    public static function cleanup_old_exports(?int $retention_days = null): int {
+    public static function cleanup_old_exports(?int $retention_days = null): int
+    {
         global $CFG;
 
         if ($retention_days === null) {
@@ -955,7 +981,8 @@ class exporter {
      * @param string $dir Directory path.
      * @return bool True on success.
      */
-    protected static function delete_directory_static(string $dir): bool {
+    protected static function delete_directory_static(string $dir): bool
+    {
         if (!is_dir($dir)) {
             return false;
         }

@@ -21,7 +21,7 @@
  * pipe-based transformations like {fach|ucfirst} or {name|upper|truncate:20}.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -32,7 +32,8 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Template transformer class.
  */
-class template_transformer {
+class template_transformer
+{
 
     /** @var array Custom transformer maps (e.g., subject abbreviation expansion) */
     protected array $maps = [];
@@ -42,7 +43,8 @@ class template_transformer {
      *
      * @param array $maps Custom transformer maps.
      */
-    public function __construct(array $maps = []) {
+    public function __construct(array $maps = [])
+    {
         $this->maps = $maps;
     }
 
@@ -55,7 +57,8 @@ class template_transformer {
      * @param array $variables Named variables to substitute.
      * @return string Transformed result.
      */
-    public function apply(string $template, array $variables): string {
+    public function apply(string $template, array $variables): string
+    {
         // Pattern: {variablename} or {variablename|transform1|transform2:arg}
         $pattern = '/\{([a-zA-Z_][a-zA-Z0-9_]*)(\|[^}]+)?\}/u';
 
@@ -82,7 +85,8 @@ class template_transformer {
      * @param string $transformers Pipe-separated transformer chain.
      * @return string Transformed value.
      */
-    protected function apply_transformers(string $value, string $transformers): string {
+    protected function apply_transformers(string $value, string $transformers): string
+    {
         $parts = explode('|', $transformers);
 
         foreach ($parts as $transformer) {
@@ -99,7 +103,8 @@ class template_transformer {
      * @param string $transformer Transformer name with optional args.
      * @return string Transformed value.
      */
-    protected function apply_single_transformer(string $value, string $transformer): string {
+    protected function apply_single_transformer(string $value, string $transformer): string
+    {
         // Parse transformer and arguments (format: name:arg1:arg2).
         $parts = explode(':', $transformer);
         $name = array_shift($parts);
@@ -180,7 +185,8 @@ class template_transformer {
      * @param string $map_name Map name.
      * @return string Mapped value or ucfirst original.
      */
-    protected function apply_map(string $value, string $map_name): string {
+    protected function apply_map(string $value, string $map_name): string
+    {
         if (isset($this->maps[$map_name][$value])) {
             return $this->maps[$map_name][$value];
         }
@@ -201,7 +207,8 @@ class template_transformer {
      * @param string $name Map name.
      * @param array $map Key-value mapping.
      */
-    public function register_map(string $name, array $map): void {
+    public function register_map(string $name, array $map): void
+    {
         $this->maps[$name] = $map;
     }
 
@@ -210,7 +217,8 @@ class template_transformer {
      *
      * @return array All transformer maps.
      */
-    public function get_maps(): array {
+    public function get_maps(): array
+    {
         return $this->maps;
     }
 
@@ -219,7 +227,8 @@ class template_transformer {
      *
      * @return array List of transformers with descriptions.
      */
-    public static function get_transformer_docs(): array {
+    public static function get_transformer_docs(): array
+    {
         return [
             'upper' => 'Großbuchstaben: {name|upper} → "BIOLOGIE"',
             'lower' => 'Kleinbuchstaben: {name|lower} → "biologie"',

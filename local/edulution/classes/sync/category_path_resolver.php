@@ -21,7 +21,7 @@
  * structure exists, creating categories as needed.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -32,7 +32,8 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Resolves category paths and creates categories as needed.
  */
-class category_path_resolver {
+class category_path_resolver
+{
 
     /** @var array Cache of resolved category IDs [path => id] */
     protected array $cache = [];
@@ -60,7 +61,8 @@ class category_path_resolver {
      *
      * @param int $parent_category_id Optional parent category for all sync categories.
      */
-    public function __construct(int $parent_category_id = 0) {
+    public function __construct(int $parent_category_id = 0)
+    {
         $this->parent_category_id = $parent_category_id;
         $this->load_existing_categories();
     }
@@ -70,14 +72,16 @@ class category_path_resolver {
      *
      * @param bool $dry_run Whether to enable dry run.
      */
-    public function set_dry_run(bool $dry_run): void {
+    public function set_dry_run(bool $dry_run): void
+    {
         $this->dry_run = $dry_run;
     }
 
     /**
      * Load existing categories into cache.
      */
-    protected function load_existing_categories(): void {
+    protected function load_existing_categories(): void
+    {
         global $DB;
 
         // Build category path cache from database.
@@ -107,7 +111,8 @@ class category_path_resolver {
      * @param array $all_categories All categories indexed by ID.
      * @return string Full path.
      */
-    protected function build_path(object $category, array $all_categories): string {
+    protected function build_path(object $category, array $all_categories): string
+    {
         $parts = [$category->name];
         $parent_id = $category->parent;
 
@@ -125,7 +130,8 @@ class category_path_resolver {
      * @param string $path Category path (/ separated).
      * @return int Category ID (-1 in dry run if would be created).
      */
-    public function resolve(string $path): int {
+    public function resolve(string $path): int
+    {
         // Normalize path.
         $path = trim($path, '/');
         if (empty($path)) {
@@ -151,7 +157,8 @@ class category_path_resolver {
      * @param string $path Category path (relative to parent).
      * @return int Final category ID.
      */
-    protected function create_path(string $path): int {
+    protected function create_path(string $path): int
+    {
         global $DB;
 
         $parts = explode('/', $path);
@@ -244,7 +251,8 @@ class category_path_resolver {
      *
      * @return array Stats.
      */
-    public function get_stats(): array {
+    public function get_stats(): array
+    {
         return $this->stats;
     }
 
@@ -253,7 +261,8 @@ class category_path_resolver {
      *
      * @return array Created categories.
      */
-    public function get_created_categories(): array {
+    public function get_created_categories(): array
+    {
         return $this->created_categories;
     }
 
@@ -262,7 +271,8 @@ class category_path_resolver {
      *
      * @return array Cache [path => id].
      */
-    public function get_cache(): array {
+    public function get_cache(): array
+    {
         return $this->cache;
     }
 
@@ -271,7 +281,8 @@ class category_path_resolver {
      *
      * @param int $category_id Parent category ID.
      */
-    public function set_parent_category(int $category_id): void {
+    public function set_parent_category(int $category_id): void
+    {
         $this->parent_category_id = $category_id;
         $this->load_existing_categories();
     }
@@ -279,7 +290,8 @@ class category_path_resolver {
     /**
      * Reset statistics and created categories list.
      */
-    public function reset_stats(): void {
+    public function reset_stats(): void
+    {
         $this->stats = [
             'categories_created' => 0,
             'categories_found' => 0,

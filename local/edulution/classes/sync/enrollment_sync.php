@@ -23,7 +23,7 @@
  * - Removing enrollments for users no longer in groups
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -36,7 +36,8 @@ require_once($GLOBALS['CFG']->libdir . '/enrollib.php');
 /**
  * Enrollment synchronization class.
  */
-class enrollment_sync {
+class enrollment_sync
+{
 
     /** @var keycloak_client Keycloak API client */
     protected keycloak_client $client;
@@ -76,7 +77,8 @@ class enrollment_sync {
      * @param keycloak_client $client Keycloak API client.
      * @param group_classifier $classifier Group classifier.
      */
-    public function __construct(keycloak_client $client, group_classifier $classifier) {
+    public function __construct(keycloak_client $client, group_classifier $classifier)
+    {
         $this->client = $client;
         $this->classifier = $classifier;
         $this->load_settings();
@@ -85,7 +87,8 @@ class enrollment_sync {
     /**
      * Load settings from plugin configuration.
      */
-    protected function load_settings(): void {
+    protected function load_settings(): void
+    {
         $this->auto_enroll_teachers = (bool) (get_config('local_edulution', 'auto_enroll_teachers') ?? true);
         $this->auto_enroll_students = (bool) (get_config('local_edulution', 'auto_enroll_students') ?? true);
         $this->unenroll_removed = (bool) (get_config('local_edulution', 'unenroll_removed_users') ?? true);
@@ -97,7 +100,8 @@ class enrollment_sync {
      * @param bool $dry_run Whether to enable dry run.
      * @return self
      */
-    public function set_dry_run(bool $dry_run): self {
+    public function set_dry_run(bool $dry_run): self
+    {
         $this->dry_run = $dry_run;
         return $this;
     }
@@ -110,7 +114,8 @@ class enrollment_sync {
      * @param bool $unenroll Whether to unenroll removed users.
      * @return self
      */
-    public function set_options(bool $teachers = true, bool $students = true, bool $unenroll = true): self {
+    public function set_options(bool $teachers = true, bool $students = true, bool $unenroll = true): self
+    {
         $this->auto_enroll_teachers = $teachers;
         $this->auto_enroll_students = $students;
         $this->unenroll_removed = $unenroll;
@@ -125,7 +130,8 @@ class enrollment_sync {
      * @param array $groups All Keycloak groups (classified).
      * @return array Sync results.
      */
-    public function sync(array $synced_users, array $synced_courses, array $groups): array {
+    public function sync(array $synced_users, array $synced_courses, array $groups): array
+    {
         $this->log('info', 'Starting enrollment synchronization...');
 
         // Classify groups if not already done.
@@ -335,7 +341,8 @@ class enrollment_sync {
      * @param string $role_shortname Role shortname ('student', 'editingteacher', etc.).
      * @return bool True if newly enrolled.
      */
-    protected function enroll_user(int $user_id, int $course_id, string $role_shortname): bool {
+    protected function enroll_user(int $user_id, int $course_id, string $role_shortname): bool
+    {
         global $DB;
 
         $role = $DB->get_record('role', ['shortname' => $role_shortname]);
@@ -389,7 +396,8 @@ class enrollment_sync {
      *
      * @param array $synced_courses Synced courses.
      */
-    protected function cleanup_enrollments(array $synced_courses): void {
+    protected function cleanup_enrollments(array $synced_courses): void
+    {
         global $DB;
 
         $this->log('info', 'Cleaning up stale enrollments...');
@@ -431,7 +439,8 @@ class enrollment_sync {
      * @param int $user_id User ID.
      * @param int $course_id Course ID.
      */
-    protected function unenroll_user(int $user_id, int $course_id): void {
+    protected function unenroll_user(int $user_id, int $course_id): void
+    {
         global $DB;
 
         if ($this->dry_run) {
@@ -509,7 +518,8 @@ class enrollment_sync {
      * @param string $level Log level.
      * @param string $message Log message.
      */
-    protected function log(string $level, string $message): void {
+    protected function log(string $level, string $message): void
+    {
         $this->log[] = [
             'time' => time(),
             'level' => $level,
@@ -527,7 +537,8 @@ class enrollment_sync {
      *
      * @return array Results.
      */
-    public function get_results(): array {
+    public function get_results(): array
+    {
         return [
             'success' => $this->stats['errors'] === 0,
             'stats' => $this->stats,
@@ -541,7 +552,8 @@ class enrollment_sync {
      *
      * @return array Statistics.
      */
-    public function get_stats(): array {
+    public function get_stats(): array
+    {
         return $this->stats;
     }
 
@@ -550,7 +562,8 @@ class enrollment_sync {
      *
      * @return array Expected enrollments [course_id => [user_id => role]].
      */
-    public function get_expected_enrollments(): array {
+    public function get_expected_enrollments(): array
+    {
         return $this->expected_enrollments;
     }
 
@@ -559,7 +572,8 @@ class enrollment_sync {
      *
      * @return array Log entries.
      */
-    public function get_log(): array {
+    public function get_log(): array
+    {
         return $this->log;
     }
 }

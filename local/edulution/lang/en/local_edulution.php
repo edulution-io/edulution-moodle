@@ -18,7 +18,7 @@
  * English language strings for local_edulution.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -27,8 +27,8 @@ defined('MOODLE_INTERNAL') || die();
 // ============================================================================
 // PLUGIN INFO
 // ============================================================================
-$string['pluginname'] = 'Edulution';
-$string['plugindescription'] = 'Complete migration, sync and management solution for Edulution Moodle';
+$string['pluginname'] = 'edulution';
+$string['plugindescription'] = 'Complete migration, sync and management solution for edulution Moodle';
 $string['pluginversion'] = 'Version';
 $string['pluginauthor'] = 'Author';
 $string['pluginlicense'] = 'License';
@@ -38,12 +38,12 @@ $string['plugindocumentation'] = 'Documentation';
 // ============================================================================
 // CAPABILITIES
 // ============================================================================
-$string['edulution:manage'] = 'Manage Edulution settings';
+$string['edulution:manage'] = 'Manage edulution settings';
 $string['edulution:export'] = 'Export data from Moodle';
 $string['edulution:import'] = 'Import data into Moodle';
 $string['edulution:sync'] = 'Synchronize with Keycloak';
-$string['edulution:viewreports'] = 'View Edulution reports';
-$string['edulution:viewdashboard'] = 'View Edulution dashboard';
+$string['edulution:viewreports'] = 'View edulution reports';
+$string['edulution:viewdashboard'] = 'View edulution dashboard';
 $string['edulution:managekeycloak'] = 'Manage Keycloak integration';
 $string['edulution:manageusers'] = 'Manage user synchronization';
 $string['edulution:managecourses'] = 'Manage course export/import';
@@ -81,9 +81,9 @@ $string['reports'] = 'Reports';
 // ============================================================================
 // DASHBOARD
 // ============================================================================
-$string['dashboard_title'] = 'Edulution Dashboard';
-$string['dashboard_subtitle'] = 'Overview of your Edulution integration';
-$string['dashboard_welcome'] = 'Welcome to Edulution';
+$string['dashboard_title'] = 'edulution Dashboard';
+$string['dashboard_subtitle'] = 'Overview of your edulution integration';
+$string['dashboard_welcome'] = 'Welcome to edulution';
 $string['dashboard_welcome_message'] = 'Manage your Moodle migration, synchronization, and data management from this central hub.';
 $string['dashboard_description'] = 'Manage your Moodle exports, imports, and Keycloak synchronization from one place.';
 
@@ -121,7 +121,7 @@ $string['dashboard_card_import_desc'] = 'Import data from external sources into 
 $string['dashboard_card_sync'] = 'Keycloak Sync';
 $string['dashboard_card_sync_desc'] = 'Synchronize users with Keycloak identity provider';
 $string['dashboard_card_settings'] = 'Settings';
-$string['dashboard_card_settings_desc'] = 'Configure Edulution plugin settings';
+$string['dashboard_card_settings_desc'] = 'Configure edulution plugin settings';
 $string['dashboard_card_reports'] = 'Reports';
 $string['dashboard_card_reports_desc'] = 'View detailed reports and analytics';
 $string['dashboard_card_logs'] = 'Activity Logs';
@@ -349,7 +349,7 @@ $string['keycloaksyncenabled_desc'] = 'Enable automatic user synchronization wit
 // ============================================================================
 $string['import_title'] = 'Import Data';
 $string['import_subtitle'] = 'Import data from external sources into Moodle';
-$string['import_description'] = 'Import data from an Edulution export package.';
+$string['import_description'] = 'Import data from an edulution export package.';
 
 // Import types
 $string['import_type'] = 'Import Type';
@@ -390,7 +390,7 @@ $string['import_skiprows_help'] = 'Number of rows to skip at the beginning';
 
 // Import options (legacy)
 $string['upload_export'] = 'Upload Export File';
-$string['upload_export_help'] = 'Upload a ZIP file created by Edulution export.';
+$string['upload_export_help'] = 'Upload a ZIP file created by edulution export.';
 $string['preview_contents'] = 'Preview Contents';
 $string['import_options'] = 'Import Options';
 $string['import_users'] = 'Import Users';
@@ -768,16 +768,16 @@ $string['keycloak_setup_view_users'] = 'View Synced Users';
 // ============================================================================
 // SETTINGS
 // ============================================================================
-$string['settings_title'] = 'Edulution Settings';
+$string['settings_title'] = 'edulution Settings';
 $string['settings_subtitle'] = 'Configure plugin settings';
 $string['settings_saved'] = 'Settings saved successfully';
 $string['settings_error'] = 'Error saving settings';
-$string['settings_description'] = 'Configure Edulution plugin settings.';
+$string['settings_description'] = 'Configure edulution plugin settings.';
 
 // General settings
 $string['settings_general'] = 'General Settings';
 $string['settings_enabled'] = 'Enable Plugin';
-$string['settings_enabled_help'] = 'Enable or disable the Edulution plugin';
+$string['settings_enabled_help'] = 'Enable or disable the edulution plugin';
 $string['settings_debug'] = 'Debug Mode';
 $string['settings_debug_help'] = 'Enable verbose logging for troubleshooting';
 $string['settings_log_level'] = 'Log Level';
@@ -792,7 +792,7 @@ $string['settings_log_retention_help'] = 'Number of days to keep log entries';
 // Settings legacy
 $string['general_settings'] = 'General Settings';
 $string['enable_plugin'] = 'Enable Plugin';
-$string['enable_plugin_help'] = 'Enable or disable the Edulution plugin functionality.';
+$string['enable_plugin_help'] = 'Enable or disable the edulution plugin functionality.';
 $string['export_settings'] = 'Export Settings';
 $string['export_directory'] = 'Export Directory';
 $string['export_directory_help'] = 'Directory where export files will be stored.';
@@ -898,8 +898,8 @@ $string['keycloaksettings'] = 'Keycloak Settings';
 $string['keycloaksettings_desc'] = 'Configure the connection to your Keycloak identity server.';
 $string['generalsettings'] = 'General Settings';
 $string['generalsettings_desc'] = 'General plugin configuration options.';
-$string['enabled'] = 'Enable Edulution';
-$string['enabled_desc'] = 'Enable or disable the Edulution plugin functionality.';
+$string['enabled'] = 'Enable edulution';
+$string['enabled_desc'] = 'Enable or disable the edulution plugin functionality.';
 $string['keycloak_sync_enabled'] = 'Enable Keycloak Sync';
 $string['keycloak_sync_enabled_desc'] = 'Enable automatic user synchronization with Keycloak.';
 $string['keycloak_url'] = 'Keycloak Server URL';
@@ -1354,7 +1354,7 @@ $string['activity_keycloak_configured'] = 'Keycloak configuration updated';
 // HELP TOOLTIPS
 // ============================================================================
 $string['help_export'] = 'Create a backup of your Moodle data that can be imported into another Moodle instance.';
-$string['help_import'] = 'Restore data from a previous Edulution export.';
+$string['help_import'] = 'Restore data from a previous edulution export.';
 $string['help_sync'] = 'Keep user accounts synchronized between Keycloak and Moodle.';
 $string['help_keycloak'] = 'Configure the connection to your Keycloak identity provider.';
 
@@ -1382,7 +1382,7 @@ $string['viewreports'] = 'View Reports';
 // ============================================================================
 // KEYCLOAK API ERROR STRINGS
 // ============================================================================
-$string['keycloak_not_configured'] = 'Keycloak is not configured. Please set the server URL, realm, client ID, and client secret in Site Administration > Plugins > Local plugins > Edulution.';
+$string['keycloak_not_configured'] = 'Keycloak is not configured. Please set the server URL, realm, client ID, and client secret in Site Administration > Plugins > Local plugins > edulution.';
 $string['keycloak_connected'] = 'Successfully connected to Keycloak realm: {$a}';
 $string['keycloak_auth_failed'] = 'Keycloak authentication failed (HTTP {$a}). Check client credentials.';
 $string['keycloak_curl_error'] = 'Failed to connect to Keycloak server: {$a}';
@@ -1460,7 +1460,7 @@ $string['coursecategorysettings'] = 'Course & Category Settings';
 $string['coursecategorysettings_desc'] = 'Configure where synced courses are created and how they are named.';
 $string['parentcategory'] = 'Parent Category';
 $string['parentcategory_desc'] = 'Select an existing category to use as the parent for synced courses, or create a new one.';
-$string['createnewcategory'] = '-- Create new "Edulution Sync" category --';
+$string['createnewcategory'] = '-- Create new "edulution Sync" category --';
 $string['categorynamemain'] = 'Main Category Name';
 $string['categorynamemain_desc'] = 'Name for the main sync category (only used if creating new).';
 $string['categorynameclasses'] = 'Classes Category Name';

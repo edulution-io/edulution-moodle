@@ -18,7 +18,7 @@
  * User data exporter.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -32,7 +32,8 @@ defined('MOODLE_INTERNAL') || die();
  * Exports users with profile fields, roles and role assignments,
  * with support for anonymization.
  */
-class user_exporter extends base_exporter {
+class user_exporter extends base_exporter
+{
 
     /** @var int Users exported counter */
     protected int $users_exported = 0;
@@ -48,7 +49,8 @@ class user_exporter extends base_exporter {
      *
      * @return string Human-readable name.
      */
-    public function get_name(): string {
+    public function get_name(): string
+    {
         return get_string('exporter_users', 'local_edulution');
     }
 
@@ -57,7 +59,8 @@ class user_exporter extends base_exporter {
      *
      * @return string Language string key.
      */
-    public function get_string_key(): string {
+    public function get_string_key(): string
+    {
         return 'users';
     }
 
@@ -66,7 +69,8 @@ class user_exporter extends base_exporter {
      *
      * @return int Number of users to export.
      */
-    public function get_total_count(): int {
+    public function get_total_count(): int
+    {
         global $DB;
 
         $where = "deleted = 0 AND username NOT IN ('guest')";
@@ -86,7 +90,8 @@ class user_exporter extends base_exporter {
      * @return array Exported user data.
      * @throws \moodle_exception On export failure.
      */
-    public function export(): array {
+    public function export(): array
+    {
         global $DB;
 
         $this->log('info', 'Exporting user data...');
@@ -189,7 +194,8 @@ class user_exporter extends base_exporter {
      * @param object $user User record.
      * @return array User data.
      */
-    protected function export_user(object $user): array {
+    protected function export_user(object $user): array
+    {
         $anonymize = $this->options->anonymize_users;
 
         $userData = [
@@ -258,7 +264,8 @@ class user_exporter extends base_exporter {
      * @param bool $anonymize Whether to anonymize data.
      * @return array Profile field name => value mapping.
      */
-    protected function get_profile_fields(int $userid, bool $anonymize): array {
+    protected function get_profile_fields(int $userid, bool $anonymize): array
+    {
         global $DB;
 
         $sql = "SELECT f.shortname, f.name, f.datatype, f.param1, d.data
@@ -298,7 +305,8 @@ class user_exporter extends base_exporter {
      * @param int $userid User ID.
      * @return array Array of role data.
      */
-    protected function get_system_roles(int $userid): array {
+    protected function get_system_roles(int $userid): array
+    {
         global $DB;
 
         $systemContext = \context_system::instance();
@@ -326,7 +334,8 @@ class user_exporter extends base_exporter {
      * @param int $userid User ID.
      * @return array Enrollment data.
      */
-    protected function get_user_enrollments(int $userid): array {
+    protected function get_user_enrollments(int $userid): array
+    {
         global $DB;
 
         $sql = "SELECT e.courseid, c.shortname as course_shortname, c.fullname as course_fullname,
@@ -371,7 +380,8 @@ class user_exporter extends base_exporter {
      * @param int $userid User ID.
      * @return string|null Relative path to exported file or null.
      */
-    protected function export_profile_picture(int $userid): ?string {
+    protected function export_profile_picture(int $userid): ?string
+    {
         $context = \context_user::instance($userid, IGNORE_MISSING);
         if (!$context) {
             return null;
@@ -403,7 +413,8 @@ class user_exporter extends base_exporter {
      *
      * @return array Roles data.
      */
-    protected function export_roles(): array {
+    protected function export_roles(): array
+    {
         global $DB;
 
         // Get all roles.
@@ -463,7 +474,8 @@ class user_exporter extends base_exporter {
      * @param int $level Context level constant.
      * @return string Level name.
      */
-    protected function get_context_level_name(int $level): string {
+    protected function get_context_level_name(int $level): string
+    {
         $names = [
             CONTEXT_SYSTEM => 'system',
             CONTEXT_USER => 'user',
@@ -483,7 +495,8 @@ class user_exporter extends base_exporter {
      * @param string $email Original email.
      * @return string Anonymized email.
      */
-    protected function anonymize_email(int $userid, string $email): string {
+    protected function anonymize_email(int $userid, string $email): string
+    {
         // Use user ID for consistent anonymization.
         return "user_{$userid}@anonymized.local";
     }
@@ -493,7 +506,8 @@ class user_exporter extends base_exporter {
      *
      * @return array User list.
      */
-    public function get_user_list(): array {
+    public function get_user_list(): array
+    {
         global $DB;
 
         $where = "deleted = 0 AND username NOT IN ('guest')";

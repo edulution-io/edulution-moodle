@@ -5,7 +5,7 @@
 # This script generates a config.php file for Moodle using environment
 # variables. It's called by entrypoint.sh during container startup.
 #
-# @copyright 2024 Edulution
+# @copyright 2026 edulution
 # @license   MIT
 #
 

@@ -18,14 +18,14 @@
  * Capability definitions for local_edulution.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 $capabilities = [
-    // Full admin access to the Edulution plugin.
+    // Full admin access to the edulution plugin.
     'local/edulution:manage' => [
         'captype' => 'write',
         'contextlevel' => CONTEXT_SYSTEM,

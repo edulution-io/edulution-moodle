@@ -21,7 +21,7 @@
  * and generates course names and category paths.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -32,7 +32,8 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Processes naming schemas and matches groups to schemas.
  */
-class naming_schema_processor {
+class naming_schema_processor
+{
 
     /** @var naming_schema[] Array of schema objects sorted by priority */
     protected array $schemas = [];
@@ -54,7 +55,8 @@ class naming_schema_processor {
      *
      * @param array|null $config Custom configuration or null to load from settings.
      */
-    public function __construct(?array $config = null) {
+    public function __construct(?array $config = null)
+    {
         $this->transformer = new template_transformer();
 
         if ($config !== null) {
@@ -68,7 +70,8 @@ class naming_schema_processor {
     /**
      * Load configuration from available sources.
      */
-    protected function load_config(): void {
+    protected function load_config(): void
+    {
         // Try plugin settings first.
         $loaded = $this->load_from_plugin_settings();
         if ($loaded) {
@@ -94,7 +97,8 @@ class naming_schema_processor {
      * @param string $path Path to JSON file.
      * @return bool True if loaded successfully.
      */
-    protected function load_from_json(string $path): bool {
+    protected function load_from_json(string $path): bool
+    {
         $content = @file_get_contents($path);
         if ($content === false) {
             return false;
@@ -115,7 +119,8 @@ class naming_schema_processor {
      *
      * @return bool True if loaded.
      */
-    protected function load_from_plugin_settings(): bool {
+    protected function load_from_plugin_settings(): bool
+    {
         $schemas_json = get_config('local_edulution', 'naming_schemas');
         if (empty($schemas_json)) {
             return false;
@@ -136,7 +141,8 @@ class naming_schema_processor {
      *
      * @param array $config Configuration array.
      */
-    public function load_from_array(array $config): void {
+    public function load_from_array(array $config): void
+    {
         // Load defaults.
         $this->defaults = $config['defaults'] ?? [
             'course_format' => 'topics',
@@ -174,7 +180,8 @@ class naming_schema_processor {
     /**
      * Load default German school configuration.
      */
-    protected function load_defaults(): void {
+    protected function load_defaults(): void
+    {
         $defaults = self::get_german_school_defaults();
         $this->load_from_array($defaults);
         $this->config_source = 'defaults';
@@ -186,7 +193,8 @@ class naming_schema_processor {
      * @param string $pattern Pattern to validate.
      * @return bool True if valid.
      */
-    protected function validate_pattern(string $pattern): bool {
+    protected function validate_pattern(string $pattern): bool
+    {
         if (empty($pattern)) {
             return false;
         }
@@ -203,7 +211,8 @@ class naming_schema_processor {
      * @param string $group_name Group name to check.
      * @return bool True if should be ignored.
      */
-    public function should_ignore(string $group_name): bool {
+    public function should_ignore(string $group_name): bool
+    {
         foreach ($this->ignore_patterns as $pattern) {
             $delimiter = substr($pattern, 0, 1) === '/' ? '' : '/';
             $regex = $delimiter . $pattern . $delimiter . 'u';
@@ -221,7 +230,8 @@ class naming_schema_processor {
      * @param string $group_name Group name to match.
      * @return naming_schema|null Matching schema or null.
      */
-    public function find_schema(string $group_name): ?naming_schema {
+    public function find_schema(string $group_name): ?naming_schema
+    {
         if ($this->should_ignore($group_name)) {
             return null;
         }
@@ -242,7 +252,8 @@ class naming_schema_processor {
      * @param string $group_id Keycloak group ID.
      * @return array|null Course configuration or null if no match/ignored.
      */
-    public function process(string $group_name, string $group_id = ''): ?array {
+    public function process(string $group_name, string $group_id = ''): ?array
+    {
         $schema = $this->find_schema($group_name);
         if ($schema === null) {
             return null;
@@ -273,7 +284,8 @@ class naming_schema_processor {
      * @param array $groups Array of groups with 'name' and 'id' keys.
      * @return array Results with 'matched', 'ignored', 'unmatched' arrays.
      */
-    public function process_all(array $groups): array {
+    public function process_all(array $groups): array
+    {
         $results = [
             'matched' => [],
             'ignored' => [],
@@ -305,7 +317,8 @@ class naming_schema_processor {
      *
      * @return naming_schema[] Array of schemas.
      */
-    public function get_schemas(): array {
+    public function get_schemas(): array
+    {
         return $this->schemas;
     }
 
@@ -314,7 +327,8 @@ class naming_schema_processor {
      *
      * @return string Source identifier.
      */
-    public function get_config_source(): string {
+    public function get_config_source(): string
+    {
         return $this->config_source;
     }
 
@@ -323,7 +337,8 @@ class naming_schema_processor {
      *
      * @return template_transformer Transformer.
      */
-    public function get_transformer(): template_transformer {
+    public function get_transformer(): template_transformer
+    {
         return $this->transformer;
     }
 
@@ -334,7 +349,8 @@ class naming_schema_processor {
      *
      * @return array Default configuration.
      */
-    public static function get_german_school_defaults(): array {
+    public static function get_german_school_defaults(): array
+    {
         return [
             'version' => '1.0',
             'description' => 'Standard-Schemas für deutsche Schulen',
@@ -492,7 +508,8 @@ class naming_schema_processor {
      *
      * @return string JSON configuration.
      */
-    public function export_config(): string {
+    public function export_config(): string
+    {
         $config = [
             'version' => '1.0',
             'defaults' => $this->defaults,

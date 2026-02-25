@@ -17,11 +17,11 @@
 /**
  * Version information for local_edulution.
  *
- * This is the all-in-one Edulution plugin that includes export, import,
+ * This is the all-in-one edulution plugin that includes export, import,
  * Keycloak sync, and more functionality.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

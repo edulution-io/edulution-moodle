@@ -1,439 +1,439 @@
 /**
- * Edulution plugin styles
+ * edulution plugin styles
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 /* Navigation */
 .edulution-nav {
-    background: #f8f9fa;
-    border-radius: 4px;
-    padding: 4px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  padding: 4px;
 }
 
 .edulution-nav .nav-pills {
-    gap: 2px;
+  gap: 2px;
 }
 
 .edulution-nav .nav-link {
-    color: #495057;
-    font-size: 13px;
-    padding: 6px 12px;
-    border-radius: 3px;
+  color: #495057;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 3px;
 }
 
 .edulution-nav .nav-link i {
-    margin-right: 4px;
-    font-size: 12px;
+  margin-right: 4px;
+  font-size: 12px;
 }
 
 .edulution-nav .nav-link:hover {
-    background: #e9ecef;
-    color: #212529;
+  background: #e9ecef;
+  color: #212529;
 }
 
 .edulution-nav .nav-link.active {
-    background: #0d6efd;
-    color: #fff;
+  background: #0d6efd;
+  color: #fff;
 }
 
 /* Dashboard Styles */
 .edulution-dashboard .card {
-    transition: all 0.15s ease-in-out;
-    border-radius: 6px;
+  transition: all 0.15s ease-in-out;
+  border-radius: 6px;
 }
 
 .edulution-dashboard .card:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Sync Preview Cards */
 .sync-preview .card {
-    border-radius: 6px;
+  border-radius: 6px;
 }
 
 .sync-preview .card.border-success,
 .sync-preview .card.border-info,
 .sync-preview .card.border-danger {
-    border-width: 1px !important;
+  border-width: 1px !important;
 }
 
 /* Preview Section Styling */
 .preview-section {
-    background: #f8f9fa;
-    border-radius: 4px;
-    padding: 10px;
-    font-size: 13px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  padding: 10px;
+  font-size: 13px;
 }
 
 .preview-section h6 {
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .toggle-details {
-    color: #6c757d;
-    font-size: 12px;
+  color: #6c757d;
+  font-size: 12px;
 }
 
 .toggle-details:hover {
-    color: #0d6efd;
+  color: #0d6efd;
 }
 
 /* Sync Results Styling */
 .sync-results .card {
-    border-radius: 6px;
+  border-radius: 6px;
 }
 
 .sync-results .alert {
-    border-radius: 6px;
+  border-radius: 6px;
 }
 
 /* Progress Bar Styles */
 .progress {
-    border-radius: 0.5rem;
-    overflow: hidden;
+  border-radius: 0.5rem;
+  overflow: hidden;
 }
 
 .progress-bar {
-    transition: width 0.3s ease-in-out;
+  transition: width 0.3s ease-in-out;
 }
 
 /* Card Improvements */
 .card-header h5,
 .card-header h6 {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 /* Quick Actions */
 .edulution-dashboard .d-grid .btn {
-    text-align: left;
-    padding-left: 1rem;
+  text-align: left;
+  padding-left: 1rem;
 }
 
 .edulution-dashboard .d-grid .btn .icon {
-    margin-right: 0.5rem;
+  margin-right: 0.5rem;
 }
 
 /* Export Form Styles */
 .edulution-export .form-check {
-    padding-left: 1.5rem;
+  padding-left: 1.5rem;
 }
 
 .edulution-export .form-check .form-check-input {
-    margin-left: -1.5rem;
+  margin-left: -1.5rem;
 }
 
 /* Import Dropzone */
 .edulution-import .dropzone {
-    border: 2px dashed #dee2e6;
-    border-radius: 0.5rem;
-    padding: 2rem;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
+  border: 2px dashed #dee2e6;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
 }
 
 .edulution-import .dropzone:hover,
 .edulution-import .dropzone.dragover {
-    border-color: #0d6efd;
-    background-color: rgba(13, 110, 253, 0.05);
+  border-color: #0d6efd;
+  background-color: rgba(13, 110, 253, 0.05);
 }
 
 .edulution-import .dropzone .icon {
-    font-size: 3rem;
-    color: #6c757d;
-    margin-bottom: 1rem;
+  font-size: 3rem;
+  color: #6c757d;
+  margin-bottom: 1rem;
 }
 
 /* Sync Preview Cards */
 .edulution-sync .card.border-success,
 .edulution-sync .card.border-warning,
 .edulution-sync .card.border-danger {
-    border-width: 2px;
+  border-width: 2px;
 }
 
 /* Reports Table */
 .edulution-reports .table th {
-    background-color: #f8f9fa;
-    font-weight: 600;
+  background-color: #f8f9fa;
+  font-weight: 600;
 }
 
 .edulution-reports .badge {
-    font-size: 0.75rem;
-    font-weight: 500;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
 /* Settings Form */
 .edulution-settings .form-group {
-    margin-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .edulution-settings .help-block {
-    font-size: 0.875rem;
-    color: #6c757d;
-    margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
 }
 
 /* Category Mappings Table */
 #mappings-table {
-    margin-top: 1rem;
+  margin-top: 1rem;
 }
 
 #mappings-table th,
 #mappings-table td {
-    vertical-align: middle;
+  vertical-align: middle;
 }
 
 /* Keycloak Setup Wizard */
 .edulution-keycloak-setup .wizard-step {
-    padding: 1rem;
-    border-left: 3px solid #dee2e6;
-    margin-left: 1rem;
-    margin-bottom: 1rem;
+  padding: 1rem;
+  border-left: 3px solid #dee2e6;
+  margin-left: 1rem;
+  margin-bottom: 1rem;
 }
 
 .edulution-keycloak-setup .wizard-step.active {
-    border-left-color: #0d6efd;
+  border-left-color: #0d6efd;
 }
 
 .edulution-keycloak-setup .wizard-step.completed {
-    border-left-color: #198754;
+  border-left-color: #198754;
 }
 
 /* Setup Wizard Progress */
 .setup-progress .step-number i {
-    font-size: 12px;
+  font-size: 12px;
 }
 
 .setup-progress .step-label i {
-    font-size: 11px;
-    margin-right: 3px;
+  font-size: 11px;
+  margin-right: 3px;
 }
 
 /* Preset Cards */
 .preset-card {
-    font-size: 13px;
+  font-size: 13px;
 }
 
 .preset-card h5 {
-    font-size: 14px;
+  font-size: 14px;
 }
 
 .preset-card h5 i {
-    margin-right: 6px;
+  margin-right: 6px;
 }
 
 /* Button Icons */
 .btn i {
-    margin-right: 3px;
+  margin-right: 3px;
 }
 
 /* Config Table */
 .config-table code {
-    background: rgba(0,0,0,0.04);
-    padding: 1px 4px;
-    border-radius: 3px;
-    font-size: 12px;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 12px;
 }
 
 /* Connection Test Result */
 #connection-test-result .alert {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 #connection-test-result .alert .icon {
-    margin-right: 0.5rem;
+  margin-right: 0.5rem;
 }
 
 /* Activity Log */
 .activity-log-item {
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #dee2e6;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #dee2e6;
 }
 
 .activity-log-item:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .activity-log-item .timestamp {
-    font-size: 0.75rem;
-    color: #6c757d;
+  font-size: 0.75rem;
+  color: #6c757d;
 }
 
 /* Tab Navigation */
 .nav-tabs .nav-link {
-    color: #495057;
-    font-weight: 500;
+  color: #495057;
+  font-weight: 500;
 }
 
 .nav-tabs .nav-link.active {
-    color: #0d6efd;
-    font-weight: 600;
+  color: #0d6efd;
+  font-weight: 600;
 }
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {
-    .edulution-dashboard .display-4 {
-        font-size: 2rem;
-    }
+  .edulution-dashboard .display-4 {
+    font-size: 2rem;
+  }
 
-    .edulution-dashboard .card-body {
-        padding: 1rem;
-    }
+  .edulution-dashboard .card-body {
+    padding: 1rem;
+  }
 
-    .btn-lg {
-        padding: 0.5rem 1rem;
-        font-size: 1rem;
-    }
+  .btn-lg {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+  }
 }
 
 /* Loading Spinner */
 .edulution-loading {
-    display: inline-flex;
-    align-items: center;
+  display: inline-flex;
+  align-items: center;
 }
 
 .edulution-loading .spinner-border {
-    width: 1rem;
-    height: 1rem;
-    margin-right: 0.5rem;
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.5rem;
 }
 
 /* Status Badges */
 .badge-success-light {
-    background-color: rgba(25, 135, 84, 0.1);
-    color: #198754;
+  background-color: rgba(25, 135, 84, 0.1);
+  color: #198754;
 }
 
 .badge-warning-light {
-    background-color: rgba(255, 193, 7, 0.1);
-    color: #ffc107;
+  background-color: rgba(255, 193, 7, 0.1);
+  color: #ffc107;
 }
 
 .badge-danger-light {
-    background-color: rgba(220, 53, 69, 0.1);
-    color: #dc3545;
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
 }
 
 .badge-info-light {
-    background-color: rgba(13, 202, 240, 0.1);
-    color: #0dcaf0;
+  background-color: rgba(13, 202, 240, 0.1);
+  color: #0dcaf0;
 }
 
 /* Disk Space Progress */
 .disk-space-indicator {
-    height: 8px;
-    border-radius: 4px;
+  height: 8px;
+  border-radius: 4px;
 }
 
 /* File List */
 .file-list {
-    max-height: 300px;
-    overflow-y: auto;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .file-list-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .file-list-item:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .file-list-item .file-name {
-    font-weight: 500;
-    word-break: break-all;
+  font-weight: 500;
+  word-break: break-all;
 }
 
 .file-list-item .file-size {
-    color: #6c757d;
-    font-size: 0.875rem;
-    white-space: nowrap;
-    margin-left: 1rem;
+  color: #6c757d;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  margin-left: 1rem;
 }
 
 /* Animation for Progress Updates */
 @keyframes pulse {
-    0% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.5;
-    }
-    100% {
-        opacity: 1;
-    }
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 .progress-bar-animated.pulse {
-    animation: pulse 1.5s ease-in-out infinite;
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
 /* Form Validation */
 .is-invalid ~ .invalid-feedback {
-    display: block;
+  display: block;
 }
 
 .is-valid ~ .valid-feedback {
-    display: block;
+  display: block;
 }
 
 /* Card Actions */
 .card-header .btn-group {
-    margin: -0.25rem 0;
+  margin: -0.25rem 0;
 }
 
 /* Empty State */
 .empty-state {
-    text-align: center;
-    padding: 3rem 2rem;
-    color: #6c757d;
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #6c757d;
 }
 
 .empty-state .icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
 }
 
 .empty-state p {
-    margin-bottom: 1.5rem;
-    font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
 }
 
 /* Tooltip Improvements */
 [data-bs-toggle="tooltip"] {
-    cursor: help;
+  cursor: help;
 }
 
 /* Table Improvements */
 .table-hover tbody tr:hover {
-    background-color: rgba(0, 0, 0, 0.02);
+  background-color: rgba(0, 0, 0, 0.02);
 }
 
 /* Dark Mode Support (if Moodle theme supports it) */
 @media (prefers-color-scheme: dark) {
-    .edulution-dashboard .card {
-        background-color: #2d2d2d;
-        border-color: #3d3d3d;
-    }
+  .edulution-dashboard .card {
+    background-color: #2d2d2d;
+    border-color: #3d3d3d;
+  }
 
-    .edulution-import .dropzone {
-        border-color: #3d3d3d;
-    }
+  .edulution-import .dropzone {
+    border-color: #3d3d3d;
+  }
 
-    .edulution-import .dropzone:hover {
-        border-color: #0d6efd;
-        background-color: rgba(13, 110, 253, 0.1);
-    }
+  .edulution-import .dropzone:hover {
+    border-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.1);
+  }
 }

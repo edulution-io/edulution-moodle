@@ -18,7 +18,7 @@
  * AJAX handler to start an import.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -80,7 +80,7 @@ try {
     raise_memory_limit(MEMORY_HUGE);
 
     // Update progress function.
-    $updateProgress = function($progress, $phase, $message = '') use ($progressFile) {
+    $updateProgress = function ($progress, $phase, $message = '') use ($progressFile) {
         file_put_contents($progressFile, json_encode([
             'status' => 'running',
             'progress' => $progress,

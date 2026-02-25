@@ -18,7 +18,7 @@
  * External services definition for local_edulution.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -26,43 +26,43 @@ defined('MOODLE_INTERNAL') || die();
 
 $functions = [
     'local_edulution_get_sync_preview' => [
-        'classname'     => 'local_edulution\external\sync_external',
-        'methodname'    => 'get_sync_preview',
-        'description'   => 'Get a preview of what will be synchronized',
-        'type'          => 'read',
-        'ajax'          => true,
-        'capabilities'  => 'local/edulution:sync',
+        'classname' => 'local_edulution\external\sync_external',
+        'methodname' => 'get_sync_preview',
+        'description' => 'Get a preview of what will be synchronized',
+        'type' => 'read',
+        'ajax' => true,
+        'capabilities' => 'local/edulution:sync',
     ],
     'local_edulution_start_sync' => [
-        'classname'     => 'local_edulution\external\sync_external',
-        'methodname'    => 'start_sync',
-        'description'   => 'Start the Keycloak synchronization',
-        'type'          => 'write',
-        'ajax'          => true,
-        'capabilities'  => 'local/edulution:sync',
+        'classname' => 'local_edulution\external\sync_external',
+        'methodname' => 'start_sync',
+        'description' => 'Start the Keycloak synchronization',
+        'type' => 'write',
+        'ajax' => true,
+        'capabilities' => 'local/edulution:sync',
     ],
     'local_edulution_get_sync_status' => [
-        'classname'     => 'local_edulution\external\sync_external',
-        'methodname'    => 'get_sync_status',
-        'description'   => 'Get the status of a running sync job',
-        'type'          => 'read',
-        'ajax'          => true,
-        'capabilities'  => 'local/edulution:sync',
+        'classname' => 'local_edulution\external\sync_external',
+        'methodname' => 'get_sync_status',
+        'description' => 'Get the status of a running sync job',
+        'type' => 'read',
+        'ajax' => true,
+        'capabilities' => 'local/edulution:sync',
     ],
     'local_edulution_cancel_sync' => [
-        'classname'     => 'local_edulution\external\sync_external',
-        'methodname'    => 'cancel_sync',
-        'description'   => 'Cancel a running sync job',
-        'type'          => 'write',
-        'ajax'          => true,
-        'capabilities'  => 'local/edulution:sync',
+        'classname' => 'local_edulution\external\sync_external',
+        'methodname' => 'cancel_sync',
+        'description' => 'Cancel a running sync job',
+        'type' => 'write',
+        'ajax' => true,
+        'capabilities' => 'local/edulution:sync',
     ],
     'local_edulution_get_ongoing_sync' => [
-        'classname'     => 'local_edulution\external\sync_external',
-        'methodname'    => 'get_ongoing_sync',
-        'description'   => 'Check if there is an ongoing sync job',
-        'type'          => 'read',
-        'ajax'          => true,
-        'capabilities'  => 'local/edulution:sync',
+        'classname' => 'local_edulution\external\sync_external',
+        'methodname' => 'get_ongoing_sync',
+        'description' => 'Check if there is an ongoing sync job',
+        'type' => 'read',
+        'ajax' => true,
+        'capabilities' => 'local/edulution:sync',
     ],
 ];

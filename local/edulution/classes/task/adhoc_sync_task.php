@@ -21,7 +21,7 @@
  * It runs in the background via cron, allowing the UI to remain responsive.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -36,7 +36,8 @@ use local_edulution\sync\phased_sync;
 /**
  * Ad-hoc task for background Keycloak synchronization.
  */
-class adhoc_sync_task extends \core\task\adhoc_task {
+class adhoc_sync_task extends \core\task\adhoc_task
+{
 
     /** @var string Current sync ID */
     protected string $sync_id = '';
@@ -46,14 +47,16 @@ class adhoc_sync_task extends \core\task\adhoc_task {
      *
      * @return string Task name.
      */
-    public function get_name(): string {
+    public function get_name(): string
+    {
         return get_string('task_adhoc_sync', 'local_edulution');
     }
 
     /**
      * Execute the task.
      */
-    public function execute(): void {
+    public function execute(): void
+    {
         global $DB;
 
         $data = $this->get_custom_data();
@@ -67,7 +70,7 @@ class adhoc_sync_task extends \core\task\adhoc_task {
         }
 
         mtrace('========================================');
-        mtrace('  Edulution Keycloak Sync');
+        mtrace('  edulution Keycloak Sync');
         mtrace('========================================');
         mtrace("Sync ID: {$this->sync_id}");
         mtrace("Direction: {$direction}");
@@ -158,7 +161,7 @@ class adhoc_sync_task extends \core\task\adhoc_task {
                 'errors' => $total_errors,
                 'processed' => $stats['users_fetched'],
                 'total' => $stats['users_fetched'],
-                'error_details' => array_map(function($e) {
+                'error_details' => array_map(function ($e) {
                     return $e['message'] ?? json_encode($e);
                 }, $result['errors']),
                 'log' => $this->format_log_entries($result['log']),
@@ -190,7 +193,8 @@ class adhoc_sync_task extends \core\task\adhoc_task {
      * @param string $message Status message.
      * @param array $stats Current statistics.
      */
-    public function on_progress(string $phase, int $progress, string $message, array $stats): void {
+    public function on_progress(string $phase, int $progress, string $message, array $stats): void
+    {
         // Update job status with current progress.
         $this->update_job_status([
             'progress' => $progress,
@@ -206,7 +210,8 @@ class adhoc_sync_task extends \core\task\adhoc_task {
      * @param array $log_entries Log entries from phased_sync.
      * @return array Formatted log entries.
      */
-    protected function format_log_entries(array $log_entries): array {
+    protected function format_log_entries(array $log_entries): array
+    {
         $formatted = [];
         foreach ($log_entries as $entry) {
             $formatted[] = [
@@ -223,7 +228,8 @@ class adhoc_sync_task extends \core\task\adhoc_task {
      *
      * @param array $updates Fields to update.
      */
-    protected function update_job_status(array $updates): void {
+    protected function update_job_status(array $updates): void
+    {
         global $DB;
 
         if (empty($this->sync_id)) {

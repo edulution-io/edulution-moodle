@@ -1,8 +1,8 @@
 /**
- * Common utilities for Edulution plugin.
+ * Common utilities for edulution plugin.
  *
  * @module     local_edulution/common
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 define(['jquery', 'core/ajax', 'core/notification', 'core/str', 'core/templates', 'core/modal_factory', 'core/modal_events'],

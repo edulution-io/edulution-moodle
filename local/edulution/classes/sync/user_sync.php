@@ -21,7 +21,7 @@
  * Keycloak identities. Supports OIDC authentication method.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -37,7 +37,8 @@ require_once($GLOBALS['CFG']->dirroot . '/user/lib.php');
  * Synchronizes users from Keycloak to Moodle, creating new users,
  * updating existing ones, and maintaining the mapping between systems.
  */
-class user_sync {
+class user_sync
+{
 
     /** @var keycloak_client Keycloak API client */
     protected keycloak_client $client;
@@ -67,7 +68,8 @@ class user_sync {
      *
      * @param keycloak_client $client Keycloak API client instance.
      */
-    public function __construct(keycloak_client $client) {
+    public function __construct(keycloak_client $client)
+    {
         $this->client = $client;
         $this->report = new sync_report();
     }
@@ -78,7 +80,8 @@ class user_sync {
      * @param int $batch_size Number of users to fetch per API call.
      * @return sync_report Sync report with results.
      */
-    public function sync_users(int $batch_size = 100): sync_report {
+    public function sync_users(int $batch_size = 100): sync_report
+    {
         global $DB;
 
         $this->report = new sync_report();
@@ -115,7 +118,8 @@ class user_sync {
      * @param array $keycloak_user Keycloak user data.
      * @return int|null Moodle user ID or null on failure.
      */
-    public function sync_user(array $keycloak_user): ?int {
+    public function sync_user(array $keycloak_user): ?int
+    {
         // Skip disabled users.
         if (!($keycloak_user['enabled'] ?? true)) {
             $this->report->add_skipped($keycloak_user['username'] ?? 'unknown', 'disabled');
@@ -172,7 +176,8 @@ class user_sync {
      * @param array $keycloak_user Keycloak user data.
      * @return \stdClass|null Moodle user record or null.
      */
-    public function find_moodle_user(array $keycloak_user): ?\stdClass {
+    public function find_moodle_user(array $keycloak_user): ?\stdClass
+    {
         global $DB;
 
         // First, try to find by username.
@@ -216,7 +221,8 @@ class user_sync {
      * @param array $keycloak_user Keycloak user data.
      * @return int|null Created user ID or null on failure.
      */
-    public function create_moodle_user(array $keycloak_user): ?int {
+    public function create_moodle_user(array $keycloak_user): ?int
+    {
         global $CFG;
 
         $user = new \stdClass();
@@ -259,7 +265,8 @@ class user_sync {
      * @param array $keycloak_user Keycloak user data.
      * @return bool True on success.
      */
-    public function update_moodle_user(int $moodleuserid, array $keycloak_user): bool {
+    public function update_moodle_user(int $moodleuserid, array $keycloak_user): bool
+    {
         $user = new \stdClass();
         $user->id = $moodleuserid;
         $user->email = \core_text::strtolower($keycloak_user['email']);
@@ -298,7 +305,8 @@ class user_sync {
      * @param string $keycloakid Keycloak user ID (UUID).
      * @return bool True on success.
      */
-    public function link_to_keycloak(int $moodleuserid, string $keycloakid): bool {
+    public function link_to_keycloak(int $moodleuserid, string $keycloakid): bool
+    {
         global $DB;
 
         // Check if mapping already exists.
@@ -336,7 +344,8 @@ class user_sync {
      * @param int $moodleuserid Moodle user ID.
      * @return string|null Keycloak user ID or null if not mapped.
      */
-    public function get_user_mapping(int $moodleuserid): ?string {
+    public function get_user_mapping(int $moodleuserid): ?string
+    {
         global $DB;
 
         $mapping = $DB->get_record('local_edulution_user_map', [
@@ -352,7 +361,8 @@ class user_sync {
      * @param string $keycloakid Keycloak user ID (UUID).
      * @return int|null Moodle user ID or null if not mapped.
      */
-    public function get_moodle_userid(string $keycloakid): ?int {
+    public function get_moodle_userid(string $keycloakid): ?int
+    {
         global $DB;
 
         $mapping = $DB->get_record('local_edulution_user_map', [
@@ -368,7 +378,8 @@ class user_sync {
      * @param bool $update Whether to update existing users.
      * @return self
      */
-    public function set_update_existing(bool $update): self {
+    public function set_update_existing(bool $update): self
+    {
         $this->update_existing = $update;
         return $this;
     }
@@ -379,7 +390,8 @@ class user_sync {
      * @param bool $create Whether to create new users.
      * @return self
      */
-    public function set_create_new(bool $create): self {
+    public function set_create_new(bool $create): self
+    {
         $this->create_new = $create;
         return $this;
     }
@@ -390,7 +402,8 @@ class user_sync {
      * @param string $auth Authentication method (e.g., 'oidc', 'manual').
      * @return self
      */
-    public function set_auth_method(string $auth): self {
+    public function set_auth_method(string $auth): self
+    {
         $this->auth_method = $auth;
         return $this;
     }
@@ -400,7 +413,8 @@ class user_sync {
      *
      * @return sync_report Current report.
      */
-    public function get_report(): sync_report {
+    public function get_report(): sync_report
+    {
         return $this->report;
     }
 
@@ -409,7 +423,8 @@ class user_sync {
      *
      * @return keycloak_client Client instance.
      */
-    public function get_client(): keycloak_client {
+    public function get_client(): keycloak_client
+    {
         return $this->client;
     }
 }

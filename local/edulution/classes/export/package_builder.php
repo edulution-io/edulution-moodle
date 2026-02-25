@@ -18,7 +18,7 @@
  * ZIP package builder for exports.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -34,7 +34,8 @@ use ZipArchive;
  * Creates final ZIP with all exported data, supports compression levels,
  * and generates checksums.
  */
-class package_builder {
+class package_builder
+{
 
     /** @var string Source directory containing export files */
     protected string $source_dir;
@@ -83,7 +84,8 @@ class package_builder {
      * @return string Path to the created ZIP file.
      * @throws \moodle_exception If ZIP creation fails.
      */
-    public function build(): string {
+    public function build(): string
+    {
         $this->tracker->log('info', 'Creating ZIP package...');
 
         // Ensure output directory exists.
@@ -176,7 +178,8 @@ class package_builder {
      *
      * @return array Array of file paths.
      */
-    protected function get_all_files(): array {
+    protected function get_all_files(): array
+    {
         $files = [];
 
         $iterator = new \RecursiveIteratorIterator(
@@ -199,7 +202,8 @@ class package_builder {
      * @param string $filepath Full file path.
      * @return string Relative path.
      */
-    protected function get_relative_path(string $filepath): string {
+    protected function get_relative_path(string $filepath): string
+    {
         return ltrim(str_replace($this->source_dir, '', $filepath), '/\\');
     }
 
@@ -208,9 +212,10 @@ class package_builder {
      *
      * @return string Checksums in sha256sum format.
      */
-    protected function generate_checksums_file(): string {
+    protected function generate_checksums_file(): string
+    {
         $lines = [];
-        $lines[] = '# SHA256 checksums for Edulution export';
+        $lines[] = '# SHA256 checksums for edulution export';
         $lines[] = '# Generated: ' . date('c');
         $lines[] = '';
 
@@ -228,7 +233,8 @@ class package_builder {
      * @param int $code Error code.
      * @return string Error message.
      */
-    protected function get_zip_error(int $code): string {
+    protected function get_zip_error(int $code): string
+    {
         $errors = [
             ZipArchive::ER_EXISTS => 'File already exists',
             ZipArchive::ER_INCONS => 'Zip archive inconsistent',
@@ -251,7 +257,8 @@ class package_builder {
      * @param int|null $maxSize Maximum size per part in bytes (uses split_threshold if null).
      * @return array Array of part file paths.
      */
-    public function split_file(string $filepath, ?int $maxSize = null): array {
+    public function split_file(string $filepath, ?int $maxSize = null): array
+    {
         $maxSize = $maxSize ?? $this->split_threshold;
 
         if (!file_exists($filepath) || filesize($filepath) <= $maxSize) {
@@ -315,7 +322,8 @@ class package_builder {
      *
      * @return int Size in bytes, or 0 if file doesn't exist.
      */
-    public function get_size(): int {
+    public function get_size(): int
+    {
         if (file_exists($this->output_path)) {
             return filesize($this->output_path);
         }
@@ -327,7 +335,8 @@ class package_builder {
      *
      * @return array File checksums.
      */
-    public function get_checksums(): array {
+    public function get_checksums(): array
+    {
         return $this->checksums;
     }
 
@@ -336,7 +345,8 @@ class package_builder {
      *
      * @return string|null SHA256 checksum or null if file doesn't exist.
      */
-    public function get_zip_checksum(): ?string {
+    public function get_zip_checksum(): ?string
+    {
         if (file_exists($this->output_path)) {
             return hash_file('sha256', $this->output_path);
         }
@@ -349,7 +359,8 @@ class package_builder {
      * @param int $bytes File size in bytes.
      * @return string Formatted size string.
      */
-    protected function format_size(int $bytes): string {
+    protected function format_size(int $bytes): string
+    {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
         $bytes = max($bytes, 0);
         $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
@@ -363,7 +374,8 @@ class package_builder {
      *
      * @return bool True if archive is valid.
      */
-    public function verify(): bool {
+    public function verify(): bool
+    {
         if (!file_exists($this->output_path)) {
             return false;
         }
@@ -397,7 +409,8 @@ class package_builder {
      *
      * @return array Archive info.
      */
-    public function get_archive_info(): array {
+    public function get_archive_info(): array
+    {
         if (!file_exists($this->output_path)) {
             return ['exists' => false];
         }

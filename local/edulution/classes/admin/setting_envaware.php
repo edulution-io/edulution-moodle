@@ -18,7 +18,7 @@
  * Environment-aware admin settings that show when values come from env vars.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -31,7 +31,8 @@ require_once(__DIR__ . '/../../lib.php');
 /**
  * Text setting that is aware of environment variable overrides.
  */
-class setting_configtext_envaware extends \admin_setting_configtext {
+class setting_configtext_envaware extends \admin_setting_configtext
+{
 
     /** @var string The config key name */
     protected string $configkey;
@@ -46,7 +47,8 @@ class setting_configtext_envaware extends \admin_setting_configtext {
      * @param mixed $paramtype Parameter type.
      * @param int $size Input size.
      */
-    public function __construct($name, $visiblename, $description, $defaultsetting, $paramtype = PARAM_RAW, $size = null) {
+    public function __construct($name, $visiblename, $description, $defaultsetting, $paramtype = PARAM_RAW, $size = null)
+    {
         // Extract config key from name (e.g., 'local_edulution/keycloak_url' -> 'keycloak_url')
         $parts = explode('/', $name);
         $this->configkey = end($parts);
@@ -59,7 +61,8 @@ class setting_configtext_envaware extends \admin_setting_configtext {
      *
      * @return mixed Current value.
      */
-    public function get_setting() {
+    public function get_setting()
+    {
         if (\local_edulution_config_from_env($this->configkey)) {
             return \local_edulution_get_config($this->configkey);
         }
@@ -73,7 +76,8 @@ class setting_configtext_envaware extends \admin_setting_configtext {
      * @param string $query Search query.
      * @return string HTML output.
      */
-    public function output_html($data, $query = '') {
+    public function output_html($data, $query = '')
+    {
         $fromEnv = \local_edulution_config_from_env($this->configkey);
 
         if ($fromEnv) {
@@ -103,7 +107,8 @@ class setting_configtext_envaware extends \admin_setting_configtext {
      * @param mixed $data Data to write.
      * @return string Empty on success.
      */
-    public function write_setting($data) {
+    public function write_setting($data)
+    {
         if (\local_edulution_config_from_env($this->configkey)) {
             // Don't allow writing if value comes from env.
             return '';
@@ -115,7 +120,8 @@ class setting_configtext_envaware extends \admin_setting_configtext {
 /**
  * Password setting that is aware of environment variable overrides.
  */
-class setting_configpassword_envaware extends \admin_setting_configpasswordunmask {
+class setting_configpassword_envaware extends \admin_setting_configpasswordunmask
+{
 
     /** @var string The config key name */
     protected string $configkey;
@@ -128,7 +134,8 @@ class setting_configpassword_envaware extends \admin_setting_configpasswordunmas
      * @param string $description Description.
      * @param string $defaultsetting Default value.
      */
-    public function __construct($name, $visiblename, $description, $defaultsetting) {
+    public function __construct($name, $visiblename, $description, $defaultsetting)
+    {
         $parts = explode('/', $name);
         $this->configkey = end($parts);
 
@@ -142,7 +149,8 @@ class setting_configpassword_envaware extends \admin_setting_configpasswordunmas
      * @param string $query Search query.
      * @return string HTML output.
      */
-    public function output_html($data, $query = '') {
+    public function output_html($data, $query = '')
+    {
         $fromEnv = \local_edulution_config_from_env($this->configkey);
 
         if ($fromEnv) {
@@ -170,7 +178,8 @@ class setting_configpassword_envaware extends \admin_setting_configpasswordunmas
      * @param mixed $data Data to write.
      * @return string Empty on success.
      */
-    public function write_setting($data) {
+    public function write_setting($data)
+    {
         if (\local_edulution_config_from_env($this->configkey)) {
             return '';
         }
@@ -181,7 +190,8 @@ class setting_configpassword_envaware extends \admin_setting_configpasswordunmas
 /**
  * Checkbox setting that is aware of environment variable overrides.
  */
-class setting_configcheckbox_envaware extends \admin_setting_configcheckbox {
+class setting_configcheckbox_envaware extends \admin_setting_configcheckbox
+{
 
     /** @var string The config key name */
     protected string $configkey;
@@ -196,7 +206,8 @@ class setting_configcheckbox_envaware extends \admin_setting_configcheckbox {
      * @param string $yes Yes value.
      * @param string $no No value.
      */
-    public function __construct($name, $visiblename, $description, $defaultsetting, $yes = '1', $no = '0') {
+    public function __construct($name, $visiblename, $description, $defaultsetting, $yes = '1', $no = '0')
+    {
         $parts = explode('/', $name);
         $this->configkey = end($parts);
 
@@ -208,7 +219,8 @@ class setting_configcheckbox_envaware extends \admin_setting_configcheckbox {
      *
      * @return mixed Current value.
      */
-    public function get_setting() {
+    public function get_setting()
+    {
         if (\local_edulution_config_from_env($this->configkey)) {
             return \local_edulution_get_config($this->configkey) ? $this->yes : $this->no;
         }
@@ -222,7 +234,8 @@ class setting_configcheckbox_envaware extends \admin_setting_configcheckbox {
      * @param string $query Search query.
      * @return string HTML output.
      */
-    public function output_html($data, $query = '') {
+    public function output_html($data, $query = '')
+    {
         $fromEnv = \local_edulution_config_from_env($this->configkey);
 
         if ($fromEnv) {
@@ -252,7 +265,8 @@ class setting_configcheckbox_envaware extends \admin_setting_configcheckbox {
      * @param mixed $data Data to write.
      * @return string Empty on success.
      */
-    public function write_setting($data) {
+    public function write_setting($data)
+    {
         if (\local_edulution_config_from_env($this->configkey)) {
             return '';
         }

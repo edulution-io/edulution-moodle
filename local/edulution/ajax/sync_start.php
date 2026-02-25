@@ -18,7 +18,7 @@
  * AJAX handler to start sync.
  *
  * @package    local_edulution
- * @copyright  2024 Edulution
+ * @copyright  2026 edulution
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -99,7 +99,7 @@ try {
     $sync = new phased_sync($client, $classifier);
 
     // Progress callback to update the progress file.
-    $sync->set_progress_callback(function($phase, $progress, $message, $stats) use ($progressFile) {
+    $sync->set_progress_callback(function ($phase, $progress, $message, $stats) use ($progressFile) {
         $current = json_decode(file_get_contents($progressFile), true) ?: [];
         $current['status'] = 'running';
         $current['progress'] = $progress;
@@ -129,7 +129,7 @@ try {
 
 } catch (Exception $e) {
     // Log error.
-    error_log('[Edulution Sync] Error: ' . $e->getMessage());
+    error_log('[edulution Sync] Error: ' . $e->getMessage());
 
     if (isset($progressFile)) {
         file_put_contents($progressFile, json_encode([
