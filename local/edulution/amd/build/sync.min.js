@@ -396,8 +396,8 @@ function($, Ajax, Notification, Str, Templates, Common) {
         }).then(function(response) {
             if (response.success) {
                 state.syncId = response.syncId;
-                state.progressBar.update(5, 'Sync started...');
-                addLogEntry('info', 'Synchronization started');
+                state.progressBar.update(2, 'Warte auf Hintergrund-Verarbeitung...');
+                addLogEntry('info', 'Sync gestartet - warte auf Cron-Verarbeitung...');
 
                 // Start progress updates
                 if (config.useSSE && state.eventSource) {
@@ -490,19 +490,50 @@ function($, Ajax, Notification, Str, Templates, Common) {
             });
         }
 
+        // Update status text based on state.
+        var $statusTitle = $('#sync-status-title');
+        var $statusText = $('#sync-status-text');
+        var $spinner = $('#sync-spinner');
+
         // Handle status
         switch (response.status) {
             case 'pending':
+                if ($statusTitle.length) {
+                    $statusTitle.text('Warte auf Verarbeitung...');
+                    $statusText.html(
+                        'Die Aufgabe wartet auf den nächsten Cron-Durchlauf.<br>' +
+                        '<small class="text-muted">Dies dauert in der Regel 2-5 Minuten. Bitte haben Sie Geduld.</small>'
+                    );
+                }
+                schedulePoll();
+                break;
             case 'processing':
+                if ($statusTitle.length) {
+                    $statusTitle.text('Synchronisierung läuft...');
+                    if (response.progress > 0) {
+                        $statusText.html(response.message || 'Verarbeite Daten...');
+                    } else {
+                        $statusText.html('Die Synchronisierung wird gerade ausgeführt...');
+                    }
+                }
                 schedulePoll();
                 break;
             case 'completed':
+                if ($spinner.length) {
+                    $spinner.hide();
+                }
                 handleSyncComplete(response);
                 break;
             case 'failed':
+                if ($spinner.length) {
+                    $spinner.hide();
+                }
                 handleSyncError(response.message || 'Sync failed');
                 break;
             case 'cancelled':
+                if ($spinner.length) {
+                    $spinner.hide();
+                }
                 handleSyncCancelled();
                 break;
             default:
@@ -837,7 +868,7 @@ function($, Ajax, Notification, Str, Templates, Common) {
     var checkOngoingSync = function() {
         Common.ajax('local_edulution_get_ongoing_sync', {})
             .then(function(response) {
-                if (response.syncId && response.status === 'processing') {
+                if (response.syncId && (response.status === 'processing' || response.status === 'pending')) {
                     state.syncId = response.syncId;
                     state.direction = response.direction || 'both';
 
@@ -849,12 +880,23 @@ function($, Ajax, Notification, Str, Templates, Common) {
                     elements.cancelBtn.show();
                     elements.logContainer.show();
 
+                    // Update status text for pending state.
+                    if (response.status === 'pending') {
+                        $('#sync-status-title').text('Warte auf Verarbeitung...');
+                        $('#sync-status-text').html(
+                            'Die Aufgabe wartet auf den nächsten Cron-Durchlauf.<br>' +
+                            '<small class="text-muted">Dies dauert in der Regel 2-5 Minuten.</small>'
+                        );
+                    }
+
                     // Create progress bar
                     state.progressBar = Common.progressBar(
                         elements.progressContainer.find('.progress-wrapper'),
                         {
                             value: response.progress || 0,
-                            label: 'Resuming sync...',
+                            label: response.status === 'pending'
+                                ? 'Warte auf Cron-Verarbeitung...'
+                                : 'Synchronisierung läuft...',
                             type: 'info'
                         }
                     );

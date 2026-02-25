@@ -135,8 +135,13 @@ class cookie_auth_backend
         // Find the user in Moodle.
         $user = $this->find_user($username, $payload);
         if (!$user) {
-            $this->log_debug("User not found: {$username}");
-            return false;
+            // Auto-provision: create the user from JWT claims.
+            $user = $this->auto_provision_user($username, $payload);
+            if (!$user) {
+                $this->log_debug("User not found and could not be provisioned: {$username}");
+                return false;
+            }
+            $this->log_debug("User auto-provisioned via cookie auth: {$username}");
         }
 
         // Check if user is enabled.
@@ -473,6 +478,87 @@ class cookie_auth_backend
     }
 
     /**
+     * Auto-provision a user from JWT claims.
+     *
+     * Creates a new Moodle user based on the JWT token payload.
+     * This ensures users can log in via cookie SSO even before
+     * the Keycloak sync has run (e.g. global-admin on first start).
+     *
+     * @param string $username The username to create.
+     * @param array $payload The decoded JWT payload.
+     * @return \stdClass|null The created user or null on failure.
+     */
+    protected function auto_provision_user(string $username, array $payload): ?\stdClass
+    {
+        global $CFG, $DB;
+
+        require_once($CFG->dirroot . '/user/lib.php');
+        require_once($CFG->libdir . '/accesslib.php');
+
+        $email = $payload['email'] ?? '';
+        if (empty($email)) {
+            $this->log_debug("Cannot provision user without email: {$username}");
+            return null;
+        }
+
+        // Check if email is already in use.
+        $existing = $DB->get_record('user', ['email' => $email, 'deleted' => 0]);
+        if ($existing) {
+            $this->log_debug("Email already in use, returning existing user: {$email}");
+            return $existing;
+        }
+
+        try {
+            $user = new \stdClass();
+            $user->username = strtolower($username);
+            $user->email = $email;
+            $user->firstname = $payload['given_name'] ?? $payload['preferred_username'] ?? $username;
+            $user->lastname = $payload['family_name'] ?? '';
+            $user->auth = 'manual';
+            $user->confirmed = 1;
+            $user->mnethostid = $CFG->mnet_localhost_id;
+            $user->password = '';
+
+            $user->id = user_create_user($user, false, false);
+
+            $this->log_debug("Created user {$username} (ID: {$user->id})");
+
+            // Check if user should be admin (global-admin, admin, etc.).
+            $admin_usernames = ['global-admin', 'admin', 'administrator', 'moodle-admin'];
+            if (in_array($user->username, $admin_usernames)) {
+                // Assign site admin role directly in config.
+                $admins = $CFG->siteadmins ?? '';
+                $adminlist = array_filter(explode(',', $admins));
+                if (!in_array($user->id, $adminlist)) {
+                    $adminlist[] = $user->id;
+                    set_config('siteadmins', implode(',', $adminlist));
+                    $CFG->siteadmins = implode(',', $adminlist);
+                    $this->log_debug("Granted site admin to: {$username}");
+                }
+
+                // Also assign coursecreator role.
+                try {
+                    $role = $DB->get_record('role', ['shortname' => 'coursecreator']);
+                    if ($role) {
+                        $context = \context_system::instance();
+                        role_assign($role->id, $user->id, $context->id);
+                    }
+                } catch (\Exception $e) {
+                    // Role assignment may not be available this early — not critical.
+                    $this->log_debug("Could not assign coursecreator role: " . $e->getMessage());
+                }
+            }
+
+            // Reload from DB to get all fields.
+            return $DB->get_record('user', ['id' => $user->id]);
+
+        } catch (\Exception $e) {
+            $this->log_debug("Failed to provision user {$username}: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Log in a user.
      *
      * @param \stdClass $user The user to log in.
@@ -535,119 +621,273 @@ class cookie_auth_backend
     }
 
     /**
-     * Get debug information for troubleshooting.
+     * Run a complete end-to-end simulation of the auth flow.
      *
-     * @return array Debug information.
-     */
-    public function get_debug_info(): array
-    {
-        global $USER, $SESSION;
-
-        $cookie_name = get_config('local_edulution', 'cookie_auth_cookie_name') ?: 'authToken';
-        $token = $_COOKIE[$cookie_name] ?? null;
-
-        $info = [
-            'enabled' => $this->is_enabled(),
-            'cookie_name' => $cookie_name,
-            'cookie_present' => !empty($token),
-            'user_logged_in' => isloggedin() && !isguestuser(),
-            'current_user' => isloggedin() ? $USER->username : null,
-            'session_marked' => !empty($SESSION->{self::SESSION_KEY}),
-            'realm_url' => get_config('local_edulution', 'cookie_auth_realm_url'),
-            'user_claim' => get_config('local_edulution', 'cookie_auth_user_claim') ?: 'preferred_username',
-            'algorithm' => get_config('local_edulution', 'cookie_auth_algorithm') ?: 'RS256',
-        ];
-
-        // Decode token payload for debugging (without verification).
-        if ($token) {
-            $payload = $this->decode_token_payload($token);
-            if ($payload) {
-                $info['token_claims'] = [
-                    'iss' => $payload['iss'] ?? null,
-                    'exp' => $payload['exp'] ?? null,
-                    'exp_human' => isset($payload['exp']) ? date('Y-m-d H:i:s', $payload['exp']) : null,
-                    'username_claim' => $this->extract_username($payload),
-                ];
-            } else {
-                $info['token_claims'] = 'Failed to decode';
-            }
-        }
-
-        return $info;
-    }
-
-    /**
-     * Test the configuration by validating a token.
+     * Tests every step regardless of whether cookie auth is enabled,
+     * so admins can see exactly what would happen and where it fails.
      *
-     * @return array Test results.
+     * @return array Complete diagnostic results with step-by-step checks.
      */
-    public function test_configuration(): array
+    public function run_full_diagnostic(): array
     {
-        $results = [
-            'success' => false,
-            'messages' => [],
-        ];
+        global $USER, $SESSION, $DB;
 
-        // Check if enabled.
-        if (!$this->is_enabled()) {
-            $results['messages'][] = ['type' => 'warning', 'text' => 'Cookie Auth ist nicht aktiviert.'];
-            return $results;
-        }
-
-        // Check realm URL or public key.
-        $realm_url = get_config('local_edulution', 'cookie_auth_realm_url');
-        $public_key = get_config('local_edulution', 'cookie_auth_public_key');
-
-        if (empty($realm_url) && empty($public_key)) {
-            // Try main Keycloak settings (environment variables take precedence).
-            $keycloak_url = \local_edulution_get_config('keycloak_url');
-            $realm = \local_edulution_get_config('keycloak_realm', 'master');
-
-            if (!empty($keycloak_url) && !empty($realm)) {
-                $realm_url = rtrim($keycloak_url, '/') . '/realms/' . $realm;
-                $results['messages'][] = ['type' => 'info', 'text' => "Verwende Keycloak-Einstellungen: {$realm_url}"];
-            } else {
-                $results['messages'][] = ['type' => 'error', 'text' => 'Keine Realm-URL oder Public Key konfiguriert.'];
-                return $results;
-            }
-        }
-
-        // Test fetching public key.
-        $key = $this->get_public_key();
-        if (empty($key)) {
-            $results['messages'][] = ['type' => 'error', 'text' => 'Public Key konnte nicht abgerufen werden.'];
-            return $results;
-        }
-
-        $results['messages'][] = ['type' => 'success', 'text' => 'Public Key erfolgreich abgerufen.'];
-
-        // Check for token.
         $cookie_name = \local_edulution_get_config('cookie_auth_cookie_name', 'authToken');
         $token = $_COOKIE[$cookie_name] ?? null;
+        $user_claim = get_config('local_edulution', 'cookie_auth_user_claim') ?: 'preferred_username';
+        $algorithm = get_config('local_edulution', 'cookie_auth_algorithm') ?: 'RS256';
 
-        if (empty($token)) {
-            $results['messages'][] = ['type' => 'warning', 'text' => "Kein Cookie '{$cookie_name}' vorhanden."];
-        } else {
-            $payload = $this->validate_token($token);
-            if ($payload) {
-                $results['messages'][] = ['type' => 'success', 'text' => 'Token erfolgreich validiert.'];
-                $username = $this->extract_username($payload);
-                if ($username) {
-                    $results['messages'][] = ['type' => 'info', 'text' => "Benutzername aus Token: {$username}"];
-
-                    $user = $this->find_user($username, $payload);
-                    if ($user) {
-                        $results['messages'][] = ['type' => 'success', 'text' => "Moodle-Benutzer gefunden: {$user->username}"];
-                        $results['success'] = true;
-                    } else {
-                        $results['messages'][] = ['type' => 'error', 'text' => 'Kein passender Moodle-Benutzer gefunden.'];
-                    }
-                }
-            } else {
-                $results['messages'][] = ['type' => 'error', 'text' => 'Token-Validierung fehlgeschlagen.'];
+        // Build realm URL.
+        $realm_url = get_config('local_edulution', 'cookie_auth_realm_url');
+        if (empty($realm_url)) {
+            $keycloak_url = \local_edulution_get_config('keycloak_url');
+            $realm = \local_edulution_get_config('keycloak_realm', 'master');
+            if (!empty($keycloak_url) && !empty($realm)) {
+                $realm_url = rtrim($keycloak_url, '/') . '/realms/' . $realm;
             }
         }
 
-        return $results;
+        $result = [
+            'would_auth_work' => false,
+            'failure_reason' => null,
+            'config' => [
+                'enabled' => $this->is_enabled(),
+                'cookie_name' => $cookie_name,
+                'user_claim' => $user_claim,
+                'algorithm' => $algorithm,
+                'realm_url' => $realm_url ?: '(nicht konfiguriert)',
+            ],
+            'moodle_session' => [
+                'user_logged_in' => isloggedin() && !isguestuser(),
+                'current_user' => isloggedin() && !isguestuser() ? $USER->username : null,
+                'session_via_cookie_auth' => !empty($SESSION->{self::SESSION_KEY}),
+            ],
+            'steps' => [],
+        ];
+
+        // Step 1: Cookie vorhanden?
+        $step = ['name' => 'Cookie vorhanden', 'key' => 'cookie'];
+        if (!empty($token)) {
+            $step['status'] = 'ok';
+            $step['detail'] = "Cookie '{$cookie_name}' gefunden (" . strlen($token) . " Zeichen)";
+        } else {
+            $step['status'] = 'fail';
+            $step['detail'] = "Cookie '{$cookie_name}' nicht vorhanden";
+            $result['steps'][] = $step;
+            $result['failure_reason'] = 'Kein Token-Cookie vorhanden';
+            return $result;
+        }
+        $result['steps'][] = $step;
+
+        // Step 2: Token-Format (3 Teile)?
+        $step = ['name' => 'Token-Format', 'key' => 'format'];
+        $parts = explode('.', $token);
+        if (count($parts) === 3) {
+            $step['status'] = 'ok';
+            $step['detail'] = 'JWT-Format korrekt (Header.Payload.Signature)';
+        } else {
+            $step['status'] = 'fail';
+            $step['detail'] = 'Kein gueltiges JWT (erwartet: 3 Teile, gefunden: ' . count($parts) . ')';
+            $result['steps'][] = $step;
+            $result['failure_reason'] = 'Token ist kein gueltiges JWT';
+            return $result;
+        }
+        $result['steps'][] = $step;
+
+        // Step 3: Payload decodierbar?
+        $step = ['name' => 'Payload decodieren', 'key' => 'payload'];
+        $payload = $this->decode_token_payload($token);
+        if ($payload) {
+            $step['status'] = 'ok';
+            $step['detail'] = 'Payload erfolgreich decodiert';
+            $result['token'] = [
+                'iss' => $payload['iss'] ?? null,
+                'sub' => $payload['sub'] ?? null,
+                'exp' => $payload['exp'] ?? null,
+                'exp_human' => isset($payload['exp']) ? date('Y-m-d H:i:s', $payload['exp']) : null,
+                'preferred_username' => $payload['preferred_username'] ?? null,
+                'email' => $payload['email'] ?? null,
+            ];
+        } else {
+            $step['status'] = 'fail';
+            $step['detail'] = 'Payload konnte nicht decodiert werden';
+            $result['steps'][] = $step;
+            $result['failure_reason'] = 'Token-Payload nicht decodierbar';
+            return $result;
+        }
+        $result['steps'][] = $step;
+
+        // Step 4: Token abgelaufen?
+        $step = ['name' => 'Token-Ablauf', 'key' => 'expiration'];
+        if (isset($payload['exp'])) {
+            $remaining = $payload['exp'] - time();
+            if ($remaining > 0) {
+                $minutes = round($remaining / 60);
+                $step['status'] = 'ok';
+                $step['detail'] = "Gueltig bis " . date('H:i:s', $payload['exp']) . " (noch {$minutes} Min.)";
+            } else {
+                $expired_ago = round(abs($remaining) / 60);
+                $step['status'] = 'fail';
+                $step['detail'] = "Abgelaufen seit " . date('H:i:s', $payload['exp']) . " (vor {$expired_ago} Min.)";
+                $result['steps'][] = $step;
+                $result['failure_reason'] = "Token abgelaufen (vor {$expired_ago} Minuten)";
+                // Don't return - continue checks so admin sees full picture.
+            }
+        } else {
+            $step['status'] = 'warn';
+            $step['detail'] = 'Kein Ablaufdatum (exp) im Token';
+        }
+        $result['steps'][] = $step;
+
+        // Step 5: Public Key abrufbar?
+        $step = ['name' => 'Public Key', 'key' => 'public_key'];
+        $public_key = $this->get_public_key();
+        if (!empty($public_key)) {
+            $step['status'] = 'ok';
+            $step['detail'] = 'Public Key verfuegbar';
+        } else {
+            $step['status'] = 'fail';
+            $step['detail'] = 'Public Key nicht verfuegbar - Realm erreichbar?';
+            $result['steps'][] = $step;
+            if (!$result['failure_reason']) {
+                $result['failure_reason'] = 'Public Key konnte nicht abgerufen werden';
+            }
+            return $result;
+        }
+        $result['steps'][] = $step;
+
+        // Step 6: Algorithmus + Signatur.
+        $step = ['name' => 'Signatur-Verifikation', 'key' => 'signature'];
+        $header_json = $this->base64url_decode($parts[0]);
+        $header_data = $header_json ? json_decode($header_json, true) : null;
+        $token_alg = $header_data['alg'] ?? '(unbekannt)';
+
+        if ($token_alg !== $algorithm) {
+            $step['status'] = 'fail';
+            $step['detail'] = "Algorithmus-Mismatch: Token={$token_alg}, Konfiguriert={$algorithm}";
+            $result['steps'][] = $step;
+            if (!$result['failure_reason']) {
+                $result['failure_reason'] = "Algorithmus-Mismatch ({$token_alg} vs {$algorithm})";
+            }
+            return $result;
+        }
+
+        if ($this->verify_signature($parts[0], $parts[1], $parts[2], $algorithm)) {
+            $step['status'] = 'ok';
+            $step['detail'] = "Signatur gueltig ({$algorithm})";
+        } else {
+            $step['status'] = 'fail';
+            $step['detail'] = "Signatur ungueltig ({$algorithm})";
+            $result['steps'][] = $step;
+            if (!$result['failure_reason']) {
+                $result['failure_reason'] = 'Token-Signatur ungueltig';
+            }
+            return $result;
+        }
+        $result['steps'][] = $step;
+
+        // Step 7: Issuer.
+        $step = ['name' => 'Issuer', 'key' => 'issuer'];
+        $expected_issuer = get_config('local_edulution', 'cookie_auth_issuer');
+        if (empty($expected_issuer)) {
+            $expected_issuer = get_config('local_edulution', 'cookie_auth_realm_url');
+        }
+        $token_issuer = $payload['iss'] ?? null;
+
+        if (!empty($expected_issuer) && !empty($token_issuer)) {
+            if ($token_issuer === $expected_issuer) {
+                $step['status'] = 'ok';
+                $step['detail'] = $token_issuer;
+            } else {
+                $step['status'] = 'fail';
+                $step['detail'] = "Erwartet: {$expected_issuer} | Token: {$token_issuer}";
+                $result['steps'][] = $step;
+                if (!$result['failure_reason']) {
+                    $result['failure_reason'] = 'Issuer stimmt nicht ueberein';
+                }
+                return $result;
+            }
+        } else {
+            $step['status'] = 'ok';
+            $step['detail'] = $token_issuer ?: '(kein Issuer-Check konfiguriert)';
+        }
+        $result['steps'][] = $step;
+
+        // Step 8: Username aus Token.
+        $step = ['name' => "Username (Claim: {$user_claim})", 'key' => 'username'];
+        $username = $this->extract_username($payload);
+        if (!empty($username)) {
+            $step['status'] = 'ok';
+            $step['detail'] = $username;
+        } else {
+            $available = array_keys($payload);
+            $step['status'] = 'fail';
+            $step['detail'] = "Claim '{$user_claim}' nicht gefunden. Vorhandene Claims: " . implode(', ', $available);
+            $result['steps'][] = $step;
+            if (!$result['failure_reason']) {
+                $result['failure_reason'] = "Claim '{$user_claim}' nicht im Token";
+            }
+            return $result;
+        }
+        $result['steps'][] = $step;
+
+        // Step 9: Moodle-User suchen.
+        $step = ['name' => 'Moodle-User suchen', 'key' => 'user_lookup'];
+        $user = $this->find_user($username, $payload);
+        if ($user) {
+            $step['status'] = 'ok';
+            $step['detail'] = "{$user->username} (ID: {$user->id}, {$user->email})";
+            $result['moodle_user'] = [
+                'id' => (int) $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'firstname' => $user->firstname,
+                'lastname' => $user->lastname,
+                'auth' => $user->auth,
+                'suspended' => (bool) $user->suspended,
+            ];
+        } else {
+            $tried = [
+                "username='{$username}'",
+                "username='" . strtolower($username) . "'",
+            ];
+            if (isset($payload['email'])) {
+                $tried[] = "email='{$payload['email']}'";
+            }
+            $step['status'] = 'fail';
+            $step['detail'] = "Nicht gefunden. Gesucht: " . implode(', ', $tried);
+            $result['steps'][] = $step;
+            if (!$result['failure_reason']) {
+                $result['failure_reason'] = "Kein Moodle-User '{$username}' gefunden";
+            }
+            return $result;
+        }
+        $result['steps'][] = $step;
+
+        // Step 10: User aktiv?
+        $step = ['name' => 'User-Status', 'key' => 'user_status'];
+        if ($user->suspended) {
+            $step['status'] = 'fail';
+            $step['detail'] = "User '{$user->username}' ist gesperrt";
+            $result['steps'][] = $step;
+            if (!$result['failure_reason']) {
+                $result['failure_reason'] = 'Moodle-User ist gesperrt';
+            }
+            return $result;
+        } else {
+            $step['status'] = 'ok';
+            $step['detail'] = "Aktiv (Auth: {$user->auth})";
+        }
+        $result['steps'][] = $step;
+
+        // All checks passed?
+        if (!$result['failure_reason']) {
+            $result['would_auth_work'] = true;
+            if (!$this->is_enabled()) {
+                $result['failure_reason'] = 'Alle Checks OK - aber Cookie Auth ist deaktiviert!';
+            }
+        }
+
+        return $result;
     }
 }

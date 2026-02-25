@@ -133,9 +133,10 @@ if ($action === 'save' && confirm_sesskey()) {
 
         case 4: // Sync aktivieren
             set_config('keycloak_sync_enabled', 1, 'local_edulution');
+            set_config('setup_complete', 1, 'local_edulution');
             $message = 'Einrichtung abgeschlossen! Sie können jetzt synchronisieren.';
             $messagetype = 'success';
-            redirect(new moodle_url('/local/edulution/sync.php'));
+            redirect(new moodle_url('/local/edulution/dashboard.php'));
             break;
     }
 }

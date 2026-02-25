@@ -53,7 +53,7 @@ function local_edulution_after_config()
 
     // Skip for certain paths.
     $script = $_SERVER['SCRIPT_NAME'] ?? '';
-    $skip_paths = ['/login/', '/logout.php', '/admin/cron.php', '/lib/ajax/'];
+    $skip_paths = ['/logout.php', '/admin/cron.php', '/lib/ajax/'];
     foreach ($skip_paths as $path) {
         if (strpos($script, $path) !== false) {
             return;
@@ -106,7 +106,27 @@ define('LOCAL_EDULUTION_FORMAT_XML', 'xml');
  */
 function local_edulution_extend_navigation(global_navigation $navigation)
 {
-    // Navigation is handled through settings.php for admin pages.
+    global $PAGE, $USER;
+
+    // Redirect admin to setup wizard if plugin is not yet configured.
+    if (isloggedin() && !isguestuser() && is_siteadmin()) {
+        $setupcomplete = get_config('local_edulution', 'setup_complete');
+        if (empty($setupcomplete)) {
+            // Don't redirect if already on the setup page or during install/upgrade/ajax.
+            $script = $_SERVER['SCRIPT_NAME'] ?? '';
+            $skippatterns = ['/setup.php', '/admin/', '/login/', '/lib/ajax/', '/webservice/'];
+            $shouldredirect = true;
+            foreach ($skippatterns as $pattern) {
+                if (strpos($script, $pattern) !== false) {
+                    $shouldredirect = false;
+                    break;
+                }
+            }
+            if ($shouldredirect && !CLI_SCRIPT && !defined('AJAX_SCRIPT')) {
+                redirect(new moodle_url('/local/edulution/setup.php'));
+            }
+        }
+    }
 }
 
 /**

@@ -380,6 +380,7 @@ class naming_schema_processor
                     'course_shortname' => '{lehrer|upper}_{fach|upper}_{stufe|upper}',
                     'category_path' => 'Kurse/Stufe {stufe|extract_grade}',
                     'course_idnumber_prefix' => 'kc_lehrer_',
+                    'role_map' => ['default' => 'student', 'teacher' => 'editingteacher'],
                 ],
                 [
                     'id' => 'klasse_fach',
@@ -390,6 +391,7 @@ class naming_schema_processor
                     'course_shortname' => '{klasse|upper}_{fach|upper}',
                     'category_path' => 'Klassen/Stufe {klasse|extract_grade}',
                     'course_idnumber_prefix' => 'kc_klasse_',
+                    'role_map' => ['default' => 'student', 'teacher' => 'editingteacher'],
                 ],
                 [
                     'id' => 'ag',
@@ -400,6 +402,7 @@ class naming_schema_processor
                     'course_shortname' => 'AG_{name|upper|truncate:20}',
                     'category_path' => 'AGs',
                     'course_idnumber_prefix' => 'kc_ag_',
+                    'role_map' => ['default' => 'student', 'teacher' => 'editingteacher'],
                 ],
                 [
                     'id' => 'klasse_students',
@@ -410,6 +413,7 @@ class naming_schema_processor
                     'course_shortname' => 'K_{klasse|upper}',
                     'category_path' => 'Klassen/Stufe {klasse|extract_grade}',
                     'course_idnumber_prefix' => 'kc_',
+                    'role_map' => ['default' => 'student', 'teacher' => 'editingteacher'],
                 ],
                 [
                     'id' => 'kursstufe',
@@ -420,6 +424,7 @@ class naming_schema_processor
                     'course_shortname' => 'KS_{stufe|upper}',
                     'category_path' => 'Klassen/Kursstufe',
                     'course_idnumber_prefix' => 'kc_ks_',
+                    'role_map' => ['default' => 'student', 'teacher' => 'editingteacher'],
                 ],
                 [
                     'id' => 'projekt_default',
@@ -430,6 +435,7 @@ class naming_schema_processor
                     'course_shortname' => 'P_{name|upper|clean|truncate:25}',
                     'category_path' => 'Projekte',
                     'course_idnumber_prefix' => 'kc_project_',
+                    'role_map' => ['default' => 'student', 'teacher' => 'editingteacher'],
                 ],
             ],
             'ignore_patterns' => [

@@ -107,6 +107,7 @@ COPY config/config-template.php /var/www/html/moodle/config-template.php
 COPY scripts/entrypoint.sh /entrypoint.sh
 COPY scripts/configure-moodle.sh /usr/local/bin/configure-moodle.sh
 COPY scripts/generate-config.sh /usr/local/bin/generate-config.sh
+COPY scripts/set-branding.php /usr/local/bin/set-branding.php
 COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Make scripts executable

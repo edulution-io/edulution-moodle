@@ -37,6 +37,21 @@ $PAGE->set_title('edulution');
 $PAGE->set_heading('edulution');
 $PAGE->set_pagelayout('admin');
 
+// Handle POST actions.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
+    $action = optional_param('action', '', PARAM_ALPHA);
+    switch ($action) {
+        case 'dismiss_welcome':
+            set_config('welcome_dismissed', 1, 'local_edulution');
+            redirect(new moodle_url('/local/edulution/dashboard.php'));
+            break;
+        case 'enable_sync':
+            set_config('keycloak_sync_enabled', 1, 'local_edulution');
+            redirect(new moodle_url('/local/edulution/dashboard.php'));
+            break;
+    }
+}
+
 // Prüfe Konfiguration (Environment-Variablen haben Vorrang)
 $keycloakurl = local_edulution_get_config('keycloak_url');
 $keycloakrealm = local_edulution_get_config('keycloak_realm', 'master');
@@ -45,6 +60,11 @@ $keycloakclientsecret = local_edulution_get_config('keycloak_client_secret');
 $syncenabled = local_edulution_get_config('keycloak_sync_enabled');
 
 $isconfigured = !empty($keycloakurl) && !empty($keycloakclientid) && !empty($keycloakclientsecret);
+
+// Auto-mark setup as complete when configured via env vars.
+if ($isconfigured && empty(get_config('local_edulution', 'setup_complete'))) {
+    set_config('setup_complete', 1, 'local_edulution');
+}
 
 // Check which configs come from environment variables
 $envconfigs = local_edulution_get_env_configs();
@@ -304,6 +324,36 @@ $logourl = $CFG->wwwroot . '/local/edulution/pix/logo.svg';
         <span class="tagline">Keycloak Sync for Moodle</span>
     </div>
 
+    <!-- Welcome Guide (shows once after setup) -->
+    <?php
+    $showwelcome = !get_config('local_edulution', 'welcome_dismissed');
+    if ($showwelcome && $isconfigured):
+    ?>
+        <div class="sync-section" id="welcome-guide" style="border-left: 4px solid #198754;">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h3 style="color: #198754;"><i class="fa fa-check-circle"></i> Willkommen bei edulution Moodle!</h3>
+                    <p style="font-size: 14px; margin-bottom: 12px;">
+                        Ihr Moodle ist konfiguriert und bereit. So starten Sie:
+                    </p>
+                    <ol style="font-size: 13px; padding-left: 20px; margin-bottom: 0;">
+                        <li class="mb-1"><strong>Vorschau</strong> klicken, um zu sehen welche Benutzer, Kurse und Einschreibungen synchronisiert werden</li>
+                        <li class="mb-1"><strong>Starten</strong> klicken, um die Synchronisierung auszuführen (dauert ca. 2-5 Min.)</li>
+                        <li class="mb-1">Lehrer werden automatisch als <strong>Trainer/in</strong> eingeschrieben, Schüler als <strong>Teilnehmer/in</strong></li>
+                        <li class="mb-1">Lehrer erhalten automatisch die Rolle <strong>Kursersteller/in</strong></li>
+                    </ol>
+                </div>
+                <form method="post" action="<?php echo new moodle_url('/local/edulution/dashboard.php'); ?>">
+                    <input type="hidden" name="sesskey" value="<?php echo sesskey(); ?>">
+                    <input type="hidden" name="action" value="dismiss_welcome">
+                    <button type="submit" class="btn btn-sm btn-link text-muted" title="Schließen">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <!-- Status-Karte -->
     <?php if (!$isconfigured): ?>
         <div class="status-card warning">
@@ -403,9 +453,15 @@ $logourl = $CFG->wwwroot . '/local/edulution/pix/logo.svg';
 
             <!-- Fortschritt Container -->
             <div id="sync-progress-container" style="display: none;" class="mt-4">
-                <div class="alert alert-info">
-                    <strong>Synchronisierung läuft...</strong>
-                    <p class="mb-2" id="sync-status-text">Initialisiere...</p>
+                <div class="alert alert-info" id="sync-status-alert">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status" id="sync-spinner"></div>
+                        <strong id="sync-status-title">Synchronisierung gestartet</strong>
+                    </div>
+                    <p class="mb-0" id="sync-status-text">
+                        Die Synchronisierung wurde als Hintergrund-Aufgabe gestartet.<br>
+                        <small class="text-muted">Dies dauert in der Regel 2-5 Minuten. Die Seite aktualisiert sich automatisch wenn fertig.</small>
+                    </p>
                 </div>
                 <div class="progress" style="height: 25px;">
                     <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"

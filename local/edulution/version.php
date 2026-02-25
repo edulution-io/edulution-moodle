@@ -28,7 +28,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_edulution';
-$plugin->version = 2026022003;  // Improved UI with icons instead of emojis, category name input.
+$plugin->version = 2026022500;  // Teacher role mapping, setup wizard redirect, branding, sync status UX.
 $plugin->requires = 2024042200; // Moodle 5.0+
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '1.1.0';
+$plugin->release = '1.2.0';

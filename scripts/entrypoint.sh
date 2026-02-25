@@ -222,6 +222,13 @@ if [ "${ENABLE_SSO:-0}" = "1" ] || [ "${ENABLE_SSO:-0}" = "true" ]; then
     fi
 fi
 
+# Set edulution branding (logo)
+log_info "Setting edulution branding..."
+cd "${MOODLE_BASE}"
+sudo -E -u www-data php /usr/local/bin/set-branding.php 2>/dev/null && \
+    log_success "Branding configured" || \
+    log_warn "Could not set branding (set manually via admin UI)"
+
 # Download German language pack (no CLI available in Moodle)
 log_info "Downloading German language pack..."
 LANG_DIR="${MOODLE_DATA}/lang"

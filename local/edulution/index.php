@@ -33,5 +33,9 @@ $keycloakclientid = local_edulution_get_config('keycloak_client_id');
 if (empty($keycloakurl) || empty($keycloakclientid)) {
     redirect(new moodle_url('/local/edulution/setup.php'));
 } else {
+    // Auto-mark setup as complete when configured via env vars.
+    if (empty(get_config('local_edulution', 'setup_complete'))) {
+        set_config('setup_complete', 1, 'local_edulution');
+    }
     redirect(new moodle_url('/local/edulution/dashboard.php'));
 }

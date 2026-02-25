@@ -15,7 +15,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Cookie auth test and debug page.
+ * Cookie auth diagnostic endpoint.
+ *
+ * Runs a complete end-to-end simulation of the cookie auth flow
+ * and reports exactly what would happen and where it fails.
  *
  * @package    local_edulution
  * @copyright  2026 edulution
@@ -23,97 +26,142 @@
  */
 
 require_once(__DIR__ . '/../../../config.php');
-require_once($CFG->libdir . '/adminlib.php');
-
-// This page can be accessed without login for testing purposes.
-// But we'll show more info if logged in as admin.
-$isadmin = false;
-try {
-    if (isloggedin() && !isguestuser()) {
-        $context = context_system::instance();
-        $isadmin = has_capability('local/edulution:manage', $context);
-    }
-} catch (Exception $e) {
-    // Not logged in.
-}
-
 require_once($CFG->dirroot . '/local/edulution/classes/auth/cookie_auth_backend.php');
 
 $auth = new \local_edulution\auth\cookie_auth_backend();
-$debug_info = $auth->get_debug_info();
-$test_results = $auth->test_configuration();
+$diag = $auth->run_full_diagnostic();
 
-// Output format.
+// JSON output.
 $format = optional_param('format', 'html', PARAM_ALPHA);
-
 if ($format === 'json') {
     header('Content-Type: application/json');
-    echo json_encode([
-        'debug' => $debug_info,
-        'test' => $test_results,
-    ], JSON_PRETTY_PRINT);
+    echo json_encode($diag, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
 // HTML output.
 $PAGE->set_url(new moodle_url('/local/edulution/ajax/cookie_auth_test.php'));
 $PAGE->set_context(context_system::instance());
-$PAGE->set_title('Cookie Auth Test');
-$PAGE->set_heading('Cookie Auth Test');
+$PAGE->set_title('Cookie Auth - Diagnose');
+$PAGE->set_heading('Cookie Auth - Diagnose');
 $PAGE->set_pagelayout('admin');
 
 echo $OUTPUT->header();
+
+// Status icons.
+$icons = [
+    'ok' => '<span style="color:#198754;font-weight:bold">&#10004;</span>',
+    'fail' => '<span style="color:#dc3545;font-weight:bold">&#10008;</span>',
+    'warn' => '<span style="color:#ffc107;font-weight:bold">&#9888;</span>',
+];
+
+// Main result banner.
+$would_work = $diag['would_auth_work'];
+$enabled = $diag['config']['enabled'];
 ?>
 
-<div class="container-fluid">
-    <h2>Cookie Auth - Status & Test</h2>
+<div class="container-fluid" style="max-width: 900px;">
+
+    <!-- Ergebnis -->
+    <?php if ($would_work && $enabled): ?>
+        <div class="alert alert-success py-3 mb-4" style="font-size: 1.2em;">
+            <strong>&#10004; Auto-Login wuerde funktionieren</strong>
+        </div>
+    <?php elseif ($would_work && !$enabled): ?>
+        <div class="alert alert-warning py-3 mb-4" style="font-size: 1.2em;">
+            <strong>&#9888; Alle Checks OK - aber Cookie Auth ist deaktiviert</strong><br>
+            <small>Aktivieren unter: Plugins &gt; Lokale Plugins &gt; edulution &gt; Cookie Auth (SSO)</small>
+        </div>
+    <?php else: ?>
+        <div class="alert alert-danger py-3 mb-4" style="font-size: 1.2em;">
+            <strong>&#10008; Auto-Login wuerde NICHT funktionieren</strong><br>
+            <span><?php echo s($diag['failure_reason']); ?></span>
+        </div>
+    <?php endif; ?>
+
+    <!-- Steps -->
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">Auth-Flow Simulation</h5></div>
+        <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:30px"></th>
+                        <th>Schritt</th>
+                        <th>Ergebnis</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($diag['steps'] as $step): ?>
+                    <tr<?php echo $step['status'] === 'fail' ? ' class="table-danger"' : ''; ?>>
+                        <td class="text-center"><?php echo $icons[$step['status']]; ?></td>
+                        <td><?php echo s($step['name']); ?></td>
+                        <td><code><?php echo s($step['detail']); ?></code></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
     <div class="row">
+        <!-- Config -->
         <div class="col-md-6">
             <div class="card mb-4">
-                <div class="card-header">
-                    <h4 class="card-title mb-0">Status</h4>
-                </div>
+                <div class="card-header"><h5 class="mb-0">Konfiguration</h5></div>
                 <div class="card-body">
-                    <table class="table table-sm">
+                    <table class="table table-sm mb-0">
                         <tr>
-                            <th>Cookie Auth aktiviert</th>
+                            <th>Cookie Auth</th>
                             <td>
-                                <?php if ($debug_info['enabled']): ?>
-                                    <span class="badge bg-success">Ja</span>
+                                <?php if ($diag['config']['enabled']): ?>
+                                    <span class="badge bg-success">Aktiviert</span>
                                 <?php else: ?>
-                                    <span class="badge bg-danger">Nein</span>
+                                    <span class="badge bg-danger">Deaktiviert</span>
                                 <?php endif; ?>
                             </td>
                         </tr>
                         <tr>
                             <th>Cookie-Name</th>
-                            <td><code><?php echo s($debug_info['cookie_name']); ?></code></td>
+                            <td><code><?php echo s($diag['config']['cookie_name']); ?></code></td>
                         </tr>
                         <tr>
-                            <th>Cookie vorhanden</th>
-                            <td>
-                                <?php if ($debug_info['cookie_present']): ?>
-                                    <span class="badge bg-success">Ja</span>
-                                <?php else: ?>
-                                    <span class="badge bg-warning">Nein</span>
-                                <?php endif; ?>
-                            </td>
+                            <th>User-Claim</th>
+                            <td><code><?php echo s($diag['config']['user_claim']); ?></code></td>
                         </tr>
                         <tr>
-                            <th>Benutzer angemeldet</th>
+                            <th>Algorithmus</th>
+                            <td><code><?php echo s($diag['config']['algorithm']); ?></code></td>
+                        </tr>
+                        <tr>
+                            <th>Realm-URL</th>
+                            <td><code style="word-break:break-all"><?php echo s($diag['config']['realm_url']); ?></code></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Moodle Session -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Moodle-Session</h5></div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tr>
+                            <th>Eingeloggt</th>
                             <td>
-                                <?php if ($debug_info['user_logged_in']): ?>
-                                    <span class="badge bg-success"><?php echo s($debug_info['current_user']); ?></span>
+                                <?php if ($diag['moodle_session']['user_logged_in']): ?>
+                                    <span class="badge bg-success"><?php echo s($diag['moodle_session']['current_user']); ?></span>
                                 <?php else: ?>
                                     <span class="badge bg-secondary">Nein</span>
                                 <?php endif; ?>
                             </td>
                         </tr>
                         <tr>
-                            <th>Session via Cookie Auth</th>
+                            <th>Via Cookie Auth</th>
                             <td>
-                                <?php if ($debug_info['session_marked']): ?>
+                                <?php if ($diag['moodle_session']['session_via_cookie_auth']): ?>
                                     <span class="badge bg-info">Ja</span>
                                 <?php else: ?>
                                     <span class="badge bg-secondary">Nein</span>
@@ -124,147 +172,85 @@ echo $OUTPUT->header();
                 </div>
             </div>
 
-            <?php if ($isadmin): ?>
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h4 class="card-title mb-0">Konfiguration</h4>
-                    </div>
-                    <div class="card-body">
-                        <table class="table table-sm">
-                            <tr>
-                                <th>Realm-URL</th>
-                                <td><code><?php echo s($debug_info['realm_url'] ?: '(aus Keycloak-Einstellungen)'); ?></code>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>User-Claim</th>
-                                <td><code><?php echo s($debug_info['user_claim']); ?></code></td>
-                            </tr>
-                            <tr>
-                                <th>Algorithmus</th>
-                                <td><code><?php echo s($debug_info['algorithm']); ?></code></td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <div class="col-md-6">
+            <?php if (isset($diag['token'])): ?>
             <div class="card mb-4">
-                <div class="card-header">
-                    <h4 class="card-title mb-0">Test-Ergebnisse</h4>
-                </div>
+                <div class="card-header"><h5 class="mb-0">Token</h5></div>
                 <div class="card-body">
-                    <?php foreach ($test_results['messages'] as $msg): ?>
-                        <?php
-                        $alert_class = 'alert-info';
-                        if ($msg['type'] === 'success')
-                            $alert_class = 'alert-success';
-                        if ($msg['type'] === 'error')
-                            $alert_class = 'alert-danger';
-                        if ($msg['type'] === 'warning')
-                            $alert_class = 'alert-warning';
-                        ?>
-                        <div class="alert <?php echo $alert_class; ?> py-2 mb-2">
-                            <?php echo s($msg['text']); ?>
-                        </div>
-                    <?php endforeach; ?>
-
-                    <?php if ($test_results['success']): ?>
-                        <div class="alert alert-success mt-3">
-                            <strong>Konfiguration ist korrekt!</strong>
-                        </div>
-                    <?php endif; ?>
+                    <table class="table table-sm mb-0">
+                        <?php foreach ($diag['token'] as $key => $val): ?>
+                        <tr>
+                            <th><?php echo s($key); ?></th>
+                            <td><code><?php echo s($val ?? '-'); ?></code></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </table>
                 </div>
             </div>
+            <?php endif; ?>
 
-            <?php if ($debug_info['cookie_present'] && $isadmin && isset($debug_info['token_claims'])): ?>
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h4 class="card-title mb-0">Token-Informationen</h4>
-                    </div>
-                    <div class="card-body">
-                        <?php if (is_array($debug_info['token_claims'])): ?>
-                            <table class="table table-sm">
-                                <tr>
-                                    <th>Issuer</th>
-                                    <td><code><?php echo s($debug_info['token_claims']['iss'] ?? '-'); ?></code></td>
-                                </tr>
-                                <tr>
-                                    <th>Ablauf</th>
-                                    <td><?php echo s($debug_info['token_claims']['exp_human'] ?? '-'); ?></td>
-                                </tr>
-                                <tr>
-                                    <th>Benutzername (aus Claim)</th>
-                                    <td><code><?php echo s($debug_info['token_claims']['username_claim'] ?? '-'); ?></code></td>
-                                </tr>
-                            </table>
-                        <?php else: ?>
-                            <div class="alert alert-warning">
-                                <?php echo s($debug_info['token_claims']); ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
+            <?php if (isset($diag['moodle_user'])): ?>
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Moodle-User (gefunden)</h5></div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <?php foreach ($diag['moodle_user'] as $key => $val): ?>
+                        <tr>
+                            <th><?php echo s($key); ?></th>
+                            <td><code><?php echo s(is_bool($val) ? ($val ? 'true' : 'false') : $val); ?></code></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </table>
                 </div>
+            </div>
             <?php endif; ?>
         </div>
     </div>
 
-    <?php if ($isadmin): ?>
-        <div class="card">
-            <div class="card-header">
-                <h4 class="card-title mb-0">Cookies</h4>
-            </div>
-            <div class="card-body">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Vorhanden</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        $interesting_cookies = ['authToken', 'KEYCLOAK_SESSION', 'MoodleSession', 'MOODLEID_'];
-                        foreach ($interesting_cookies as $name): ?>
-                            <tr>
-                                <td><code><?php echo s($name); ?></code></td>
-                                <td>
-                                    <?php
-                                    $found = false;
-                                    foreach ($_COOKIE as $key => $value) {
-                                        if (strpos($key, $name) === 0) {
-                                            $found = true;
-                                            break;
-                                        }
-                                    }
-                                    ?>
-                                    <?php if ($found): ?>
-                                        <span class="badge bg-success">Ja</span>
-                                    <?php else: ?>
-                                        <span class="badge bg-secondary">Nein</span>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-
-                <p class="text-muted mt-3">
-                    <strong>Hinweis:</strong> Für iframe-SSO muss das Cookie mit <code>SameSite=None; Secure</code> gesetzt
-                    sein.
-                </p>
-            </div>
+    <!-- Cookies -->
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">Cookies im Browser</h5></div>
+        <div class="card-body">
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Cookie</th><th>Vorhanden</th></tr></thead>
+                <tbody>
+                    <?php
+                    $check_cookies = [
+                        $diag['config']['cookie_name'],
+                        'MoodleSession',
+                        'MOODLEID_',
+                    ];
+                    foreach ($check_cookies as $name):
+                        $found = false;
+                        foreach ($_COOKIE as $key => $value) {
+                            if (strpos($key, $name) === 0) {
+                                $found = true;
+                                break;
+                            }
+                        }
+                    ?>
+                    <tr>
+                        <td><code><?php echo s($name); ?></code></td>
+                        <td>
+                            <?php if ($found): ?>
+                                <span class="badge bg-success">Ja</span>
+                            <?php else: ?>
+                                <span class="badge bg-secondary">Nein</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
-    <?php endif; ?>
+    </div>
 
-    <div class="mt-4">
+    <div class="mb-4">
         <a href="<?php echo new moodle_url('/admin/settings.php', ['section' => 'local_edulution_cookie_auth']); ?>"
-            class="btn btn-primary">Einstellungen</a>
+           class="btn btn-primary">Einstellungen</a>
         <a href="<?php echo new moodle_url('/local/edulution/dashboard.php'); ?>"
-            class="btn btn-secondary">Dashboard</a>
+           class="btn btn-secondary">Dashboard</a>
         <a href="?format=json" class="btn btn-outline-secondary" target="_blank">JSON</a>
+        <a href="?" class="btn btn-outline-secondary">Neu laden</a>
     </div>
 </div>
 
