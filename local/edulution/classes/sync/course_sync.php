@@ -51,6 +51,69 @@ class course_sync
     /** Custom field name for category Keycloak source */
     public const CUSTOM_FIELD_CATEGORY_SOURCE = 'keycloak_source';
 
+    /** Project sub-types */
+    public const SUBTYPE_FACHSCHAFT = 'fachschaft';
+    public const SUBTYPE_TEACHER_COURSE = 'teacher_course';
+    public const SUBTYPE_CLASS_COURSE = 'class_course';
+    public const SUBTYPE_AG = 'ag';
+    public const SUBTYPE_GENERAL = 'general';
+
+    /** Subject abbreviation map (lowercase key => display name) */
+    public const SUBJECT_MAP = [
+        'bio' => 'Biologie',
+        'biologie' => 'Biologie',
+        'm' => 'Mathematik',
+        'mathe' => 'Mathematik',
+        'math' => 'Mathematik',
+        'mathematik' => 'Mathematik',
+        'd' => 'Deutsch',
+        'deutsch' => 'Deutsch',
+        'deu' => 'Deutsch',
+        'e' => 'Englisch',
+        'eng' => 'Englisch',
+        'englisch' => 'Englisch',
+        'f' => 'Franzoesisch',
+        'franz' => 'Franzoesisch',
+        'fra' => 'Franzoesisch',
+        'l' => 'Latein',
+        'lat' => 'Latein',
+        'latein' => 'Latein',
+        'g' => 'Geschichte',
+        'gesch' => 'Geschichte',
+        'geschichte' => 'Geschichte',
+        'geo' => 'Geografie',
+        'geografie' => 'Geografie',
+        'ek' => 'Erdkunde',
+        'erdkunde' => 'Erdkunde',
+        'ph' => 'Physik',
+        'physik' => 'Physik',
+        'ch' => 'Chemie',
+        'chemie' => 'Chemie',
+        'mus' => 'Musik',
+        'musik' => 'Musik',
+        'bk' => 'Bildende Kunst',
+        'kunst' => 'Bildende Kunst',
+        'spo' => 'Sport',
+        'sport' => 'Sport',
+        'eth' => 'Ethik',
+        'ethik' => 'Ethik',
+        'evrel' => 'Ev. Religion',
+        'krel' => 'Kath. Religion',
+        'rel' => 'Religion',
+        'spa' => 'Spanisch',
+        'spanisch' => 'Spanisch',
+        'rus' => 'Russisch',
+        'nwt' => 'NwT',
+        'bnt' => 'BNT',
+        'gk' => 'Gemeinschaftskunde',
+        'gemk' => 'Gemeinschaftskunde',
+        'wbs' => 'WBS',
+        'inf' => 'Informatik',
+        'informatik' => 'Informatik',
+        'it' => 'IT',
+        'lehrer' => 'Alle Lehrer',
+    ];
+
     /** @var keycloak_client Keycloak API client */
     protected keycloak_client $client;
 
@@ -272,6 +335,21 @@ class course_sync
             $this->categories['projekte'],
             'Fachschaftskurse (alle Lehrer eines Fachs)'
         );
+        $this->categories['lehrerkurse'] = $this->get_or_create_category(
+            'Lehrerkurse',
+            $this->categories['projekte'],
+            'Fachkurse einzelner Lehrkraefte (z.B. Mueller Mathe 10A)'
+        );
+        $this->categories['klassenkurse'] = $this->get_or_create_category(
+            'Klassenkurse',
+            $this->categories['projekte'],
+            'Fachkurse fuer Klassen (z.B. Deutsch 10A)'
+        );
+        $this->categories['ags'] = $this->get_or_create_category(
+            'AGs',
+            $this->categories['projekte'],
+            'Arbeitsgemeinschaften'
+        );
         $this->categories['projektkurse'] = $this->get_or_create_category(
             'Projektkurse',
             $this->categories['projekte'],
@@ -353,12 +431,97 @@ class course_sync
      */
     protected function get_project_category(string $group_name): int
     {
-        // Fachgruppen: p_alle-* (all teachers of a subject).
-        if (preg_match('/^p_alle[-_]/', $group_name)) {
-            return $this->categories['fachgruppen'];
+        $subtype = $this->detect_project_subtype($group_name);
+
+        switch ($subtype) {
+            case self::SUBTYPE_FACHSCHAFT:
+                return $this->categories['fachgruppen'];
+            case self::SUBTYPE_TEACHER_COURSE:
+                return $this->categories['lehrerkurse'];
+            case self::SUBTYPE_CLASS_COURSE:
+                return $this->categories['klassenkurse'];
+            case self::SUBTYPE_AG:
+                return $this->categories['ags'];
+            default:
+                return $this->categories['projektkurse'];
+        }
+    }
+
+    /**
+     * Detect the sub-type of a project group by analyzing its name parts.
+     *
+     * Patterns:
+     * - p_alle_bio         → fachschaft (starts with 'alle')
+     * - p_robotik_ag       → ag (ends with 'ag')
+     * - p_mueller_mathe_10a → teacher_course (teacher + subject + class)
+     * - p_10a_deutsch      → class_course (class + subject, no teacher)
+     * - p_theater           → general (catch-all)
+     *
+     * @param string $group_name Group name (with p_ prefix).
+     * @return string Sub-type constant.
+     */
+    protected function detect_project_subtype(string $group_name): string
+    {
+        $name = preg_replace('/^p_/', '', $group_name);
+        $parts = preg_split('/[-_]/', $name);
+        $parts = array_values(array_filter($parts, fn($p) => $p !== ''));
+
+        if (empty($parts)) {
+            return self::SUBTYPE_GENERAL;
         }
 
-        return $this->categories['projektkurse'];
+        // Fachschaft: p_alle_bio, p_alle-mathe.
+        if (strtolower($parts[0]) === 'alle') {
+            return self::SUBTYPE_FACHSCHAFT;
+        }
+
+        // AG: p_robotik_ag, p_theater_ag.
+        if (strtolower(end($parts)) === 'ag') {
+            return self::SUBTYPE_AG;
+        }
+
+        // Parse parts into teacher/subject/class.
+        $parsed = $this->parse_project_parts($parts);
+
+        // Teacher course: teacher + subject + class (e.g., p_mueller_mathe_10a).
+        if ($parsed['teacher'] !== null && $parsed['subject'] !== null && $parsed['class'] !== null) {
+            return self::SUBTYPE_TEACHER_COURSE;
+        }
+
+        // Class course: class + subject, no teacher (e.g., p_10a_deutsch).
+        if ($parsed['class'] !== null && $parsed['subject'] !== null && $parsed['teacher'] === null) {
+            return self::SUBTYPE_CLASS_COURSE;
+        }
+
+        return self::SUBTYPE_GENERAL;
+    }
+
+    /**
+     * Parse project group name parts into teacher, subject, and class components.
+     *
+     * @param array $parts Name parts (already split by - or _).
+     * @return array ['teacher' => string|null, 'subject' => string|null, 'class' => string|null]
+     */
+    protected function parse_project_parts(array $parts): array
+    {
+        $class_pattern = '/^(\d+[a-z]?|k[s]?[12]|j[12])$/i';
+        $result = ['teacher' => null, 'subject' => null, 'class' => null];
+
+        foreach ($parts as $part) {
+            $lower = strtolower($part);
+            if (preg_match($class_pattern, $part)) {
+                $result['class'] = $part;
+            } elseif (isset(self::SUBJECT_MAP[$lower])) {
+                $result['subject'] = $part;
+            } else {
+                // First unrecognized part is the teacher name.
+                if ($result['teacher'] === null) {
+                    $result['teacher'] = $part;
+                }
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -405,14 +568,15 @@ class course_sync
         $group_name = $group['name'];
         $group_id = $group['id'];
 
-        // Generate course names.
+        // Detect sub-type and generate course names.
+        $subtype = $this->detect_project_subtype($group_name);
         $project_name = $this->extract_project_name($group_name);
         $fullname = $this->generate_fullname($group_name, 'project', $project_name);
         $shortname = $this->generate_shortname($group_name, 'project', $project_name);
-        $idnumber = self::PREFIX_PROJECT . strtolower(preg_replace('/[^a-z0-9]/', '', $group_name));
+        $idnumber = self::PREFIX_PROJECT . strtolower(preg_replace('/[^a-z0-9_]/', '', $group_name));
         $category_id = $this->get_project_category($group_name);
 
-        $this->log('debug', "Project: {$group_name} -> {$shortname}");
+        $this->log('debug', "Project ({$subtype}): {$group_name} -> {$shortname} [{$fullname}]");
 
         // Find or create the course.
         $course = $this->find_or_create_course($idnumber, $shortname, $fullname, $category_id, $group_id);
@@ -423,6 +587,7 @@ class course_sync
                 'shortname' => $course->shortname,
                 'group_id' => $group_id,
                 'type' => 'project',
+                'subtype' => $subtype,
             ];
         }
     }
@@ -517,61 +682,105 @@ class course_sync
     }
 
     /**
-     * Extract project name from group name.
+     * Extract project short name from group name.
      *
      * @param string $group_name Group name.
-     * @return string Project name.
+     * @return string Project short name.
      */
     protected function extract_project_name(string $group_name): string
     {
+        $subtype = $this->detect_project_subtype($group_name);
         $name = preg_replace('/^p_/', '', $group_name);
-        return strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', substr($name, 0, 20)));
+        $parts = preg_split('/[-_]/', $name);
+        $parts = array_values(array_filter($parts, fn($p) => $p !== ''));
+
+        switch ($subtype) {
+            case self::SUBTYPE_FACHSCHAFT:
+                // p_alle_bio → FS_BIO.
+                $subject = strtoupper($parts[1] ?? 'X');
+                return "FS_{$subject}";
+
+            case self::SUBTYPE_TEACHER_COURSE:
+                // p_mueller_mathe_10a → MUELLER_MATHE_10A.
+                $parsed = $this->parse_project_parts($parts);
+                return strtoupper(implode('_', array_filter([
+                    $parsed['teacher'],
+                    $parsed['subject'],
+                    $parsed['class'],
+                ])));
+
+            case self::SUBTYPE_CLASS_COURSE:
+                // p_10a_deutsch → 10A_DEUTSCH.
+                $parsed = $this->parse_project_parts($parts);
+                return strtoupper(implode('_', array_filter([
+                    $parsed['class'],
+                    $parsed['subject'],
+                ])));
+
+            case self::SUBTYPE_AG:
+                // p_robotik_ag → AG_ROBOTIK.
+                array_pop($parts); // Remove 'ag'.
+                return 'AG_' . strtoupper(implode('_', $parts));
+
+            default:
+                // p_theater → THEATER.
+                return strtoupper(preg_replace('/[^a-zA-Z0-9_]/', '', implode('_', $parts)));
+        }
     }
 
     /**
      * Create a readable full name for a project course.
+     *
+     * Recognizes sub-types:
+     * - Fachschaften:  p_alle_bio          → "Fachschaft Biologie"
+     * - Lehrer-Kurse:  p_mueller_mathe_10a → "Mathematik Klasse 10A (MUELLER)"
+     * - Klassen-Kurse: p_10a_deutsch       → "Deutsch 10A"
+     * - AGs:           p_robotik_ag        → "AG: Robotik"
+     * - Sonstige:      p_theater           → "Projekt: Theater"
      *
      * @param string $group_name Group name.
      * @return string Full name.
      */
     protected function create_project_fullname(string $group_name): string
     {
+        $subtype = $this->detect_project_subtype($group_name);
         $name = preg_replace('/^p_/', '', $group_name);
+        $parts = preg_split('/[-_]/', $name);
+        $parts = array_values(array_filter($parts, fn($p) => $p !== ''));
 
-        // Fachgruppen: p_alle-bio -> "Fachschaft Biologie".
-        if (preg_match('/^alle[-_](.+)$/', $name, $matches)) {
-            $subject_map = [
-                'bio' => 'Biologie',
-                'm' => 'Mathematik',
-                'd' => 'Deutsch',
-                'e' => 'Englisch',
-                'f' => 'Französisch',
-                'l' => 'Latein',
-                'g' => 'Geschichte',
-                'geo' => 'Geografie',
-                'ph' => 'Physik',
-                'ch' => 'Chemie',
-                'mus' => 'Musik',
-                'bk' => 'Bildende Kunst',
-                'spo' => 'Sport',
-                'eth' => 'Ethik',
-                'evrel' => 'Ev. Religion',
-                'krel' => 'Kath. Religion',
-                'spa' => 'Spanisch',
-                'rus' => 'Russisch',
-                'nwt' => 'NwT',
-                'bnt' => 'BNT',
-                'gk' => 'Gemeinschaftskunde',
-                'wbs' => 'WBS',
-                'lehrer' => 'Alle Lehrer',
-            ];
-            $subject = $subject_map[strtolower($matches[1])] ?? ucfirst($matches[1]);
-            return "Fachschaft {$subject}";
+        switch ($subtype) {
+            case self::SUBTYPE_FACHSCHAFT:
+                // p_alle_bio → "Fachschaft Biologie".
+                $subject_key = strtolower($parts[1] ?? '');
+                $subject = self::SUBJECT_MAP[$subject_key] ?? ucfirst($parts[1] ?? 'Unbekannt');
+                return "Fachschaft {$subject}";
+
+            case self::SUBTYPE_TEACHER_COURSE:
+                // p_mueller_mathe_10a → "Mathematik Klasse 10A (MUELLER)".
+                $parsed = $this->parse_project_parts($parts);
+                $subject = self::SUBJECT_MAP[strtolower($parsed['subject'] ?? '')] ?? ucfirst($parsed['subject'] ?? '');
+                $class = strtoupper($parsed['class'] ?? '');
+                $teacher = strtoupper($parsed['teacher'] ?? '');
+                return "{$subject} Klasse {$class} ({$teacher})";
+
+            case self::SUBTYPE_CLASS_COURSE:
+                // p_10a_deutsch → "Deutsch 10A".
+                $parsed = $this->parse_project_parts($parts);
+                $subject = self::SUBJECT_MAP[strtolower($parsed['subject'] ?? '')] ?? ucfirst($parsed['subject'] ?? '');
+                $class = strtoupper($parsed['class'] ?? '');
+                return "{$subject} {$class}";
+
+            case self::SUBTYPE_AG:
+                // p_robotik_ag → "AG: Robotik".
+                array_pop($parts); // Remove 'ag'.
+                $ag_name = ucwords(implode(' ', $parts));
+                return "AG: {$ag_name}";
+
+            default:
+                // p_theater → "Projekt: Theater".
+                $name = str_replace(['-', '_'], ' ', $name);
+                return 'Projekt: ' . ucwords($name);
         }
-
-        // Other projects.
-        $name = str_replace(['-', '_'], ' ', $name);
-        return 'Projekt: ' . ucwords($name);
     }
 
     /**
