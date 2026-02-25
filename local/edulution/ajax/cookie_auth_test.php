@@ -48,6 +48,9 @@ $PAGE->set_pagelayout('admin');
 
 echo $OUTPUT->header();
 
+require_once($CFG->dirroot . '/local/edulution/lib.php');
+echo local_edulution_render_nav('cookie_auth');
+
 // Status icons.
 $icons = [
     'ok' => '<span style="color:#198754;font-weight:bold">&#10004;</span>',

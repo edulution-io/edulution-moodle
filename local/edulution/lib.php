@@ -470,6 +470,14 @@ function local_edulution_render_nav(string $active = 'dashboard'): string
         'icon' => 'fa-list',
     ];
 
+    // Cookie Auth Diagnose.
+    $items[] = [
+        'id' => 'cookie_auth',
+        'url' => new moodle_url('/local/edulution/ajax/cookie_auth_test.php'),
+        'label' => 'Cookie Auth',
+        'icon' => 'fa-key',
+    ];
+
     // Docs.
     $items[] = [
         'id' => 'docs',
@@ -737,6 +745,10 @@ function local_edulution_get_config(string $name, $default = null)
             if (in_array(strtolower($envValue), ['false', '0', 'no', 'off'])) {
                 return false;
             }
+            // Auto-fix URL values missing protocol (common Docker misconfiguration).
+            if ($name === 'keycloak_url' && strpos($envValue, '://') === false) {
+                $envValue = 'https://' . $envValue;
+            }
             return $envValue;
         }
     }
@@ -746,6 +758,13 @@ function local_edulution_get_config(string $name, $default = null)
 
     if ($value === false || $value === null || $value === '') {
         return $default;
+    }
+
+    // Auto-fix URL values missing protocol (common Docker misconfiguration).
+    if ($name === 'keycloak_url' && is_string($value) && !empty($value)) {
+        if (strpos($value, '://') === false) {
+            $value = 'https://' . $value;
+        }
     }
 
     return $value;
